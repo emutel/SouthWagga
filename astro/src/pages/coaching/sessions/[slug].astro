@@ -1,0 +1,243 @@
+---
+// src/pages/coaching/sessions/[slug].astro
+import Base from '../../../layouts/Base.astro';
+import { getSessionPlan, getAllSessionPlanSlugs, fileUrl } from '../../../lib/directus.js';
+
+export async function getStaticPaths() {
+  const slugs = await getAllSessionPlanSlugs();
+  return slugs.filter(s => s).map(slug => ({ params: { slug } }));
+}
+
+const { slug } = Astro.params;
+const plan = await getSessionPlan(slug);
+if (!plan) return Astro.redirect('/coaching/sessions');
+
+const ageLabels = { miniroos:'MiniRoos', u12:'U12', u13:'U13', u14:'U14', u15:'U15', u16:'U16', u18:'U18', senior:'Senior', all:'All Ages' };
+
+const phases = [
+  {
+    id:    'welcome',
+    label: 'Welcome & Explanation',
+    time:  '5 min',
+    icon:  '👋',
+    desc:  plan.phase_welcome_notes,
+    note:  'Introduce the theme. Ask players what they know. Set expectations for the session.'
+  },
+  {
+    id:       'warmup',
+    label:    'Warm Up',
+    time:     '15–20 min',
+    icon:     '🏃',
+    desc:     plan.phase_warmup_description,
+    points:   plan.phase_warmup_coaching_points,
+    progress: plan.phase_warmup_progressions,
+    diagram:  plan.phase_warmup_diagram,
+    note:     'With the ball, theme-related. Build physical readiness and introduce the session focus.'
+  },
+  {
+    id:       'positioning',
+    label:    'Positioning Games',
+    time:     '20 min',
+    icon:     '🔲',
+    desc:     plan.phase_positioning_description,
+    points:   plan.phase_positioning_coaching_points,
+    progress: plan.phase_positioning_progressions,
+    diagram:  plan.phase_positioning_diagram,
+    note:     'Spatial awareness, triangle formations, support play. Develop possession-based fundamentals.'
+  },
+  {
+    id:       'game_training',
+    label:    'Game Training',
+    time:     '25–30 min',
+    icon:     '🎯',
+    desc:     plan.phase_game_training_description,
+    points:   plan.phase_game_training_coaching_points,
+    progress: plan.phase_game_training_progressions,
+    diagram:  plan.phase_game_training_diagram,
+    note:     'Designated team task in a game-realistic scenario. Correct field area, suitable resistance, quality interventions.'
+  },
+  {
+    id:       'training_game',
+    label:    'Training Game',
+    time:     '20–25 min',
+    icon:     '⚽',
+    desc:     plan.phase_training_game_description,
+    rules:    plan.phase_training_game_rules,
+    points:   plan.phase_training_game_coaching_points,
+    note:     'Match play with rules and restraints that emphasise the team task. Minimal intervention — let them play.'
+  },
+  {
+    id:    'warmdown',
+    label: 'Warm Down & Wrap Up',
+    time:  '5–10 min',
+    icon:  '✅',
+    desc:  plan.phase_warmdown_notes,
+    note:  'Cool down, questions, reflection. What did we learn? What will we do better next time?'
+  },
+];
+---
+<Base title={`${plan.title} — Session Plan`} description={plan.objectives || ''}>
+
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <a href="/coaching/sessions" class="back-link">← Session Plans</a>
+      {plan.age_group && <div class="label">{ageLabels[plan.age_group] ?? plan.age_group}</div>}
+      <h1>{plan.title}</h1>
+      <div class="plan-meta">
+        {plan.theme        && <span class="meta-tag">{plan.theme}</span>}
+        {plan.duration     && <span class="meta-tag">⏱ {plan.duration} min</span>}
+        {plan.player_numbers && <span class="meta-tag">👥 {plan.player_numbers}</span>}
+      </div>
+    </div>
+  </div>
+
+  <div class="plan-layout">
+
+    <!-- Sidebar -->
+    <aside class="plan-sidebar">
+      {plan.objectives && (
+        <div class="sidebar-block card">
+          <h3>Session Objectives</h3>
+          <p>{plan.objectives}</p>
+        </div>
+      )}
+      {plan.equipment && (
+        <div class="sidebar-block card">
+          <h3>Equipment</h3>
+          <p>{plan.equipment}</p>
+        </div>
+      )}
+      <div class="sidebar-block card sidebar-timeline">
+        <h3>Session Overview</h3>
+        {phases.map(p => (
+          <a href={`#${p.id}`} class="timeline-item">
+            <span class="tl-icon">{p.icon}</span>
+            <span class="tl-label">{p.label}</span>
+            <span class="tl-time">{p.time}</span>
+          </a>
+        ))}
+      </div>
+      {plan.td_notes && (
+        <div class="sidebar-block card sidebar-td">
+          <h3>TD Notes</h3>
+          <p>{plan.td_notes}</p>
+        </div>
+      )}
+    </aside>
+
+    <!-- Phases -->
+    <main class="plan-phases">
+      {phases.map((phase, i) => (
+        <section id={phase.id} class="phase-block card">
+          <div class="phase-header">
+            <span class="phase-num">{i + 1}</span>
+            <span class="phase-icon">{phase.icon}</span>
+            <div class="phase-title-group">
+              <h2>{phase.label}</h2>
+              <span class="phase-time">{phase.time}</span>
+            </div>
+          </div>
+          <p class="phase-framework-note">{phase.note}</p>
+
+          {phase.desc && (
+            <div class="phase-section">
+              <h4>Activity</h4>
+              {phase.id === 'welcome' || phase.id === 'warmdown'
+                ? <p>{phase.desc}</p>
+                : <div class="rich-content" set:html={phase.desc} />
+              }
+            </div>
+          )}
+
+          {phase.diagram && (
+            <div class="phase-section">
+              <h4>Diagram</h4>
+              <img src={fileUrl(phase.diagram, { width: 800 })} alt="Pitch diagram" class="phase-diagram" loading="lazy" />
+            </div>
+          )}
+
+          {phase.points && (
+            <div class="phase-section phase-section--green">
+              <h4>Coaching Points</h4>
+              <p class="whitespace">{phase.points}</p>
+            </div>
+          )}
+
+          {phase.rules && (
+            <div class="phase-section phase-section--amber">
+              <h4>Rules &amp; Restraints</h4>
+              <p class="whitespace">{phase.rules}</p>
+            </div>
+          )}
+
+          {phase.progress && (
+            <div class="phase-section phase-section--muted">
+              <h4>Progressions</h4>
+              <p class="whitespace">{phase.progress}</p>
+            </div>
+          )}
+        </section>
+      ))}
+    </main>
+
+  </div>
+
+</Base>
+
+<style>
+.page-hero          { background: linear-gradient(135deg, var(--green-dark), var(--off-black)); border-bottom: 1px solid var(--border); padding: 60px 48px 48px; }
+.page-hero-inner    { max-width: 1280px; margin: 0 auto; }
+.back-link          { color: var(--green-bright); font-size: 13px; text-decoration: none; display: inline-block; margin-bottom: 16px; }
+.back-link:hover    { text-decoration: underline; }
+.page-hero h1       { font-size: clamp(32px, 4vw, 60px); margin: 10px 0 12px; }
+.plan-meta          { display: flex; flex-wrap: wrap; gap: 8px; }
+.meta-tag           { background: rgba(255,255,255,0.08); border: 1px solid var(--border); padding: 4px 12px; border-radius: 20px; font-size: 13px; color: var(--muted); }
+
+.plan-layout        { display: grid; grid-template-columns: 280px 1fr; gap: 32px; max-width: 1280px; margin: 0 auto; padding: 40px 48px 80px; }
+
+/* Sidebar */
+.plan-sidebar       { display: flex; flex-direction: column; gap: 16px; }
+.sidebar-block      { padding: 20px; }
+.sidebar-block h3   { font-family: var(--font-cond); font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--green-bright); margin-bottom: 10px; }
+.sidebar-block p    { font-size: 13px; color: var(--muted); line-height: 1.6; white-space: pre-line; }
+.sidebar-td         { border-color: var(--green); }
+.sidebar-td h3      { color: var(--green-bright); }
+.timeline-item      { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); text-decoration: none; color: var(--text); font-size: 13px; }
+.timeline-item:last-child { border-bottom: none; }
+.timeline-item:hover .tl-label { color: var(--green-bright); }
+.tl-icon            { font-size: 16px; width: 24px; text-align: center; }
+.tl-label           { flex: 1; }
+.tl-time            { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+/* Phases */
+.plan-phases        { display: flex; flex-direction: column; gap: 24px; }
+.phase-block        { padding: 0; overflow: hidden; }
+.phase-header       { display: flex; align-items: center; gap: 12px; padding: 20px 24px; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.phase-num          { font-family: var(--font-cond); font-size: 13px; font-weight: 700; color: var(--muted); width: 20px; }
+.phase-icon         { font-size: 24px; }
+.phase-title-group  { flex: 1; }
+.phase-title-group h2 { font-family: var(--font-cond); font-size: 20px; font-weight: 800; margin: 0; }
+.phase-time         { font-size: 12px; color: var(--green-bright); font-weight: 600; }
+.phase-framework-note { font-size: 12px; color: var(--muted); font-style: italic; padding: 10px 24px; border-bottom: 1px solid var(--border); margin: 0; }
+.phase-section      { padding: 20px 24px; border-bottom: 1px solid var(--border); }
+.phase-section:last-child { border-bottom: none; }
+.phase-section h4   { font-family: var(--font-cond); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.phase-section p    { font-size: 14px; line-height: 1.7; color: var(--text); }
+.phase-section--green { background: rgba(37, 160, 76, 0.06); }
+.phase-section--green h4 { color: var(--green-bright); }
+.phase-section--amber { background: rgba(255, 180, 0, 0.06); }
+.phase-section--amber h4 { color: #ffb400; }
+.phase-section--muted { background: rgba(255,255,255,0.02); }
+.phase-diagram      { width: 100%; border-radius: 4px; border: 1px solid var(--border); }
+.rich-content       { font-size: 14px; line-height: 1.7; }
+.rich-content ul, .rich-content ol { padding-left: 20px; }
+.rich-content li    { margin-bottom: 4px; }
+.whitespace         { white-space: pre-line; }
+
+@media (max-width: 900px) {
+  .plan-layout { grid-template-columns: 1fr; padding: 24px 20px 60px; }
+  .plan-sidebar { display: contents; }
+  .sidebar-timeline { order: -1; }
+  .page-hero { padding: 40px 20px 32px; }
+}
+</style>

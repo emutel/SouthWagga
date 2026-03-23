@@ -165,6 +165,49 @@ export async function getEvents({ upcomingOnly = true } = {}) {
   });
 }
 
+// ── SESSION PLANS ─────────────────────────────────────────────
+export async function getSessionPlans({ ageGroup, theme, limit = 50 } = {}) {
+  const filter = { status: { _eq: 'published' } };
+  if (ageGroup) filter.age_group = { _eq: ageGroup };
+  if (theme)    filter.theme     = { _icontains: theme };
+  return fetchDirectus('/items/session_plans', {
+    filter: JSON.stringify(filter),
+    sort:   'sort,date_created',
+    limit,
+    fields: 'id,title,slug,age_group,theme,duration,player_numbers,objectives',
+  });
+}
+
+export async function getSessionPlan(slug) {
+  const data = await fetchDirectus('/items/session_plans', {
+    filter: JSON.stringify({ slug: { _eq: slug }, status: { _eq: 'published' } }),
+    limit:  1,
+    fields: '*',
+  });
+  return Array.isArray(data) ? data[0] : data;
+}
+
+export async function getAllSessionPlanSlugs() {
+  const data = await fetchDirectus('/items/session_plans', {
+    filter: JSON.stringify({ status: { _eq: 'published' } }),
+    fields: 'slug',
+  });
+  return (data || []).map(s => s.slug).filter(Boolean);
+}
+
+// ── COACHING RESOURCES ────────────────────────────────────────
+export async function getCoachingResources({ category, ageGroup, limit = 100 } = {}) {
+  const filter = { status: { _eq: 'published' } };
+  if (category) filter.category  = { _eq: category };
+  if (ageGroup) filter.age_group = { _eq: ageGroup };
+  return fetchDirectus('/items/coaching_resources', {
+    filter: JSON.stringify(filter),
+    sort:   'sort,title',
+    limit,
+    fields: '*',
+  });
+}
+
 // ── DIRECTUS FILE URL ────────────────────────────────────────
 export function fileUrl(fileId, { width, height, quality = 80, format = 'webp' } = {}) {
   if (!fileId) return null;

@@ -1,0 +1,94 @@
+---
+// src/pages/coaching/resources/index.astro
+import Base from '../../../layouts/Base.astro';
+import { getCoachingResources, fileUrl } from '../../../lib/directus.js';
+
+const resources = await getCoachingResources() || [];
+
+const categories = ['video','pdf','drill','article','other'];
+const catLabels  = { video:'Videos', pdf:'PDFs & Documents', drill:'Drill Sheets', article:'Articles', other:'Other' };
+const catIcons   = { video:'▶', pdf:'📄', drill:'⚽', article:'📰', other:'📎' };
+
+const grouped = categories.reduce((acc, cat) => {
+  const group = resources.filter(r => r.category === cat);
+  if (group.length) acc[cat] = group;
+  return acc;
+}, {});
+---
+<Base title="Coaching Resources — Coaches Hub" description="Videos, PDFs, drill sheets and articles for Warriors FC coaches.">
+
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <a href="/coaching" class="back-link">← Coaches Hub</a>
+      <div class="label">From Your Technical Director</div>
+      <h1>Resources</h1>
+      <p>Videos, drill sheets, PDFs and articles to support your coaching development.</p>
+    </div>
+  </div>
+
+  <section class="section">
+
+    {resources.length === 0 && (
+      <p class="empty">No resources published yet — check back soon.</p>
+    )}
+
+    {Object.entries(grouped).map(([cat, items]) => (
+      <div class="cat-block">
+        <h2 class="cat-heading">{catIcons[cat]} {catLabels[cat] ?? cat}</h2>
+        <div class="resources-grid">
+          {items.map(r => (
+            <a
+              href={r.url || (r.file ? fileUrl(r.file) : '#')}
+              target={r.url ? '_blank' : undefined}
+              rel={r.url ? 'noopener noreferrer' : undefined}
+              class="resource-card card"
+            >
+              {r.thumbnail
+                ? <img src={fileUrl(r.thumbnail, { width: 400, height: 220 })} alt={r.title} class="resource-thumb" loading="lazy" />
+                : <div class="resource-thumb-placeholder">{catIcons[cat] ?? '📎'}</div>
+              }
+              <div class="resource-body">
+                <div class="resource-meta">
+                  {r.topic    && <span class="tag">{r.topic}</span>}
+                  {r.age_group && <span class="tag">{r.age_group}</span>}
+                </div>
+                <h3>{r.title}</h3>
+                {r.description && <p>{r.description}</p>}
+              </div>
+              <div class="resource-footer">
+                {r.url ? 'Open Link ↗' : r.file ? 'Download ↓' : '—'}
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    ))}
+
+  </section>
+
+</Base>
+
+<style>
+.page-hero        { background: linear-gradient(135deg, var(--green-dark), var(--off-black)); border-bottom: 1px solid var(--border); padding: 60px 48px 48px; }
+.page-hero-inner  { max-width: 1280px; margin: 0 auto; }
+.back-link        { color: var(--green-bright); font-size: 13px; text-decoration: none; display: inline-block; margin-bottom: 16px; }
+.back-link:hover  { text-decoration: underline; }
+.page-hero h1     { font-size: clamp(40px, 5vw, 72px); margin: 10px 0 8px; }
+.page-hero p      { color: var(--muted); }
+.section          { padding: 60px 48px; max-width: 1280px; margin: 0 auto; }
+.cat-block        { margin-bottom: 48px; }
+.cat-heading      { font-family: var(--font-cond); font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--green-bright); border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 20px; }
+.resources-grid   { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.resource-card    { display: flex; flex-direction: column; text-decoration: none; transition: transform 0.2s, border-color 0.2s; }
+.resource-card:hover { transform: translateY(-3px); border-color: var(--green); }
+.resource-thumb   { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+.resource-thumb-placeholder { width: 100%; aspect-ratio: 16/9; background: var(--surface-2); display: flex; align-items: center; justify-content: center; font-size: 40px; }
+.resource-body    { padding: 14px 16px; flex: 1; }
+.resource-meta    { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.tag              { background: rgba(255,255,255,0.06); border: 1px solid var(--border); padding: 2px 8px; border-radius: 10px; font-size: 11px; color: var(--muted); }
+.resource-body h3 { font-family: var(--font-cond); font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+.resource-body p  { font-size: 13px; color: var(--muted); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.resource-footer  { padding: 10px 16px; border-top: 1px solid var(--border); font-family: var(--font-cond); font-size: 12px; font-weight: 600; letter-spacing: 1px; color: var(--green-bright); }
+.empty            { color: var(--muted); font-style: italic; }
+@media (max-width: 768px) { .page-hero { padding: 40px 20px 32px; } .section { padding: 40px 20px; } }
+</style>
