@@ -7,12 +7,14 @@
 import { sessions_u5u7 }   from './sessions_u5u7.js';
 import { sessions_u8u11 }  from './sessions_u8u11.js';
 import { sessions_u12u13 } from './sessions_u12u13.js';
-// sessions_u14u16 and sessions_senior added when files are ready
+import { sessions_u14u16 } from './sessions_u14u16.js';
+// sessions_senior added when file is ready
 
 const ALL_SESSIONS = [
   ...sessions_u5u7,
   ...sessions_u8u11,
   ...sessions_u12u13,
+  ...sessions_u14u16,
 ];
 
 // Map agent age_group keys → page display labels
