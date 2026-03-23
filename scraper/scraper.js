@@ -222,27 +222,46 @@ async function scrape() {
     return;
   }
 
-  // ── FETCH FULL SEASON FIXTURES DIRECTLY ──────────────────────
-  // The page only loads date_range=default (next ~2 weeks).
-  // Supplement with direct API calls for broader date ranges.
+  // ── FETCH FULL SEASON FIXTURES DIRECTLY (with pagination) ────
+  // The page only loads the first 30 fixtures. Follow cursor pagination
+  // to fetch the complete season schedule.
   const TENANT = 'PLBdDg1Kb7';
-  const dateRanges = ['default', 'this_month', 'next_month', 'season'];
-  for (const range of dateRanges) {
-    try {
-      const url = `https://mc-api.dribl.com/api/fixtures?date_range=${range}&tenant=${TENANT}&timezone=Australia/Sydney`;
-      const res = await fetch(url, {
-        headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' }
-      });
-      if (res.ok) {
-        const body = await res.json();
-        if (body && body.data && body.data.length > 0) {
-          intercepted.fixtures.push({ url, body });
-          log(`  → Direct API fixtures (${range}): ${body.data.length} items`);
-        }
+  const API_HEADERS = { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36' };
+  try {
+    let nextUrl = `https://mc-api.dribl.com/api/fixtures?date_range=season&tenant=${TENANT}&timezone=Australia/Sydney`;
+    let pageCount = 0;
+    while (nextUrl && pageCount < 20) {
+      const res = await fetch(nextUrl, { headers: API_HEADERS });
+      if (!res.ok) break;
+      const body = await res.json();
+      if (body && body.data && body.data.length > 0) {
+        intercepted.fixtures.push({ url: nextUrl, body });
+        log(`  → Direct API fixtures page ${pageCount + 1}: ${body.data.length} items`);
       }
-    } catch (e) {
-      log(`  → Direct API fetch failed (${range}): ${e.message}`);
+      nextUrl = body.links?.next || null;
+      pageCount++;
     }
+    log(`  → Fetched ${pageCount} pages of fixtures`);
+  } catch (e) {
+    log(`  → Direct API fetch failed: ${e.message}`);
+  }
+
+  // Also fetch past results (reverse date order to get completed matches)
+  try {
+    let nextUrl = `https://mc-api.dribl.com/api/fixtures?date_range=season&tenant=${TENANT}&timezone=Australia/Sydney&sort=-date`;
+    let pageCount = 0;
+    while (nextUrl && pageCount < 20) {
+      const res = await fetch(nextUrl, { headers: API_HEADERS });
+      if (!res.ok) break;
+      const body = await res.json();
+      if (body && body.data && body.data.length > 0) {
+        intercepted.results.push({ url: nextUrl, body });
+      }
+      nextUrl = body.links?.next || null;
+      pageCount++;
+    }
+  } catch (e) {
+    log(`  → Results fetch failed: ${e.message}`);
   }
 
   // ── PROCESS & NORMALISE DATA ──────────────────────────────────
