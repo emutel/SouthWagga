@@ -2,12 +2,11 @@
   "name": "warriors-site",
   "version": "1.0.0",
   "scripts": {
-    "dev":   "astro dev",
+    "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview"
   },
   "dependencies": {
-    "astro": "^4.0.0",
-    "@astrojs/image": "^0.18.0"
+    "astro": "^4.0.0"
   }
 }
