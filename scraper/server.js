@@ -60,6 +60,13 @@ app.post('/discover', async (_req, res) => {
   }
 });
 
+// Manual scrape trigger
+app.post('/scrape', async (_req, res) => {
+  if (global.scrapeRunning) return res.json({ ok: false, message: 'Scraper already running' });
+  res.json({ ok: true, message: 'Scrape started — check /cache/fixtures.json in ~60s' });
+  runScraper();
+});
+
 app.listen(PORT, () => console.log(`[server] Listening on port ${PORT}`));
 
 // ── SCRAPE + PUBLISH ─────────────────────────────────────────
