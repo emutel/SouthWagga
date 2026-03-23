@@ -6,7 +6,7 @@ import { getNewsArticle, getAllNewsSlugs, getNews, fileUrl } from '../../lib/dir
 
 export async function getStaticPaths() {
   const slugs = await getAllNewsSlugs();
-  return slugs.map(slug => ({ params: { slug } }));
+  return slugs.filter(slug => slug).map(slug => ({ params: { slug } }));
 }
 
 const { slug }  = Astro.params;
