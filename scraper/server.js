@@ -46,6 +46,20 @@ app.get('/cache/:file', (req, res) => {
   res.send(fs.readFileSync(filePath, 'utf8'));
 });
 
+// Discovery endpoint — sets DISCOVER env var and runs scraper once
+app.post('/discover', async (_req, res) => {
+  if (global.scrapeRunning) return res.json({ ok: false, message: 'Scraper already running' });
+  res.json({ ok: true, message: 'Discovery started — check /cache/discovery-dump.json in ~60s' });
+  process.env.DRIBL_DISCOVER = 'true';
+  try {
+    await scrape();
+  } catch (err) {
+    console.error('[discover] Error:', err.message);
+  } finally {
+    delete process.env.DRIBL_DISCOVER;
+  }
+});
+
 app.listen(PORT, () => console.log(`[server] Listening on port ${PORT}`));
 
 // ── SCRAPE + PUBLISH ─────────────────────────────────────────
@@ -64,7 +78,7 @@ async function runScraper() {
 }
 
 // ── GITHUB COMMIT ─────────────────────────────────────────────
-const CACHE_FILES = ['results.json', 'fixtures.json', 'standings.json', 'scorers.json'];
+const CACHE_FILES = ['results.json', 'fixtures.json', 'standings.json', 'scorers.json', 'discovery-dump.json'];
 
 async function commitCacheToGitHub() {
   if (!GITHUB_TOKEN) {

@@ -39,7 +39,7 @@ const CONFIG = {
   teamIds:      (process.env.DRIBL_TEAM_IDS || '').split(',').filter(Boolean),
   cacheDir:     process.env.CACHE_DIR || path.join(__dirname, 'cache'),
   wpCacheDir:   process.env.WP_CACHE_DIR || '/var/www/html/wp-content/uploads/warriors-cache',
-  discoverMode: process.argv.includes('--discover'),
+  discoverMode: process.argv.includes('--discover') || process.env.DRIBL_DISCOVER === 'true',
   timeout:      30000,
 };
 // ─────────────────────────────────────────────────────────────
