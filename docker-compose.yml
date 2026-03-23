@@ -1,0 +1,186 @@
+version: "3.8"
+
+# ═══════════════════════════════════════════════════════════
+#  SOUTH WAGGA WARRIORS FC — Full Stack
+#  docker-compose up -d
+# ═══════════════════════════════════════════════════════════
+#
+#  Services:
+#    postgres    → Database for Directus
+#    directus    → Headless CMS (admin UI for club staff)
+#    astro       → Static site builder
+#    nginx       → Public web server
+#    scraper     → Dribl results/fixtures sync (cron)
+#    n8n         → Social media automation
+#
+#  Ports exposed publicly (via nginx):
+#    80  / 443   → southwagga.com.au  (public site)
+#    8055         → admin.southwagga.com.au (Directus CMS)
+#    5678         → n8n automation (internal only)
+# ═══════════════════════════════════════════════════════════
+
+networks:
+  warriors:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  directus_uploads:
+  directus_extensions:
+  n8n_data:
+  astro_output:
+
+services:
+
+  # ─── POSTGRES ──────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: warriors_postgres
+    restart: unless-stopped
+    networks: [warriors]
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB:-warriors}
+      POSTGRES_USER:     ${POSTGRES_USER:-warriors}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-warriors}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── DIRECTUS ──────────────────────────────────────────
+  directus:
+    image: directus/directus:latest
+    container_name: warriors_directus
+    restart: unless-stopped
+    networks: [warriors]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8055:8055"
+    environment:
+      # Core
+      SECRET:            ${DIRECTUS_SECRET}
+      ADMIN_EMAIL:       ${DIRECTUS_ADMIN_EMAIL:-admin@southwagga.com.au}
+      ADMIN_PASSWORD:    ${DIRECTUS_ADMIN_PASSWORD}
+      PUBLIC_URL:        ${DIRECTUS_PUBLIC_URL:-https://admin.southwagga.com.au}
+
+      # Database
+      DB_CLIENT:         pg
+      DB_HOST:           postgres
+      DB_PORT:           5432
+      DB_DATABASE:       ${POSTGRES_DB:-warriors}
+      DB_USER:           ${POSTGRES_USER:-warriors}
+      DB_PASSWORD:       ${POSTGRES_PASSWORD}
+
+      # Storage
+      STORAGE_LOCATIONS:         local
+      STORAGE_LOCAL_ROOT:        /directus/uploads
+
+      # Email (for admin notifications)
+      EMAIL_FROM:                ${EMAIL_FROM:-noreply@southwagga.com.au}
+      EMAIL_TRANSPORT:           smtp
+      EMAIL_SMTP_HOST:           ${SMTP_HOST:-mail.southwagga.com.au}
+      EMAIL_SMTP_PORT:           ${SMTP_PORT:-587}
+      EMAIL_SMTP_USER:           ${SMTP_USER}
+      EMAIL_SMTP_PASSWORD:       ${SMTP_PASSWORD}
+
+      # Webhooks — trigger Astro rebuild on content save
+      WEBHOOKS_0_NAME:           astro-rebuild
+      WEBHOOKS_0_URL:            http://astro:4321/rebuild
+      WEBHOOKS_0_METHOD:         POST
+      WEBHOOKS_0_COLLECTIONS:    news,players,teams,gallery_albums,gallery_photos,academy_programs,shop_items,events,sponsors,site_settings
+
+      # n8n social automation webhook
+      WEBHOOKS_1_NAME:           social-autopost
+      WEBHOOKS_1_URL:            http://n8n:5678/webhook/directus-publish
+      WEBHOOKS_1_METHOD:         POST
+      WEBHOOKS_1_COLLECTIONS:    news
+
+      # CORS for Astro build
+      CORS_ENABLED:              true
+      CORS_ORIGIN:               true
+
+    volumes:
+      - directus_uploads:/directus/uploads
+      - directus_extensions:/directus/extensions
+      - ./directus/schema:/directus/schema
+
+  # ─── ASTRO (build + serve) ─────────────────────────────
+  astro:
+    build:
+      context: ./astro
+      dockerfile: Dockerfile
+    container_name: warriors_astro
+    restart: unless-stopped
+    networks: [warriors]
+    depends_on: [directus]
+    environment:
+      DIRECTUS_URL:          http://directus:8055
+      DIRECTUS_TOKEN:        ${DIRECTUS_STATIC_TOKEN}
+      DRIBL_CACHE_DIR:       /cache
+      PUBLIC_SITE_URL:       ${PUBLIC_SITE_URL:-https://southwagga.com.au}
+    volumes:
+      - astro_output:/output
+      - ./scraper/cache:/cache:ro   # Dribl cache read-only
+    expose:
+      - "4321"
+
+  # ─── NGINX ─────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: warriors_nginx
+    restart: unless-stopped
+    networks: [warriors]
+    depends_on: [astro, directus]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - astro_output:/var/www/html:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/certs:ro     # SSL certs (Let's Encrypt)
+
+  # ─── DRIBL SCRAPER ─────────────────────────────────────
+  scraper:
+    build:
+      context: ./scraper
+      dockerfile: Dockerfile
+    container_name: warriors_scraper
+    restart: unless-stopped
+    networks: [warriors]
+    environment:
+      DRIBL_BASE_URL:    https://fww.dribl.com
+      DRIBL_CLUB_ID:     ${DRIBL_CLUB_ID}
+      CACHE_DIR:         /cache
+      # After discovery, set these to skip headless browser
+      DRIBL_API_TOKEN:   ${DRIBL_API_TOKEN:-}
+    volumes:
+      - ./scraper/cache:/cache
+    # Cron runs inside container — see scraper/Dockerfile
+
+  # ─── N8N AUTOMATION ────────────────────────────────────
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: warriors_n8n
+    restart: unless-stopped
+    networks: [warriors]
+    environment:
+      N8N_HOST:                  ${N8N_HOST:-n8n.southwagga.com.au}
+      N8N_PROTOCOL:              https
+      N8N_PORT:                  5678
+      WEBHOOK_URL:               ${N8N_WEBHOOK_URL:-https://n8n.southwagga.com.au}
+      N8N_BASIC_AUTH_ACTIVE:     true
+      N8N_BASIC_AUTH_USER:       ${N8N_USER:-admin}
+      N8N_BASIC_AUTH_PASSWORD:   ${N8N_PASSWORD}
+      DB_TYPE:                   sqlite
+      GENERIC_TIMEZONE:          Australia/Sydney
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/home/node/.n8n/workflows
+    expose:
+      - "5678"

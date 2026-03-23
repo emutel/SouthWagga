@@ -1,0 +1,468 @@
+---
+// src/pages/index.astro
+import Base          from '../layouts/Base.astro';
+import ShareBar      from '../components/ShareBar.astro';
+import { getNews, getAcademyPrograms, getEvents, fileUrl } from '../lib/directus.js';
+import { getResults, getFixtures }                          from '../lib/dribl.js';
+
+const news        = await getNews({ limit: 3, featured: true }) || [];
+const programs    = await getAcademyPrograms() || [];
+const events      = await getEvents({ upcomingOnly: true }) || [];
+const { data: results, cachedAt } = getResults({ limit: 8 });
+const { data: fixtures }          = getFixtures({ limit: 3 });
+
+// Group results by division for ticker
+const tickerItems = results.slice(0, 6);
+---
+<Base title="South Wagga Warriors FC">
+
+  <!-- ── TICKER ── -->
+  <div class="ticker">
+    <div class="ticker-track">
+      {[...tickerItems, ...tickerItems].map((r, i) => (
+        <span class="ticker-item">
+          <span class="ticker-score">
+            {r.home_team} {r.home_score} – {r.away_score} {r.away_team}
+          </span>
+          {r.competition} · {r.round}
+        </span>
+        {i < tickerItems.length * 2 - 1 && <span class="ticker-sep">◆</span>}
+      ))}
+      {tickerItems.length === 0 && (
+        <span class="ticker-item">Welcome to South Wagga Warriors FC — 2025 Season</span>
+      )}
+    </div>
+  </div>
+
+  <!-- ── HERO ── -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-number" aria-hidden="true">9</div>
+    <div class="hero-content">
+      <div class="label">2025 Season · Greater Wagga Football</div>
+      <h1 class="hero-title">South<br>Wagga<br><span>Warriors.</span></h1>
+      <p class="hero-sub">Grassroots football in South Wagga. From Mini Roos to Seniors — we play for the love of the game.</p>
+      <div class="hero-actions">
+        <a href="/results" class="btn btn-primary">⚽ Latest Results</a>
+        <a href="/academy" class="btn btn-secondary">Academy →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── LATEST RESULTS ── -->
+  <section class="section section--card">
+    <div class="section-inner">
+      <div class="section-header">
+        <div class="label">This Weekend</div>
+        <h2>Results</h2>
+        <a href="/results" class="see-all">All results & tables →</a>
+      </div>
+
+      <div class="results-grid">
+        {results.slice(0, 4).map(r => (
+          <div class={`result-card ${r.outcome}`}>
+            <div class="result-meta">
+              <span>{r.date ? new Date(r.date).toLocaleDateString('en-AU', { weekday:'short', day:'numeric', month:'short'}) : ''}</span>
+              {r.round && <span>{r.round}</span>}
+              <span class={`outcome-badge outcome-${r.outcome}`}>{r.outcome?.toUpperCase()}</span>
+            </div>
+            <div class="result-scoreline">
+              <span class={`result-team ${r.home_team?.toLowerCase().includes('warriors') ? 'warriors' : ''}`}>{r.home_team}</span>
+              <span class="result-digits">{r.home_score} – {r.away_score}</span>
+              <span class={`result-team right ${r.away_team?.toLowerCase().includes('warriors') ? 'warriors' : ''}`}>{r.away_team}</span>
+            </div>
+            {r.competition && <div class="result-division">{r.competition}</div>}
+          </div>
+        ))}
+        {results.length === 0 && (
+          <p class="no-data">Results loading — check back after the weekend.</p>
+        )}
+      </div>
+
+      {cachedAt && (
+        <p class="cache-note">↻ Synced from Dribl · {cachedAt ? new Date(cachedAt).toLocaleString('en-AU') : ''}</p>
+      )}
+    </div>
+  </section>
+
+  <!-- ── UPCOMING FIXTURES ── -->
+  {fixtures.length > 0 && (
+    <section class="section section--dark">
+      <div class="section-inner">
+        <div class="section-header">
+          <div class="label">Coming Up</div>
+          <h2>Next Games</h2>
+        </div>
+        <div class="fixtures-list">
+          {fixtures.map(f => (
+            <div class="fixture-row">
+              <div class="fixture-date">
+                <span class="fx-day">{f.date ? new Date(f.date).getDate() : '--'}</span>
+                <span class="fx-month">{f.date ? new Date(f.date).toLocaleString('en-AU', {month:'short'}) : '--'}</span>
+              </div>
+              <div class="fixture-info">
+                <div class="fixture-matchup">
+                  {f.home_team} vs {f.away_team}
+                </div>
+                <div class="fixture-detail">
+                  {f.time && <span>🕒 {f.time}</span>}
+                  {f.venue && <span>📍 {f.venue}</span>}
+                </div>
+              </div>
+              {f.competition && <span class="fixture-pill">{f.competition}</span>}
+            </div>
+          ))}
+        </div>
+        <a href="/results#fixtures" class="btn btn-secondary" style="margin-top:24px">Full fixture list →</a>
+      </div>
+    </section>
+  )}
+
+  <!-- ── NEWS ── -->
+  {news.length > 0 && (
+    <section class="section section--card">
+      <div class="section-inner">
+        <div class="section-header">
+          <div class="label">Club News</div>
+          <h2>Latest</h2>
+          <a href="/news" class="see-all">All news →</a>
+        </div>
+        <div class="news-grid">
+          {news.map(article => (
+            <a href={`/news/${article.slug}`} class="news-card card">
+              {article.hero_image && (
+                <img
+                  src={fileUrl(article.hero_image, { width: 600, height: 340 })}
+                  alt={article.title}
+                  loading="lazy"
+                  class="news-img"
+                />
+              )}
+              <div class="news-body">
+                <div class="news-meta">
+                  {new Date(article.date_created).toLocaleDateString('en-AU', {day:'numeric',month:'long',year:'numeric'})}
+                  {article.author && ` · ${article.author}`}
+                </div>
+                <h3>{article.title}</h3>
+                {article.excerpt && <p>{article.excerpt}</p>}
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- ── ACADEMY CTA ── -->
+  {programs.length > 0 && (
+    <section class="section section--dark academy-cta">
+      <div class="section-inner academy-cta-inner">
+        <div>
+          <div class="label">Player Development</div>
+          <h2>Warriors Academy</h2>
+          <p>Structured development pathways for players aged 6–18. From Mini Warriors to our Senior Elite program.</p>
+          <a href="/academy" class="btn btn-primary" style="margin-top:24px">View Programs & Enrol →</a>
+        </div>
+        <div class="academy-preview">
+          {programs.slice(0, 3).map(p => (
+            <div class="academy-preview-card">
+              <span class="academy-age">{p.age_group}</span>
+              <strong>{p.name}</strong>
+              <span class="academy-price">${p.price}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- ── INSTAGRAM FEED ── -->
+  <section class="section section--card" id="instagram">
+    <div class="section-inner">
+      <div class="section-header">
+        <div class="label">Follow Along</div>
+        <h2>@Warriors on Instagram</h2>
+      </div>
+      <div id="instagram-grid" class="instagram-grid">
+        <!-- Populated by client-side script using Instagram Basic Display API -->
+        <div class="instagram-placeholder">Loading Instagram feed...</div>
+      </div>
+      <a href="https://instagram.com/" class="btn btn-outline-green" style="margin-top:20px" id="instagram-follow">
+        Follow on Instagram →
+      </a>
+    </div>
+  </section>
+
+</Base>
+
+<script>
+  // Instagram Basic Display API — client side fetch
+  // Token is injected server-side via a meta tag
+  async function loadInstagram() {
+    const tokenMeta = document.querySelector('meta[name="ig-token"]');
+    const token = tokenMeta?.content;
+    if (!token || token === 'undefined') return;
+
+    try {
+      const res = await fetch(
+        `https://graph.instagram.com/me/media?fields=id,media_url,thumbnail_url,media_type,permalink&limit=9&access_token=${token}`
+      );
+      const data = await res.json();
+      if (!data.data) return;
+
+      const grid = document.getElementById('instagram-grid');
+      if (!grid) return;
+      grid.innerHTML = data.data.map(post => `
+        <a href="${post.permalink}" target="_blank" rel="noopener" class="instagram-cell">
+          <img src="${post.media_type === 'VIDEO' ? post.thumbnail_url : post.media_url}"
+               alt="Instagram post" loading="lazy">
+        </a>
+      `).join('');
+
+      // Update follow link
+      const handle = document.getElementById('instagram-follow');
+      if (handle) handle.href = 'https://instagram.com/' + (tokenMeta?.dataset?.handle || '');
+    } catch(e) {
+      console.warn('Instagram feed unavailable');
+    }
+  }
+  loadInstagram();
+</script>
+
+<style>
+/* ── HERO ── */
+.hero {
+  min-height: 92vh;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 48px 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(160deg, transparent 40%, rgba(9,12,9,0.97) 100%),
+    linear-gradient(to bottom, rgba(9,12,9,0.25) 0%, rgba(9,12,9,0.85) 100%),
+    radial-gradient(ellipse at 70% 40%, rgba(29,122,58,0.16) 0%, transparent 60%);
+  background-color: #0d1a10;
+}
+
+.hero-number {
+  position: absolute;
+  right: -60px;
+  top: 50%;
+  transform: translateY(-60%);
+  font-family: var(--font-display);
+  font-size: clamp(260px, 30vw, 460px);
+  color: rgba(29,122,58,0.06);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 680px;
+  animation: fadeUp 0.8s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.hero-title {
+  font-size: clamp(64px, 10vw, 130px);
+  line-height: 0.9;
+  margin: 14px 0 20px;
+}
+.hero-title span { color: var(--green-bright); }
+.hero-sub { font-size: 16px; color: var(--muted); max-width: 400px; line-height: 1.6; margin-bottom: 36px; }
+.hero-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+
+/* ── SHARED INNER ── */
+.section-inner { max-width: 1280px; margin: 0 auto; }
+
+.section-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+.section-header h2 { flex: 1; min-width: 200px; }
+.see-all {
+  font-family: var(--font-cond);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--green-bright);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* ── RESULTS ── */
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.result-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.result-card.win  { border-left-color: var(--win); }
+.result-card.loss { border-left-color: var(--loss); }
+.result-card.draw { border-left-color: var(--draw); }
+
+.result-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-family: var(--font-cond);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.result-scoreline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.result-team { font-family: var(--font-cond); font-size: 14px; font-weight: 700; flex: 1; }
+.result-team.right { text-align: right; color: var(--muted); }
+.result-team.warriors { color: var(--white); }
+.result-digits {
+  font-family: var(--font-display);
+  font-size: 28px;
+  letter-spacing: 3px;
+  min-width: 70px;
+  text-align: center;
+}
+.result-division {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--green-bright);
+  font-family: var(--font-cond);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.cache-note { font-size: 11px; color: var(--muted); margin-top: 16px; text-align: right; }
+.no-data    { color: var(--muted); font-style: italic; }
+
+/* ── FIXTURES ── */
+.fixtures-list { display: flex; flex-direction: column; gap: 10px; }
+
+.fixture-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  transition: border-color 0.15s;
+}
+.fixture-row:hover { border-color: var(--green); }
+
+.fixture-date {
+  text-align: center;
+  background: var(--green-dark);
+  border-radius: 6px;
+  padding: 8px 10px;
+  min-width: 46px;
+}
+.fx-day   { display: block; font-family: var(--font-display); font-size: 28px; line-height: 1; color: var(--green-bright); }
+.fx-month { display: block; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+
+.fixture-info { flex: 1; min-width: 0; }
+.fixture-matchup { font-family: var(--font-cond); font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.fixture-detail  { font-size: 12px; color: var(--muted); display: flex; gap: 10px; }
+
+.fixture-pill {
+  font-family: var(--font-cond);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: rgba(37,160,76,0.15);
+  color: var(--green-bright);
+  padding: 4px 10px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+/* ── NEWS ── */
+.news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+
+.news-card {
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.news-card:hover { transform: translateY(-4px); border-color: var(--green); }
+
+.news-img   { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+.news-body  { padding: 20px; flex: 1; }
+.news-meta  { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.news-body h3 { font-family: var(--font-cond); font-size: 20px; font-weight: 700; margin-bottom: 8px; line-height: 1.3; }
+.news-body p  { font-size: 14px; color: var(--muted); line-height: 1.5; }
+
+/* ── ACADEMY CTA ── */
+.academy-cta-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+.academy-cta p { color: var(--muted); margin-top: 12px; max-width: 400px; line-height: 1.6; }
+.academy-preview { display: flex; flex-direction: column; gap: 12px; }
+.academy-preview-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.academy-age {
+  font-family: var(--font-cond);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: rgba(37,160,76,0.15);
+  color: var(--green-bright);
+  padding: 3px 8px;
+  border-radius: 3px;
+}
+.academy-preview-card strong { flex: 1; font-family: var(--font-cond); font-size: 16px; font-weight: 700; }
+.academy-price { font-family: var(--font-display); font-size: 24px; color: var(--green-bright); }
+
+/* ── INSTAGRAM PLACEHOLDER ── */
+.instagram-placeholder { color: var(--muted); font-style: italic; padding: 40px; text-align: center; grid-column: 1/-1; }
+
+@media (max-width: 768px) {
+  .hero { padding: 0 20px 60px; }
+  .academy-cta-inner { grid-template-columns: 1fr; }
+}
+</style>

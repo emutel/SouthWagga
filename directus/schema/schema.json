@@ -1,0 +1,235 @@
+{
+  "version": 1,
+  "directus": "10.x",
+  "collections": [
+
+    {
+      "collection": "site_settings",
+      "meta": { "singleton": true, "icon": "settings", "note": "Global site configuration" },
+      "schema": { "name": "site_settings" },
+      "fields": [
+        { "field": "id",                  "type": "integer",  "schema": { "is_primary_key": true, "has_auto_increment": true } },
+        { "field": "club_name",           "type": "string",   "meta": { "interface": "input", "note": "e.g. South Wagga Warriors FC" } },
+        { "field": "tagline",             "type": "string",   "meta": { "interface": "input" } },
+        { "field": "contact_email",       "type": "string",   "meta": { "interface": "input" } },
+        { "field": "contact_phone",       "type": "string",   "meta": { "interface": "input" } },
+        { "field": "address",             "type": "text",     "meta": { "interface": "input-multiline" } },
+        { "field": "facebook_url",        "type": "string",   "meta": { "interface": "input", "note": "Full Facebook page URL" } },
+        { "field": "instagram_handle",    "type": "string",   "meta": { "interface": "input", "note": "Without @ symbol" } },
+        { "field": "youtube_channel_id",  "type": "string",   "meta": { "interface": "input" } },
+        { "field": "instagram_token",     "type": "text",     "meta": { "interface": "input", "note": "Instagram Basic Display API token — keep private" } },
+        { "field": "youtube_api_key",     "type": "text",     "meta": { "interface": "input", "note": "YouTube Data API key — keep private" } }
+      ]
+    },
+
+    {
+      "collection": "news",
+      "meta": { "icon": "article", "note": "News and announcements" },
+      "schema": { "name": "news" },
+      "fields": [
+        { "field": "id",               "type": "uuid",      "schema": { "is_primary_key": true }, "meta": { "hidden": true } },
+        { "field": "status",           "type": "string",    "schema": { "default_value": "draft" }, "meta": { "interface": "select-dropdown", "options": { "choices": [{"text": "Draft", "value": "draft"}, {"text": "Published", "value": "published"}, {"text": "Archived", "value": "archived"}] }, "width": "half" } },
+        { "field": "date_created",     "type": "timestamp", "meta": { "hidden": true, "readonly": true } },
+        { "field": "date_updated",     "type": "timestamp", "meta": { "hidden": true, "readonly": true } },
+        { "field": "title",            "type": "string",    "meta": { "interface": "input", "required": true } },
+        { "field": "slug",             "type": "string",    "meta": { "interface": "input", "note": "URL path — auto-generated from title" } },
+        { "field": "hero_image",       "type": "uuid",      "meta": { "interface": "file-image", "note": "Main article photo" } },
+        { "field": "excerpt",          "type": "text",      "meta": { "interface": "input-multiline", "note": "Short summary (shown on news list page)" } },
+        { "field": "body",             "type": "text",      "meta": { "interface": "input-rich-text-html", "note": "Full article content" } },
+        { "field": "author",           "type": "string",    "meta": { "interface": "input", "width": "half" } },
+        { "field": "featured",         "type": "boolean",   "schema": { "default_value": false }, "meta": { "interface": "boolean", "note": "Show on homepage", "width": "half" } },
+        { "field": "post_to_socials",  "type": "boolean",   "schema": { "default_value": true },  "meta": { "interface": "boolean", "note": "Auto-post to Facebook & Instagram on publish", "width": "half" } },
+        { "field": "social_post_text", "type": "text",      "meta": { "interface": "input-multiline", "note": "Optional — override the auto-generated social post text" } },
+        { "field": "tags",             "type": "json",      "meta": { "interface": "tags" } }
+      ]
+    },
+
+    {
+      "collection": "teams",
+      "meta": { "icon": "groups", "sort_field": "sort_order" },
+      "schema": { "name": "teams" },
+      "fields": [
+        { "field": "id",           "type": "uuid",     "schema": { "is_primary_key": true }, "meta": { "hidden": true } },
+        { "field": "status",       "type": "string",   "schema": { "default_value": "active" }, "meta": { "interface": "select-dropdown", "options": { "choices": [{"text":"Active","value":"active"},{"text":"Inactive","value":"inactive"}] }, "width": "half" } },
+        { "field": "sort_order",   "type": "integer",  "meta": { "hidden": true } },
+        { "field": "name",         "type": "string",   "meta": { "interface": "input", "required": true, "note": "e.g. Men's Premier League" } },
+        { "field": "short_name",   "type": "string",   "meta": { "interface": "input", "note": "e.g. Men's Premier", "width": "half" } },
+        { "field": "slug",         "type": "string",   "meta": { "interface": "input", "width": "half" } },
+        { "field": "division",     "type": "string",   "meta": { "interface": "input", "note": "Competition division name (must match Dribl)" } },
+        { "field": "season",       "type": "string",   "meta": { "interface": "input", "width": "half" } },
+        { "field": "team_photo",   "type": "uuid",     "meta": { "interface": "file-image" } },
+        { "field": "coach",        "type": "string",   "meta": { "interface": "input", "width": "half" } },
+        { "field": "manager",      "type": "string",   "meta": { "interface": "input", "width": "half" } },
+        { "field": "description",  "type": "text",     "meta": { "interface": "input-multiline" } },
+        { "field": "color_accent", "type": "string",   "schema": { "default_value": "#25a04c" }, "meta": { "interface": "select-color", "note": "Team accent colour for display", "width": "half" } }
+      ]
+    },
+
+    {
+      "collection": "players",
+      "meta": { "icon": "person", "sort_field": "last_name" },
+      "schema": { "name": "players" },
+      "fields": [
+        { "field": "id",             "type": "uuid",     "schema": { "is_primary_key": true }, "meta": { "hidden": true } },
+        { "field": "status",         "type": "string",   "schema": { "default_value": "active" }, "meta": { "interface": "select-dropdown", "options": { "choices": [{"text":"Active","value":"active"},{"text":"Inactive","value":"inactive"}] }, "width": "half" } },
+        { "field": "first_name",     "type": "string",   "meta": { "interface": "input", "required": true, "width": "half" } },
+        { "field": "last_name",      "type": "string",   "meta": { "interface": "input", "required": true, "width": "half" } },
+        { "field": "photo",          "type": "uuid",     "meta": { "interface": "file-image" } },
+        { "field": "jersey_number",  "type": "integer",  "meta": { "interface": "input", "width": "half" } },
+        { "field": "position",       "type": "string",   "meta": { "interface": "select-dropdown", "options": { "choices": [{"text":"Goalkeeper","value":"goalkeeper"},{"text":"Defender","value":"defender"},{"text":"Midfielder","value":"midfielder"},{"text":"Forward","value":"forward"}] }, "width": "half" } },
+        { "field": "team",           "type": "uuid",     "meta": { "interface": "select-dropdown-m2o", "note": "Primary team" } },
+        { "field": "seasons_at_club","type": "string",   "meta": { "interface": "input", "note": "e.g. 2021, 2022, 2023", "width": "half" } },
+        { "field": "bio",            "type": "text",     "meta": { "interface": "input-multiline" } },
+        { "field": "is_captain",     "type": "boolean",  "schema": { "default_value": false }, "meta": { "interface": "boolean", "width": "half" } }
+      ]
+    },
+
+    {
+      "collection": "sponsors",
+      "meta": { "icon": "handshake", "note": "Club and team sponsors" },
+      "schema": { "name": "sponsors" },
+      "fields": [
+        { "field": "id",          "type": "uuid",    "schema": { "is_primary_key": true }, "meta": { "hidden": true } },
+        { "field": "status",      "type": "string",  "schema": { "default_value": "active" }, "meta": { "interface": "select-dropdown", "options": { "choices": [{"text":"Active","value":"active"},{"text":"Inactive","value":"inactive"}] }, "width": "half" } },
+        { "field": "name",        "type": "string",  "meta": { "interface": "input", "required": true } },
+        { "field": "logo",        "type": "uuid",    "meta": { "interface": "file-image" } },
+        { "field": "website",     "type": "string",  "meta": { "interface": "input" } },
+        { "field": "tier",        "type": "string",  "meta": { "interface": "select-dropdown", "options": { "choices": [{"text":"Platinum","value":"platinum"},{"text":"Gold","value":"gold"},{"text":"Silver","value":"silver"},{"text":"Bronze","value":"bronze"}] }, "width": "half" } },
+        { "field": "is_global",   "type": "boolean", "schema": { "default_value": true }, "meta": { "interface": "boolean", "note": "Show on main Sponsors page", "width": "half" } },
+        { "field": "description", "type": "text",    "meta": { "interface": "input-multiline" } }
+      ]
+    },
+
+    {
+      "collection": "team_sponsors",
+      "meta": { "hidden": true, "icon": "import_export", "note": "Links sponsors to specific teams" },
+      "schema": { "name": "team_sponsors" },
+      "fields": [
+        { "field": "id",         "type": "integer", "schema": { "is_primary_key": true, "has_auto_increment": true } },
+        { "field": "teams_id",    "type": "uuid" },
+        { "field": "sponsors_id", "type": "uuid" }
+      ]
+    },
+
+    {
+      "collection": "gallery_albums",
+      "meta": { "icon": "photo_library" },
+      "schema": { "name": "gallery_albums" },
+      "fields": [
+        { "field": "id",          "type": "uuid",      "schema": { "is_primary_key": true }, "meta": { "hidden": true } },
+        { "field": "status",      "type": "string",    "schema": { "default_value": "published" }, "meta": { "interface": "select-dropdown", "options": { "choices": [{"text":"Published","value":"published"},{"text":"Draft","value":"draft"}] }, "width": "half" } },
+        { "field": "title",       "type": "string",    "meta": { "interface": "input", "required": true } },
+        { "field": "date",        "type": "date",      "meta": { "interface": "datetime", "width": "half" } },
+        { "field": "cover_photo", "type": "uuid",      "meta": { "interface": "file-image" } },
+        { "field": "description", "type": "text",      "meta": { "interface": "input-multiline" } },
+        { "field": "team",        "type": "uuid",      "meta": { "interface": "select-dropdown-m2o", "note": "Optional — link to a team" } }
+      ]
+    },
+
+    {
+      "collection": "gallery_photos",
+      "meta": { "icon": "image", "hidden": true },
+      "schema": { "name": "gallery_photos" },
+      "fields": [
+        { "field": "id",       "type": "uuid",    "schema": { "is_primary_key": true }, "meta": { "hidden": true } },
+        { "field": "album",    "type": "uuid",    "meta": { "interface": "select-dropdown-m2o" } },
+        { "field": "image",    "type": "uuid",    "meta": { "interface": "file-image", "required": true } },
+        { "field": "caption",  "type": "string",  "meta": { "interface": "input" } },
+        { "field": "sort",     "type": "integer", "meta": { "hidden": true } }
+      ]
+    },
+
+    {
+      "collection": "academy_programs",
+      "meta": { "icon": "school" },
+      "schema": { "name": "academy_programs" },
+      "fields": [
+        { "field": "id",           "type": "uuid",    "schema": { "is_primary_key": true }, "meta": { "hidden": true } },
+        { "field": "status",       "type": "string",  "schema": { "default_value": "active" }, "meta": { "interface": "select-dropdown", "options": { "choices": [{"text":"Active","value":"active"},{"text":"Full","value":"full"},{"text":"Inactive","value":"inactive"}] }, "width": "half" } },
+        { "field": "name",         "type": "string",  "meta": { "interface": "input", "required": true } },
+        { "field": "image",        "type": "uuid",    "meta": { "interface": "file-image" } },
+        { "field": "age_group",    "type": "string",  "meta": { "interface": "input", "note": "e.g. Ages 6–10", "width": "half" } },
+        { "field": "description",  "type": "text",    "meta": { "interface": "input-rich-text-html" } },
+        { "field": "schedule",     "type": "string",  "meta": { "interface": "input", "note": "e.g. Tuesday & Thursday evenings", "width": "half" } },
+        { "field": "price",        "type": "decimal", "meta": { "interface": "input", "width": "half" } },
+        { "field": "price_note",   "type": "string",  "meta": { "interface": "input", "note": "e.g. per term · 10 weeks", "width": "half" } },
+        { "field": "square_url",   "type": "string",  "meta": { "interface": "input", "note": "Square checkout link — copy from Square dashboard" } },
+        { "field": "spots_left",   "type": "integer", "meta": { "interface": "input", "note": "Optional — show remaining spots", "width": "half" } },
+        { "field": "sort",         "type": "integer", "meta": { "hidden": true } }
+      ]
+    },
+
+    {
+      "collection": "shop_items",
+      "meta": { "icon": "shopping_bag" },
+      "schema": { "name": "shop_items" },
+      "fields": [
+        { "field": "id",          "type": "uuid",    "schema": { "is_primary_key": true }, "meta": { "hidden": true } },
+        { "field": "status",      "type": "string",  "schema": { "default_value": "active" }, "meta": { "interface": "select-dropdown", "options": { "choices": [{"text":"Active","value":"active"},{"text":"Out of Stock","value":"out_of_stock"},{"text":"Hidden","value":"hidden"}] }, "width": "half" } },
+        { "field": "name",        "type": "string",  "meta": { "interface": "input", "required": true } },
+        { "field": "image",       "type": "uuid",    "meta": { "interface": "file-image" } },
+        { "field": "description", "type": "text",    "meta": { "interface": "input-multiline" } },
+        { "field": "price",       "type": "decimal", "meta": { "interface": "input", "width": "half" } },
+        { "field": "category",    "type": "string",  "meta": { "interface": "select-dropdown", "options": { "choices": [{"text":"Kit","value":"kit"},{"text":"Merchandise","value":"merch"},{"text":"Training","value":"training"},{"text":"Other","value":"other"}] }, "width": "half" } },
+        { "field": "badge",       "type": "string",  "meta": { "interface": "input", "note": "Optional label e.g. NEW, POPULAR, LIMITED", "width": "half" } },
+        { "field": "square_url",  "type": "string",  "meta": { "interface": "input", "note": "Square checkout link" } },
+        { "field": "sort",        "type": "integer", "meta": { "hidden": true } }
+      ]
+    },
+
+    {
+      "collection": "events",
+      "meta": { "icon": "event" },
+      "schema": { "name": "events" },
+      "fields": [
+        { "field": "id",          "type": "uuid",      "schema": { "is_primary_key": true }, "meta": { "hidden": true } },
+        { "field": "status",      "type": "string",    "schema": { "default_value": "published" }, "meta": { "interface": "select-dropdown", "options": { "choices": [{"text":"Published","value":"published"},{"text":"Draft","value":"draft"},{"text":"Cancelled","value":"cancelled"}] }, "width": "half" } },
+        { "field": "name",        "type": "string",    "meta": { "interface": "input", "required": true } },
+        { "field": "image",       "type": "uuid",      "meta": { "interface": "file-image" } },
+        { "field": "date",        "type": "timestamp", "meta": { "interface": "datetime", "width": "half" } },
+        { "field": "end_date",    "type": "timestamp", "meta": { "interface": "datetime", "width": "half" } },
+        { "field": "venue",       "type": "string",    "meta": { "interface": "input", "width": "half" } },
+        { "field": "description", "type": "text",      "meta": { "interface": "input-rich-text-html" } },
+        { "field": "price",       "type": "decimal",   "meta": { "interface": "input", "width": "half" } },
+        { "field": "price_note",  "type": "string",    "meta": { "interface": "input", "width": "half" } },
+        { "field": "square_url",  "type": "string",    "meta": { "interface": "input", "note": "Square ticket/registration link" } },
+        { "field": "is_featured", "type": "boolean",   "schema": { "default_value": false }, "meta": { "interface": "boolean", "width": "half" } }
+      ]
+    }
+
+  ],
+
+  "relations": [
+    {
+      "collection": "players",
+      "field": "team",
+      "related_collection": "teams"
+    },
+    {
+      "collection": "gallery_albums",
+      "field": "team",
+      "related_collection": "teams"
+    },
+    {
+      "collection": "gallery_photos",
+      "field": "album",
+      "related_collection": "gallery_albums"
+    },
+    {
+      "collection": "team_sponsors",
+      "field": "teams_id",
+      "related_collection": "teams",
+      "meta": {
+        "one_collection": "teams",
+        "many_collection": "team_sponsors",
+        "one_field": "sponsors",
+        "junction_field": "sponsors_id"
+      }
+    },
+    {
+      "collection": "team_sponsors",
+      "field": "sponsors_id",
+      "related_collection": "sponsors"
+    }
+  ]
+}

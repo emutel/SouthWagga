@@ -1,0 +1,323 @@
+---
+// src/pages/results.astro
+import Base from '../layouts/Base.astro';
+import { getResults, getFixtures, getStandings } from '../lib/dribl.js';
+
+const { data: allResults, cachedAt } = getResults({ limit: 40 });
+const { data: fixtures }             = getFixtures({ limit: 20 });
+const { data: standings }            = getStandings();
+
+// All unique divisions
+const divisions = [...new Set([
+  ...allResults.map(r => r.competition).filter(Boolean),
+  ...fixtures.map(f => f.competition).filter(Boolean),
+])];
+---
+<Base title="Results & Fixtures" description="Latest match results, upcoming fixtures and league tables for South Wagga Warriors FC.">
+
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <div class="label">fww.dribl.com</div>
+      <h1>Results &amp; Fixtures</h1>
+      <p>All Warriors teams · Updated automatically from Dribl{cachedAt ? ` · ${new Date(cachedAt).toLocaleString('en-AU')}` : ''}</p>
+    </div>
+  </div>
+
+  <!-- Mobile widget (the one we already built) -->
+  <div class="mobile-widget-wrap">
+    <iframe
+      src="/results-widget"
+      title="Results widget"
+      class="mobile-widget"
+      loading="lazy">
+    </iframe>
+  </div>
+
+  <!-- Desktop full view -->
+  <div class="desktop-view">
+
+    <!-- ── DIVISION TABS ── -->
+    <div class="page-inner">
+      <div class="tab-bar" role="tablist">
+        <button class="tab active" data-tab="results" role="tab">Results</button>
+        <button class="tab" data-tab="fixtures" role="tab">Fixtures</button>
+        <button class="tab" data-tab="table" role="tab">League Table</button>
+      </div>
+
+      <!-- Division filter -->
+      {divisions.length > 1 && (
+        <div class="div-pills" id="div-pills">
+          <button class="div-pill active" data-div="all">All Teams</button>
+          {divisions.map(d => (
+            <button class="div-pill" data-div={d}>{d}</button>
+          ))}
+        </div>
+      )}
+
+      <!-- ── RESULTS PANEL ── -->
+      <div class="tab-panel active" id="panel-results">
+        <div class="results-grid">
+          {allResults.map(r => (
+            <div
+              class={`result-card ${r.outcome}`}
+              data-div={r.competition || 'all'}
+            >
+              <div class="result-meta">
+                <span>{r.date ? new Date(r.date).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}) : ''}</span>
+                {r.round && <span>{r.round}</span>}
+                <span class={`outcome-badge outcome-${r.outcome}`}>{r.outcome?.toUpperCase()}</span>
+              </div>
+              <div class="scoreline">
+                <span class={`team ${r.home_team?.toLowerCase().includes('warriors') ? 'warriors' : ''}`}>{r.home_team}</span>
+                <span class="digits">{r.home_score} – {r.away_score}</span>
+                <span class={`team right ${r.away_team?.toLowerCase().includes('warriors') ? 'warriors' : ''}`}>{r.away_team}</span>
+              </div>
+              {r.competition && <div class="div-label">{r.competition}</div>}
+            </div>
+          ))}
+          {allResults.length === 0 && (
+            <p class="empty">No results yet — check back after the weekend.</p>
+          )}
+        </div>
+      </div>
+
+      <!-- ── FIXTURES PANEL ── -->
+      <div class="tab-panel" id="panel-fixtures">
+        <div class="fixtures-list">
+          {fixtures.map(f => {
+            const d = f.date ? new Date(f.date) : null;
+            return (
+              <div class="fixture-card" data-div={f.competition || 'all'}>
+                <div class="fx-date">
+                  <span class="fx-day">{d ? d.getDate() : '--'}</span>
+                  <span class="fx-month">{d ? d.toLocaleString('en-AU',{month:'short'}) : '--'}</span>
+                </div>
+                <div class="fx-info">
+                  <div class="fx-matchup">{f.home_team} vs {f.away_team}</div>
+                  <div class="fx-detail">
+                    {f.time && <span>🕒 {f.time}</span>}
+                    {f.venue && <span>📍 {f.venue}</span>}
+                    {f.round && <span>{f.round}</span>}
+                  </div>
+                </div>
+                {f.competition && <span class="fx-div">{f.competition}</span>}
+              </div>
+            );
+          })}
+          {fixtures.length === 0 && <p class="empty">No upcoming fixtures found.</p>}
+        </div>
+      </div>
+
+      <!-- ── TABLE PANEL ── -->
+      <div class="tab-panel" id="panel-table">
+        {standings.length === 0 && (
+          <p class="empty">League tables will appear here once the Dribl sync is running.</p>
+        )}
+        {standings.map(comp => {
+          const rows = comp.standings || comp.table || [];
+          const compName = comp.competition || comp.name || 'Standings';
+          if (!rows.length) return null;
+          return (
+            <div class="table-section">
+              <h3>{compName}</h3>
+              <div class="table-scroll">
+                <table class="standings-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th class="team-col">Team</th>
+                      <th title="Played">P</th>
+                      <th title="Won">W</th>
+                      <th title="Drawn">D</th>
+                      <th title="Lost">L</th>
+                      <th title="Goals For">GF</th>
+                      <th title="Goals Against">GA</th>
+                      <th title="Goal Difference">GD</th>
+                      <th title="Points" class="pts-col">Pts</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((row, i) => {
+                      const teamName = row.team?.name || row.team_name || row.name || '';
+                      const isWarriors = teamName.toLowerCase().includes('warriors') || teamName.toLowerCase().includes('south wagga');
+                      const gf = parseInt(row.goals_for || row.gf || 0);
+                      const ga = parseInt(row.goals_against || row.ga || 0);
+                      const gd = gf - ga;
+                      return (
+                        <tr class={isWarriors ? 'warriors-row' : ''}>
+                          <td>{i + 1}</td>
+                          <td class="team-col">{isWarriors ? <strong>{teamName}</strong> : teamName}</td>
+                          <td>{row.played || row.p || '-'}</td>
+                          <td>{row.won || row.w || '-'}</td>
+                          <td>{row.drawn || row.d || '-'}</td>
+                          <td>{row.lost || row.l || '-'}</td>
+                          <td>{row.goals_for || row.gf || '-'}</td>
+                          <td>{row.goals_against || row.ga || '-'}</td>
+                          <td>{(gd >= 0 ? '+' : '') + gd}</td>
+                          <td class="pts-col"><strong>{row.points || row.pts || '-'}</strong></td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <p class="dribl-credit">
+        Data sourced from <a href="https://fww.dribl.com" target="_blank" rel="noopener">fww.dribl.com</a>
+        {cachedAt && ` · Last synced ${new Date(cachedAt).toLocaleString('en-AU')}`}
+      </p>
+    </div>
+  </div>
+
+</Base>
+
+<script>
+  // Tab switching
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(`panel-${tab.dataset.tab}`)?.classList.add('active');
+    });
+  });
+
+  // Division filter
+  document.querySelectorAll('.div-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.div-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      const div = pill.dataset.div;
+      document.querySelectorAll('[data-div]').forEach(card => {
+        card.style.display = (div === 'all' || card.dataset.div === div) ? '' : 'none';
+      });
+    });
+  });
+</script>
+
+<style>
+.page-hero {
+  background: linear-gradient(135deg, var(--green-dark) 0%, var(--off-black) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 60px 48px 48px;
+}
+.page-hero-inner { max-width: 1280px; margin: 0 auto; }
+.page-hero h1    { font-size: clamp(48px, 6vw, 80px); margin: 10px 0 8px; }
+.page-hero p     { color: var(--muted); font-size: 14px; }
+
+/* Show mobile widget on small screens, desktop view on large */
+.mobile-widget-wrap { display: none; }
+.desktop-view       { display: block; }
+
+.page-inner    { max-width: 1280px; margin: 0 auto; padding: 40px 48px; }
+
+.tab-bar { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+.tab {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font-family: var(--font-cond);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tab:hover, .tab.active { color: var(--white); border-bottom-color: var(--green-bright); }
+
+.div-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+.div-pill {
+  padding: 5px 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-family: var(--font-cond);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.div-pill.active, .div-pill:hover { background: var(--green); border-color: var(--green); color: #fff; }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+
+.result-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  transition: border-color 0.15s;
+}
+.result-card.win  { border-left-color: var(--win); }
+.result-card.loss { border-left-color: var(--loss); }
+.result-card.draw { border-left-color: var(--draw); }
+
+.result-meta {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-family: var(--font-cond); font-size: 11px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--muted);
+  margin-bottom: 10px;
+}
+.scoreline { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.team { font-family: var(--font-cond); font-size: 14px; font-weight: 700; flex: 1; }
+.team.right { text-align: right; color: var(--muted); }
+.team.warriors { color: var(--white); }
+.digits { font-family: var(--font-display); font-size: 28px; letter-spacing: 3px; min-width: 68px; text-align: center; }
+.div-label { font-size: 11px; color: var(--green-bright); font-family: var(--font-cond); text-transform: uppercase; letter-spacing: 0.8px; }
+
+.fixtures-list { display: flex; flex-direction: column; gap: 10px; max-width: 800px; }
+.fixture-card {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px;
+  transition: border-color 0.15s;
+}
+.fixture-card:hover { border-color: var(--green); }
+.fx-date { text-align: center; background: var(--green-dark); border-radius: 6px; padding: 8px 10px; min-width: 46px; }
+.fx-day   { display: block; font-family: var(--font-display); font-size: 26px; line-height: 1; color: var(--green-bright); }
+.fx-month { display: block; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.fx-info  { flex: 1; }
+.fx-matchup { font-family: var(--font-cond); font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.fx-detail  { font-size: 12px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; }
+.fx-div { font-family: var(--font-cond); font-size: 11px; font-weight: 700; text-transform: uppercase; background: rgba(37,160,76,0.15); color: var(--green-bright); padding: 4px 10px; border-radius: 3px; white-space: nowrap; }
+
+.table-section { margin-bottom: 40px; }
+.table-section h3 { font-family: var(--font-cond); font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--green-bright); margin-bottom: 12px; }
+.table-scroll  { overflow-x: auto; }
+.standings-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.standings-table th, .standings-table td { padding: 10px 12px; text-align: center; border-bottom: 1px solid var(--border); }
+.standings-table th { background: var(--green-dark); color: var(--white); font-family: var(--font-cond); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+.standings-table .team-col { text-align: left; min-width: 160px; }
+.standings-table .pts-col  { font-family: var(--font-display); font-size: 18px; }
+.standings-table tr:hover  { background: rgba(255,255,255,0.03); }
+.standings-table .warriors-row { background: rgba(29,122,58,0.1); }
+.standings-table .warriors-row .pts-col { color: var(--green-bright); }
+
+.dribl-credit { font-size: 12px; color: var(--muted); margin-top: 32px; text-align: right; }
+.dribl-credit a { color: var(--green-bright); }
+.empty { color: var(--muted); font-style: italic; padding: 32px 0; }
+
+@media (max-width: 768px) {
+  .mobile-widget-wrap { display: block; }
+  .desktop-view       { display: none; }
+  .mobile-widget { width: 100%; height: 100vh; border: none; }
+}
+@media (max-width: 900px) {
+  .page-hero { padding: 40px 20px 32px; }
+  .page-inner { padding: 24px 20px; }
+}
+</style>

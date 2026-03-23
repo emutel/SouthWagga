@@ -1,0 +1,5 @@
+{
+  "name": "warriors-dribl-scraper",
+  "version": "1.0.0",
+  "dependencies": { "puppeteer": "^21.0.0" }
+}

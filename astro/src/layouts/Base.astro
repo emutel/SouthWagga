@@ -1,0 +1,40 @@
+---
+// src/layouts/Base.astro
+import '../styles/global.css';
+import Nav       from '../components/Nav.astro';
+import Footer    from '../components/Footer.astro';
+import { getSiteSettings } from '../lib/directus.js';
+
+const settings = await getSiteSettings() || {};
+
+const {
+  title = 'South Wagga Warriors FC',
+  description = 'Grassroots football in South Wagga. Juniors, Seniors, Women\'s and Social football for all.',
+  ogImage,
+} = Astro.props;
+
+const siteTitle = title.includes('Warriors') ? title : `${title} | Warriors FC`;
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{siteTitle}</title>
+  <meta name="description" content={description}>
+  <meta property="og:title"       content={siteTitle}>
+  <meta property="og:description" content={description}>
+  <meta property="og:type"        content="website">
+  {ogImage && <meta property="og:image" content={ogImage}>}
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <Nav settings={settings} />
+  <main>
+    <slot />
+  </main>
+  <Footer settings={settings} />
+</body>
+</html>

@@ -1,0 +1,182 @@
+---
+// src/components/Nav.astro
+const { settings = {} } = Astro.props;
+const path = Astro.url?.pathname || '/';
+const active = (href) => path === href || path.startsWith(href + '/') ? 'active' : '';
+---
+<header class="nav-outer">
+  <nav class="nav">
+    <a href="/" class="nav-brand">
+      <svg class="nav-crest" viewBox="0 0 40 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 1L38 8V22C38 31.5 30 39.5 20 43C10 39.5 2 31.5 2 22V8L20 1Z" fill="#0d3d1c" stroke="#1d7a3a" stroke-width="1.5"/>
+        <path d="M20 7L33 12V22C33 28.5 27.5 34.5 20 37C12.5 34.5 7 28.5 7 22V12L20 7Z" fill="#1d7a3a"/>
+        <text x="20" y="28" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="12" fill="white" letter-spacing="1">SW</text>
+      </svg>
+      <span class="nav-name">South Wagga <em>Warriors</em></span>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="/results"  class={active('/results')}>Results</a></li>
+      <li><a href="/teams"    class={active('/teams')}>Teams</a></li>
+      <li><a href="/academy"  class={active('/academy')}>Academy</a></li>
+      <li><a href="/gallery"  class={active('/gallery')}>Gallery</a></li>
+      <li><a href="/news"     class={active('/news')}>News</a></li>
+      <li><a href="/events"   class={active('/events')}>Events</a></li>
+    </ul>
+
+    <a href="/shop" class="btn btn-primary nav-shop">Shop</a>
+
+    <button class="nav-hamburger" aria-label="Menu" id="nav-toggle">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- Mobile drawer -->
+  <div class="nav-drawer" id="nav-drawer">
+    <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="/results">Results & Fixtures</a></li>
+      <li><a href="/teams">Teams</a></li>
+      <li><a href="/academy">Academy</a></li>
+      <li><a href="/gallery">Gallery</a></li>
+      <li><a href="/news">News</a></li>
+      <li><a href="/events">Events & Tickets</a></li>
+      <li><a href="/shop">Shop</a></li>
+      <li><a href="/about">About</a></li>
+    </ul>
+    <div class="nav-drawer-socials">
+      {settings.facebook_url && <a href={settings.facebook_url} target="_blank" rel="noopener">Facebook</a>}
+      {settings.instagram_handle && <a href={`https://instagram.com/${settings.instagram_handle}`} target="_blank" rel="noopener">Instagram</a>}
+    </div>
+  </div>
+</header>
+
+<style>
+.nav-outer {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(9,12,9,0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 68px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.nav-crest { width: 38px; height: 38px; }
+
+.nav-name {
+  font-family: var(--font-display);
+  font-size: 19px;
+  letter-spacing: 1.5px;
+  color: var(--white);
+}
+.nav-name em { color: var(--green-bright); font-style: normal; }
+
+.nav-links {
+  display: flex;
+  list-style: none;
+  gap: 4px;
+}
+
+.nav-links a {
+  font-family: var(--font-cond);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--muted);
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.nav-links a:hover, .nav-links a.active {
+  color: var(--white);
+  background: rgba(255,255,255,0.05);
+}
+
+.nav-shop { padding: 8px 20px; font-size: 13px; }
+
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+}
+.nav-hamburger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--white);
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+.nav-drawer {
+  display: none;
+  background: var(--off-black);
+  border-top: 1px solid var(--border);
+  padding: 20px 24px;
+}
+.nav-drawer.open { display: block; }
+.nav-drawer ul   { list-style: none; }
+.nav-drawer ul li a {
+  display: block;
+  padding: 12px 0;
+  font-family: var(--font-cond);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+.nav-drawer ul li a:hover { color: var(--white); }
+.nav-drawer-socials {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+}
+.nav-drawer-socials a {
+  font-family: var(--font-cond);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--green-bright);
+  text-decoration: none;
+}
+
+@media (max-width: 900px) {
+  .nav-links, .nav-shop { display: none; }
+  .nav-hamburger { display: flex; }
+}
+</style>
+
+<script>
+  const toggle = document.getElementById('nav-toggle');
+  const drawer = document.getElementById('nav-drawer');
+  toggle?.addEventListener('click', () => drawer?.classList.toggle('open'));
+</script>

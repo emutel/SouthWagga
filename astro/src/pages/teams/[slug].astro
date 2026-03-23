@@ -1,0 +1,316 @@
+---
+// src/pages/teams/[slug].astro
+import Base             from '../../layouts/Base.astro';
+import ShareBar         from '../../components/ShareBar.astro';
+import { getTeam, getAllTeamSlugs, getPlayersByTeam, getTeamSponsors, fileUrl } from '../../lib/directus.js';
+import { getResults, getFixtures } from '../../lib/dribl.js';
+
+export async function getStaticPaths() {
+  const slugs = await getAllTeamSlugs();
+  return slugs.map(slug => ({ params: { slug } }));
+}
+
+const { slug }    = Astro.params;
+const team        = await getTeam(slug);
+if (!team) return Astro.redirect('/teams');
+
+const players     = await getPlayersByTeam(team.id) || [];
+const sponsors    = await getTeamSponsors(team.id)   || [];
+const { data: results  } = getResults({ limit: 8,  division: team.division });
+const { data: fixtures } = getFixtures({ limit: 5, division: team.division });
+
+// Group players by position
+const positions   = ['goalkeeper', 'defender', 'midfielder', 'forward'];
+const byPosition  = positions.reduce((acc, pos) => {
+  acc[pos] = players.filter(p => p.position === pos);
+  return acc;
+}, {});
+const otherPlayers = players.filter(p => !p.position);
+---
+<Base
+  title={team.name}
+  description={team.description || `${team.name} — South Wagga Warriors FC`}
+  ogImage={team.team_photo ? fileUrl(team.team_photo, { width: 1200, height: 630 }) : undefined}
+>
+
+  <!-- Team Hero -->
+  <div class="team-hero" style={team.color_accent ? `--team-accent: ${team.color_accent}` : ''}>
+    {team.team_photo && (
+      <div class="team-hero-bg">
+        <img src={fileUrl(team.team_photo, { width: 1400, height: 500 })} alt="" aria-hidden="true">
+      </div>
+    )}
+    <div class="team-hero-content">
+      <div class="label">{team.division}</div>
+      <h1>{team.name}</h1>
+      <div class="team-meta">
+        {team.coach   && <span>⚽ Coach: {team.coach}</span>}
+        {team.manager && <span>📋 Manager: {team.manager}</span>}
+        {team.season  && <span>📅 {team.season} Season</span>}
+      </div>
+    </div>
+  </div>
+
+  <div class="page-inner">
+
+    <!-- ── RECENT RESULTS ── -->
+    {results.length > 0 && (
+      <section class="team-section">
+        <div class="section-header">
+          <div class="label">Recent Results</div>
+          <a href="/results" class="see-all">All results →</a>
+        </div>
+        <div class="results-row">
+          {results.slice(0, 5).map(r => (
+            <div class={`result-pill ${r.outcome}`}>
+              <span class="rp-score">{r.home_score}–{r.away_score}</span>
+              <span class="rp-opp">{r.outcome === 'win' ? r.away_team : r.home_team}</span>
+              <span class={`outcome-badge outcome-${r.outcome}`}>{r.outcome?.charAt(0).toUpperCase()}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- ── UPCOMING FIXTURES ── -->
+    {fixtures.length > 0 && (
+      <section class="team-section">
+        <div class="label" style="margin-bottom:16px">Upcoming Fixtures</div>
+        <div class="fixtures-compact">
+          {fixtures.map(f => {
+            const d = f.date ? new Date(f.date) : null;
+            return (
+              <div class="fixture-row-sm">
+                <div class="fx-date-sm">
+                  <span>{d ? d.getDate() : '--'}</span>
+                  <span>{d ? d.toLocaleString('en-AU',{month:'short'}) : '--'}</span>
+                </div>
+                <div class="fx-info-sm">
+                  <strong>{f.home_team} vs {f.away_team}</strong>
+                  <span>{f.time && `🕒 ${f.time}`} {f.venue && `· 📍 ${f.venue}`}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    )}
+
+    <!-- ── SQUAD ── -->
+    <section class="team-section">
+      <div class="label" style="margin-bottom:24px">Squad</div>
+
+      {positions.map(pos => byPosition[pos]?.length > 0 && (
+        <div class="position-group">
+          <h3 class="position-title">{pos.charAt(0).toUpperCase() + pos.slice(1)}s</h3>
+          <div class="players-grid">
+            {byPosition[pos].map(p => (
+              <div class="player-card">
+                <div class="player-photo">
+                  {p.photo ? (
+                    <img
+                      src={fileUrl(p.photo, { width: 200, height: 200 })}
+                      alt={`${p.first_name} ${p.last_name}`}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div class="player-avatar">
+                      {p.first_name?.[0]}{p.last_name?.[0]}
+                    </div>
+                  )}
+                  {p.jersey_number && (
+                    <span class="jersey-number">#{p.jersey_number}</span>
+                  )}
+                  {p.is_captain && <span class="captain-badge">C</span>}
+                </div>
+                <div class="player-name">
+                  {p.first_name} <strong>{p.last_name}</strong>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {otherPlayers.length > 0 && (
+        <div class="position-group">
+          <div class="players-grid">
+            {otherPlayers.map(p => (
+              <div class="player-card">
+                <div class="player-photo">
+                  {p.photo ? (
+                    <img src={fileUrl(p.photo, { width: 200, height: 200 })} alt={`${p.first_name} ${p.last_name}`} loading="lazy" />
+                  ) : (
+                    <div class="player-avatar">{p.first_name?.[0]}{p.last_name?.[0]}</div>
+                  )}
+                  {p.jersey_number && <span class="jersey-number">#{p.jersey_number}</span>}
+                  {p.is_captain && <span class="captain-badge">C</span>}
+                </div>
+                <div class="player-name">{p.first_name} <strong>{p.last_name}</strong></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {players.length === 0 && (
+        <p class="empty">Squad will be listed here once the season begins.</p>
+      )}
+    </section>
+
+    <!-- ── TEAM SPONSORS ── -->
+    {sponsors.length > 0 && (
+      <section class="team-section">
+        <div class="label" style="margin-bottom:20px">Team Sponsors</div>
+        <p class="sponsors-note">Thank you to our {team.short_name || team.name} sponsors for their support.</p>
+        <div class="sponsor-grid">
+          {sponsors.map(s => (
+            <a
+              href={s.website || '#'}
+              target={s.website ? '_blank' : '_self'}
+              rel="noopener"
+              class="sponsor-logo"
+              title={s.name}
+            >
+              {s.logo ? (
+                <img
+                  src={fileUrl(s.logo, { width: 240, height: 96, format: 'webp' })}
+                  alt={s.name}
+                  loading="lazy"
+                />
+              ) : (
+                <span class="sponsor-name-text">{s.name}</span>
+              )}
+            </a>
+          ))}
+        </div>
+        <p class="sponsor-cta">
+          Interested in sponsoring {team.short_name || team.name}?
+          <a href="/about#contact">Get in touch →</a>
+        </p>
+      </section>
+    )}
+
+    <!-- SHARE -->
+    <ShareBar
+      title={`${team.name} — South Wagga Warriors FC`}
+      url={Astro.url.href}
+    />
+
+  </div>
+</Base>
+
+<style>
+.team-hero {
+  position: relative;
+  min-height: 360px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  background: var(--green-dark);
+}
+.team-hero-bg {
+  position: absolute;
+  inset: 0;
+}
+.team-hero-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.35;
+}
+.team-hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(9,12,9,0.95) 30%, transparent 100%);
+}
+.team-hero-content {
+  position: relative;
+  z-index: 2;
+  padding: 0 48px 48px;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+}
+.team-hero-content h1 { font-size: clamp(40px, 6vw, 80px); margin: 12px 0 16px; }
+.team-meta { display: flex; flex-wrap: wrap; gap: 20px; font-size: 14px; color: var(--muted); }
+
+.page-inner { max-width: 1280px; margin: 0 auto; padding: 40px 48px 60px; }
+
+.team-section { margin-bottom: 56px; }
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.see-all { font-family: var(--font-cond); font-size: 13px; font-weight: 600; letter-spacing: 1px; color: var(--green-bright); text-decoration: none; }
+
+.results-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.result-pill {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 16px;
+  flex: 1; min-width: 200px;
+}
+.result-pill.win  { border-left: 3px solid var(--win); }
+.result-pill.loss { border-left: 3px solid var(--loss); }
+.result-pill.draw { border-left: 3px solid var(--draw); }
+.rp-score { font-family: var(--font-display); font-size: 24px; letter-spacing: 2px; min-width: 60px; }
+.rp-opp   { font-family: var(--font-cond); font-size: 14px; font-weight: 600; flex: 1; color: var(--muted); }
+
+.fixtures-compact { display: flex; flex-direction: column; gap: 8px; max-width: 600px; }
+.fixture-row-sm {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px;
+}
+.fx-date-sm {
+  display: flex; flex-direction: column; align-items: center;
+  background: var(--green-dark); border-radius: 6px;
+  padding: 6px 10px; min-width: 42px;
+  font-family: var(--font-display); font-size: 22px; color: var(--green-bright); line-height: 1;
+}
+.fx-date-sm span:last-child { font-family: var(--font-cond); font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); }
+.fx-info-sm strong { display: block; font-family: var(--font-cond); font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+.fx-info-sm span   { font-size: 12px; color: var(--muted); }
+
+.position-group { margin-bottom: 32px; }
+.position-title { font-family: var(--font-cond); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+
+.players-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 14px; }
+
+.player-card { text-align: center; }
+.player-photo { position: relative; margin-bottom: 8px; }
+.player-photo img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 50%; border: 2px solid var(--border); }
+.player-avatar {
+  width: 100%; aspect-ratio: 1; border-radius: 50%;
+  background: var(--green-dark); border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 22px; color: var(--green-bright);
+}
+.jersey-number {
+  position: absolute; bottom: 2px; right: 2px;
+  background: var(--green); color: white;
+  font-family: var(--font-cond); font-size: 10px; font-weight: 800;
+  padding: 2px 5px; border-radius: 3px;
+}
+.captain-badge {
+  position: absolute; top: 2px; right: 2px;
+  background: var(--gold); color: var(--black);
+  font-family: var(--font-cond); font-size: 10px; font-weight: 800;
+  width: 18px; height: 18px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.player-name { font-size: 12px; color: var(--muted); line-height: 1.3; }
+.player-name strong { display: block; font-size: 13px; color: var(--white); }
+
+.sponsors-note { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+.sponsor-name-text { font-family: var(--font-cond); font-size: 15px; font-weight: 700; color: var(--white); }
+.sponsor-cta { font-size: 13px; color: var(--muted); margin-top: 20px; }
+.sponsor-cta a { color: var(--green-bright); text-decoration: none; }
+
+.empty { color: var(--muted); font-style: italic; padding: 20px 0; }
+
+@media (max-width: 768px) {
+  .team-hero-content { padding: 0 20px 32px; }
+  .page-inner { padding: 24px 20px 40px; }
+  .players-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+}
+</style>

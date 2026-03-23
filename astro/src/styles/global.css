@@ -1,0 +1,269 @@
+/* ═══════════════════════════════════════════════════
+   SOUTH WAGGA WARRIORS FC — Global Styles
+   ═══════════════════════════════════════════════════ */
+
+:root {
+  --green:        #1d7a3a;
+  --green-bright: #25a04c;
+  --green-dark:   #0d3d1c;
+  --black:        #090c09;
+  --off-black:    #0f140f;
+  --card:         #111811;
+  --border:       #1a281c;
+  --white:        #eef5ef;
+  --muted:        #6a8a6e;
+  --gold:         #c9a030;
+  --win:          #25a04c;
+  --loss:         #d93025;
+  --draw:         #c9a030;
+  --font-display: 'Bebas Neue', cursive;
+  --font-cond:    'Barlow Condensed', sans-serif;
+  --font-body:    'Barlow', sans-serif;
+  --radius:       8px;
+  --radius-lg:    12px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  background: var(--black);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
+}
+
+body { min-height: 100dvh; overflow-x: hidden; }
+
+img { max-width: 100%; height: auto; display: block; }
+
+a { color: inherit; }
+
+/* ── TYPOGRAPHY ── */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  letter-spacing: 1.5px;
+  line-height: 1;
+}
+
+.label {
+  font-family: var(--font-cond);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--green-bright);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.label::before {
+  content: '';
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--green-bright);
+  flex-shrink: 0;
+}
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-cond);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 12px 28px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-primary {
+  background: var(--green);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--green-bright); transform: translateY(-2px); }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--white);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { border-color: var(--green); background: rgba(29,122,58,0.1); }
+
+.btn-outline-green {
+  background: transparent;
+  color: var(--green-bright);
+  border: 1px solid var(--green);
+}
+.btn-outline-green:hover { background: var(--green); color: #fff; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+/* ── OUTCOME BADGES ── */
+.outcome-badge {
+  font-family: var(--font-cond);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  padding: 3px 8px;
+  border-radius: 3px;
+}
+.outcome-win  { background: rgba(37,160,76,0.2);  color: var(--win);  }
+.outcome-loss { background: rgba(217,48,37,0.18); color: var(--loss); }
+.outcome-draw { background: rgba(201,160,48,0.18);color: var(--draw); }
+
+/* ── SECTION ── */
+.section {
+  padding: 80px 48px;
+}
+
+.section--dark  { background: var(--black); }
+.section--card  { background: var(--off-black); }
+
+.section-header {
+  margin-bottom: 40px;
+}
+
+.section-header h2 {
+  font-size: clamp(36px, 5vw, 60px);
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.section-header p {
+  color: var(--muted);
+  max-width: 480px;
+}
+
+/* ── GRID ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+/* ── TICKER ── */
+.ticker {
+  background: var(--green);
+  padding: 9px 0;
+  overflow: hidden;
+}
+.ticker-track {
+  display: flex;
+  gap: 40px;
+  animation: ticker-scroll 32s linear infinite;
+  width: max-content;
+}
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.ticker-item {
+  font-family: var(--font-cond);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  color: rgba(255,255,255,0.92);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ticker-score {
+  background: rgba(0,0,0,0.2);
+  padding: 1px 8px;
+  border-radius: 2px;
+  font-weight: 800;
+}
+.ticker-sep { color: rgba(255,255,255,0.3); font-size: 8px; }
+
+/* ── SHARE BUTTONS ── */
+.share-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-family: var(--font-cond);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.share-btn:hover { opacity: 0.85; }
+.share-facebook  { background: #1877f2; color: #fff; }
+.share-whatsapp  { background: #25d366; color: #fff; }
+.share-copy      { background: var(--card); color: var(--white); border: 1px solid var(--border); }
+
+/* ── SPONSOR LOGOS ── */
+.sponsor-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+.sponsor-logo {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  text-decoration: none;
+}
+.sponsor-logo:hover { background: rgba(255,255,255,0.1); }
+.sponsor-logo img   { max-height: 48px; max-width: 120px; filter: brightness(0) invert(1); opacity: 0.7; }
+.sponsor-logo:hover img { opacity: 1; }
+
+/* ── INSTAGRAM GRID ── */
+.instagram-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+.instagram-cell {
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--card);
+  position: relative;
+}
+.instagram-cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+.instagram-cell:hover img { transform: scale(1.05); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .section { padding: 48px 20px; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .grid-2.keep-2 { grid-template-columns: 1fr 1fr; }
+}

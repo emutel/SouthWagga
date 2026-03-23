@@ -1,0 +1,70 @@
+---
+// src/pages/teams/index.astro
+import Base from '../../layouts/Base.astro';
+import { getTeams, fileUrl } from '../../lib/directus.js';
+
+const teams = await getTeams() || [];
+---
+<Base title="Our Teams" description="All South Wagga Warriors FC teams — from Mini Roos to Men's Premier.">
+
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <div class="label">2025 Season</div>
+      <h1>Our Teams</h1>
+      <p>From Mini Roos to Men's Premier — Warriors football for every age and ability.</p>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="teams-grid">
+      {teams.map(team => (
+        <a href={`/teams/${team.slug}`} class="team-card card">
+          {team.team_photo ? (
+            <img
+              src={fileUrl(team.team_photo, { width: 600, height: 360 })}
+              alt={team.name}
+              class="team-img"
+              loading="lazy"
+            />
+          ) : (
+            <div class="team-img-placeholder">
+              <span>⚽</span>
+            </div>
+          )}
+          <div class="team-body">
+            <div class="team-division">{team.division}</div>
+            <h2>{team.name}</h2>
+            {team.coach && <p class="team-coach">Coach: {team.coach}</p>}
+          </div>
+          <div class="team-footer">
+            <span>View Squad →</span>
+          </div>
+        </a>
+      ))}
+      {teams.length === 0 && (
+        <p class="empty">Teams coming soon.</p>
+      )}
+    </div>
+  </section>
+
+</Base>
+
+<style>
+.page-hero { background: linear-gradient(135deg, var(--green-dark), var(--off-black)); border-bottom: 1px solid var(--border); padding: 60px 48px 48px; }
+.page-hero-inner { max-width: 1280px; margin: 0 auto; }
+.page-hero h1 { font-size: clamp(48px, 6vw, 80px); margin: 10px 0 8px; }
+.page-hero p  { color: var(--muted); }
+.section      { padding: 60px 48px; max-width: 1280px; margin: 0 auto; }
+.teams-grid   { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.team-card    { text-decoration: none; display: flex; flex-direction: column; transition: transform 0.2s, border-color 0.2s; }
+.team-card:hover { transform: translateY(-4px); border-color: var(--green); }
+.team-img     { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+.team-img-placeholder { width: 100%; aspect-ratio: 16/9; background: var(--green-dark); display: flex; align-items: center; justify-content: center; font-size: 48px; }
+.team-body    { padding: 20px; flex: 1; }
+.team-division { font-family: var(--font-cond); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--green-bright); margin-bottom: 6px; }
+.team-body h2 { font-family: var(--font-cond); font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+.team-coach   { font-size: 13px; color: var(--muted); }
+.team-footer  { padding: 14px 20px; border-top: 1px solid var(--border); font-family: var(--font-cond); font-size: 13px; font-weight: 600; letter-spacing: 1px; color: var(--green-bright); }
+.empty { color: var(--muted); font-style: italic; }
+@media (max-width: 768px) { .page-hero { padding: 40px 20px 32px; } .section { padding: 40px 20px; } }
+</style>

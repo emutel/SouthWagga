@@ -1,0 +1,172 @@
+{
+  "name": "Warriors — Auto-post News to Socials",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "directus-publish",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Directus Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "notes": "Receives POST from Directus when a news article is saved"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.event }}",
+              "operation": "contains",
+              "value2": "create"
+            },
+            {
+              "value1": "={{ $json.body.payload?.status }}",
+              "operation": "equal",
+              "value2": "published"
+            },
+            {
+              "value1": "={{ $json.body.payload?.post_to_socials }}",
+              "operation": "notEqual",
+              "value2": false
+            }
+          ],
+          "combineOperation": "all"
+        }
+      },
+      "id": "check-should-post",
+      "name": "Check: Should Post?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "notes": "Only post if article is published and post_to_socials is true"
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.DIRECTUS_URL }}/items/news/{{ $json.body.key }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "fetch-article",
+      "name": "Fetch Full Article",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [680, 240],
+      "notes": "Get full article data from Directus including image"
+    },
+    {
+      "parameters": {
+        "jsCode": "const article = items[0].json.data;\nconst siteUrl = process.env.PUBLIC_SITE_URL || 'https://southwagga.com.au';\n\n// Use override text if provided, otherwise auto-generate\nlet postText = article.social_post_text;\n\nif (!postText) {\n  postText = article.title;\n  if (article.excerpt) {\n    postText += '\\n\\n' + article.excerpt;\n  }\n  postText += `\\n\\n🔗 Read more: ${siteUrl}/news/${article.slug}`;\n  postText += '\\n\\n#SouthWaggaWarriors #WarriorsFC #WaggaFootball #FWW';\n}\n\nreturn [{\n  json: {\n    ...article,\n    post_text: postText,\n    article_url: `${siteUrl}/news/${article.slug}`,\n    image_id: article.hero_image,\n    directus_url: process.env.DIRECTUS_URL,\n  }\n}];"
+      },
+      "id": "build-post-text",
+      "name": "Build Post Text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [900, 240]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v18.0/{{ $env.FACEBOOK_PAGE_ID }}/feed",
+        "method": "POST",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "message", "value": "={{ $json.post_text }}" },
+            { "name": "link",    "value": "={{ $json.article_url }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "post-facebook",
+      "name": "Post to Facebook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1120, 160],
+      "notes": "Posts to the Warriors Facebook page. Requires Facebook Graph API credentials in n8n."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Instagram requires a two-step process:\n// 1. Create a media container\n// 2. Publish it\n// Image must be publicly accessible\n\nconst item = items[0].json;\nconst imageUrl = item.image_id\n  ? `${item.directus_url}/assets/${item.image_id}?width=1080&height=1080&format=jpg&quality=85`\n  : null;\n\nif (!imageUrl) {\n  return [{ json: { skip: true, reason: 'No image — Instagram requires an image' } }];\n}\n\nreturn [{\n  json: {\n    ...item,\n    instagram_image_url: imageUrl,\n    instagram_caption: item.post_text,\n  }\n}];"
+      },
+      "id": "prep-instagram",
+      "name": "Prep Instagram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1120, 340]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            { "value1": "={{ $json.skip }}", "value2": true }
+          ]
+        }
+      },
+      "id": "check-instagram-image",
+      "name": "Has Image?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1320, 340]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v18.0/{{ $env.INSTAGRAM_ACCOUNT_ID }}/media",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "image_url", "value": "={{ $json.instagram_image_url }}" },
+            { "name": "caption",   "value": "={{ $json.instagram_caption }}" },
+            { "name": "access_token", "value": "={{ $env.INSTAGRAM_PAGE_TOKEN }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "instagram-create-container",
+      "name": "Instagram: Create Container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1520, 300],
+      "notes": "Step 1: Creates media container. Returns creation_id."
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v18.0/{{ $env.INSTAGRAM_ACCOUNT_ID }}/media_publish",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "creation_id",  "value": "={{ $json.id }}" },
+            { "name": "access_token", "value": "={{ $env.INSTAGRAM_PAGE_TOKEN }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "instagram-publish",
+      "name": "Instagram: Publish",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1720, 300],
+      "notes": "Step 2: Publishes the container."
+    }
+  ],
+  "connections": {
+    "Directus Webhook":          { "main": [[{ "node": "Check: Should Post?", "type": "main", "index": 0 }]] },
+    "Check: Should Post?":       { "main": [[{ "node": "Fetch Full Article",  "type": "main", "index": 0 }], []] },
+    "Fetch Full Article":        { "main": [[{ "node": "Build Post Text",     "type": "main", "index": 0 }]] },
+    "Build Post Text":           { "main": [[{ "node": "Post to Facebook",    "type": "main", "index": 0 }, { "node": "Prep Instagram", "type": "main", "index": 0 }]] },
+    "Prep Instagram":            { "main": [[{ "node": "Has Image?",          "type": "main", "index": 0 }]] },
+    "Has Image?":                { "main": [[],                                                               [{ "node": "Instagram: Create Container", "type": "main", "index": 0 }]] },
+    "Instagram: Create Container": { "main": [[{ "node": "Instagram: Publish", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "meta": { "templateCredsSetupCompleted": false }
+}

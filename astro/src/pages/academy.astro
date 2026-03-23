@@ -1,0 +1,201 @@
+---
+// src/pages/academy.astro
+import Base from '../layouts/Base.astro';
+import { getAcademyPrograms, fileUrl } from '../lib/directus.js';
+
+const programs = await getAcademyPrograms() || [];
+const active   = programs.filter(p => p.status === 'active');
+const full     = programs.filter(p => p.status === 'full');
+---
+<Base title="Warriors Academy" description="Player development programs for ages 6–18. Mini Warriors, Junior Development, and Senior Academy pathways.">
+
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <div class="label">Player Development</div>
+      <h1>Warriors Academy</h1>
+      <p>Structured development pathways from Mini Warriors to Senior Elite. Every program run by our qualified coaching staff.</p>
+    </div>
+  </div>
+
+  <div class="page-inner">
+
+    {active.length > 0 && (
+      <section class="programs-section">
+        <div class="label" style="margin-bottom:32px">Open for Enrolment</div>
+        <div class="programs-grid">
+          {active.map((p, i) => (
+            <div class={`program-card card ${i === 0 ? 'program-card--featured' : ''}`}>
+              {p.image && (
+                <img
+                  src={fileUrl(p.image, { width: i === 0 ? 800 : 600, height: 300 })}
+                  alt={p.name}
+                  class="program-img"
+                  loading="lazy"
+                />
+              )}
+              <div class="program-body">
+                <div class="program-tags">
+                  {p.age_group && <span class="age-tag">{p.age_group}</span>}
+                  {p.spots_left && p.spots_left <= 5 && (
+                    <span class="spots-tag">Only {p.spots_left} spots left!</span>
+                  )}
+                </div>
+                <h2>{p.name}</h2>
+                {p.description && (
+                  <div class="program-desc" set:html={p.description} />
+                )}
+                <div class="program-details">
+                  {p.schedule && (
+                    <div class="program-detail">
+                      <span class="detail-icon">📅</span>
+                      <span>{p.schedule}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div class="program-footer">
+                <div class="program-price">
+                  <span class="price-amount">${parseFloat(p.price || 0).toFixed(0)}</span>
+                  {p.price_note && <span class="price-note">{p.price_note}</span>}
+                </div>
+                {p.square_url ? (
+                  <a href={p.square_url} target="_blank" rel="noopener" class="btn btn-primary">
+                    Enrol Now →
+                  </a>
+                ) : (
+                  <a href="/about#contact" class="btn btn-secondary">Enquire →</a>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {full.length > 0 && (
+      <section class="programs-section">
+        <div class="label" style="margin-bottom:24px">Currently Full</div>
+        <div class="programs-grid programs-grid--small">
+          {full.map(p => (
+            <div class="program-card program-card--full card">
+              <div class="program-body">
+                {p.age_group && <span class="age-tag">{p.age_group}</span>}
+                <h3>{p.name}</h3>
+                {p.schedule && <p class="program-sched">{p.schedule}</p>}
+                <p class="full-note">This program is currently full. Contact us to join the waitlist.</p>
+              </div>
+              <div class="program-footer">
+                <a href="/about#contact" class="btn btn-secondary">Join Waitlist</a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {programs.length === 0 && (
+      <div class="empty-state">
+        <p>Academy programs for 2025 will be announced shortly.</p>
+        <a href="/about#contact" class="btn btn-primary" style="margin-top:20px">Register Interest</a>
+      </div>
+    )}
+
+    <!-- FAQ / Info -->
+    <section class="academy-info">
+      <div class="label" style="margin-bottom:24px">About the Academy</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-icon">⚽</div>
+          <h3>Qualified Coaching</h3>
+          <p>All programs run by FFA-licensed coaches with experience at representative level.</p>
+        </div>
+        <div class="info-card">
+          <div class="info-icon">📍</div>
+          <h3>Rawlings Park</h3>
+          <p>All sessions held at our home ground in South Wagga. Full-size and small-sided pitches available.</p>
+        </div>
+        <div class="info-card">
+          <div class="info-icon">🔒</div>
+          <h3>Secure Enrolment</h3>
+          <p>All payments processed securely through Square. Confirmation sent immediately on enrolment.</p>
+        </div>
+        <div class="info-card">
+          <div class="info-icon">❓</div>
+          <h3>Questions?</h3>
+          <p>Contact our academy coordinator via the <a href="/about#contact">contact page</a> or find us on Facebook.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+</Base>
+
+<style>
+.page-hero { background:linear-gradient(135deg,var(--green-dark),var(--off-black)); border-bottom:1px solid var(--border); padding:60px 48px 48px; }
+.page-hero-inner { max-width:1280px; margin:0 auto; }
+.page-hero h1 { font-size:clamp(48px,6vw,80px); margin:10px 0 8px; }
+.page-hero p  { color:var(--muted); max-width:560px; }
+
+.page-inner { max-width:1280px; margin:0 auto; padding:56px 48px; }
+.programs-section { margin-bottom:56px; }
+
+.programs-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(320px,1fr));
+  gap:20px;
+}
+.programs-grid--small {
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+}
+
+.program-card { display:flex; flex-direction:column; }
+.program-card--featured { grid-column:1/-1; display:grid; grid-template-columns:1.2fr 1fr; grid-template-rows:auto 1fr auto; }
+.program-card--featured .program-img { grid-row:1/3; height:100%; object-fit:cover; }
+.program-card--featured .program-body { padding:32px; }
+.program-card--featured .program-footer { grid-column:2; padding:0 32px 32px; }
+.program-card--full { opacity:0.7; }
+
+.program-img { width:100%; aspect-ratio:16/9; object-fit:cover; }
+
+.program-body { padding:24px; flex:1; }
+
+.program-tags { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.age-tag   { background:rgba(37,160,76,0.15); color:var(--green-bright); font-family:var(--font-cond); font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; padding:3px 10px; border-radius:3px; }
+.spots-tag { background:rgba(201,160,48,0.2); color:var(--gold); font-family:var(--font-cond); font-size:11px; font-weight:700; letter-spacing:1px; padding:3px 10px; border-radius:3px; }
+
+.program-body h2 { font-family:var(--font-cond); font-size:28px; font-weight:800; margin-bottom:12px; }
+.program-body h3 { font-family:var(--font-cond); font-size:20px; font-weight:700; margin-bottom:8px; }
+.program-desc { font-size:14px; color:var(--muted); line-height:1.65; margin-bottom:16px; }
+.program-desc p { margin-bottom:8px; }
+
+.program-details { display:flex; flex-direction:column; gap:8px; }
+.program-detail  { display:flex; align-items:center; gap:10px; font-size:14px; color:var(--muted); }
+.detail-icon     { font-size:16px; }
+
+.program-sched { font-size:13px; color:var(--muted); margin-bottom:8px; }
+.full-note     { font-size:13px; color:var(--muted); font-style:italic; }
+
+.program-footer { padding:20px 24px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.program-price  { display:flex; align-items:baseline; gap:8px; }
+.price-amount   { font-family:var(--font-display); font-size:40px; color:var(--white); letter-spacing:1px; }
+.price-note     { font-size:13px; color:var(--muted); }
+
+.academy-info   { margin-top:40px; padding-top:48px; border-top:1px solid var(--border); }
+.info-grid      { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:20px; }
+.info-card      { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:24px; }
+.info-icon      { font-size:28px; margin-bottom:12px; }
+.info-card h3   { font-family:var(--font-cond); font-size:17px; font-weight:700; margin-bottom:8px; }
+.info-card p    { font-size:14px; color:var(--muted); line-height:1.6; }
+.info-card a    { color:var(--green-bright); }
+
+.empty-state { text-align:center; padding:60px 0; color:var(--muted); }
+
+@media (max-width:900px) {
+  .page-hero { padding:40px 20px 32px; }
+  .page-inner { padding:32px 20px; }
+  .program-card--featured { grid-template-columns:1fr; }
+  .program-card--featured .program-img { aspect-ratio:16/9; height:auto; }
+  .program-card--featured .program-footer { grid-column:1; padding:0 20px 20px; }
+}
+</style>

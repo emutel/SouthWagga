@@ -1,0 +1,249 @@
+---
+// src/pages/about.astro
+import Base from '../layouts/Base.astro';
+import { getSiteSettings, getGlobalSponsors, fileUrl } from '../lib/directus.js';
+
+const settings = await getSiteSettings() || {};
+const sponsors = await getGlobalSponsors() || [];
+
+const tiers    = ['platinum','gold','silver','bronze'];
+const tierLabels = { platinum:'Platinum Sponsors', gold:'Gold Sponsors', silver:'Silver Sponsors', bronze:'Bronze Sponsors' };
+const bySponsorTier = tiers.reduce((acc, t) => {
+  acc[t] = sponsors.filter(s => s.tier === t);
+  return acc;
+}, {});
+---
+<Base title="About Us" description="South Wagga Warriors FC — club history, contact details and sponsors.">
+
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <div class="label">Our Club</div>
+      <h1>About the Warriors</h1>
+    </div>
+  </div>
+
+  <div class="page-inner">
+
+    <!-- About section -->
+    <section class="about-section">
+      <div class="about-grid">
+        <div class="about-text">
+          <div class="label" style="margin-bottom:16px">Our Story</div>
+          <p>South Wagga Warriors FC has been part of the South Wagga community for decades, providing football for players of all ages and abilities — from Mini Roos right through to competitive senior football.</p>
+          <p>We are proud members of Football Wagga Wiradjuri (FWW) and compete across multiple divisions in the greater Wagga region.</p>
+          <p>Our home ground is Rawlings Park, South Wagga, where we host home games, training sessions, and community events throughout the season.</p>
+        </div>
+        <div class="about-stats">
+          <div class="stat-card">
+            <span class="stat-num">7+</span>
+            <span class="stat-label">Teams</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-num">200+</span>
+            <span class="stat-label">Players</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-num">FWW</span>
+            <span class="stat-label">Competition</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-num">⚽</span>
+            <span class="stat-label">All Ages</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ground / Location -->
+    <section class="section-block">
+      <div class="label" style="margin-bottom:20px">Our Ground</div>
+      <div class="ground-grid">
+        <div>
+          <h3>Rawlings Park</h3>
+          <p class="ground-address">{settings.address || 'Rawlings Park, South Wagga NSW 2650'}</p>
+          <div class="ground-details">
+            <div class="ground-detail">📅 Home games: Saturdays & Sundays during season</div>
+            <div class="ground-detail">🚗 Parking available on site</div>
+            <div class="ground-detail">☕ Canteen open on home game days</div>
+          </div>
+        </div>
+        <!-- Google Maps embed -->
+        <div class="map-embed">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3!2d147.36!3d-35.12!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sRawlings+Park+South+Wagga!5e0!3m2!1sen!2sau!4v1"
+            width="100%"
+            height="280"
+            style="border:0;border-radius:var(--radius);filter:grayscale(30%) invert(90%) hue-rotate(160deg)"
+            allowfullscreen=""
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            title="Rawlings Park location"
+          ></iframe>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="section-block" id="contact">
+      <div class="label" style="margin-bottom:20px">Get in Touch</div>
+      <div class="contact-grid">
+        <div class="contact-cards">
+          {settings.contact_email && (
+            <a href={`mailto:${settings.contact_email}`} class="contact-card card">
+              <span class="contact-icon">✉️</span>
+              <div>
+                <strong>Email</strong>
+                <span>{settings.contact_email}</span>
+              </div>
+            </a>
+          )}
+          {settings.contact_phone && (
+            <a href={`tel:${settings.contact_phone}`} class="contact-card card">
+              <span class="contact-icon">📞</span>
+              <div>
+                <strong>Phone</strong>
+                <span>{settings.contact_phone}</span>
+              </div>
+            </a>
+          )}
+          {settings.facebook_url && (
+            <a href={settings.facebook_url} target="_blank" rel="noopener" class="contact-card card">
+              <span class="contact-icon">📘</span>
+              <div>
+                <strong>Facebook</strong>
+                <span>Message us on Facebook</span>
+              </div>
+            </a>
+          )}
+        </div>
+        <!-- Simple contact form (handled by Netlify Forms or similar) -->
+        <div class="contact-form card">
+          <h3>Send a Message</h3>
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" placeholder="Your name" id="cf-name">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" placeholder="your@email.com" id="cf-email">
+          </div>
+          <div class="form-group">
+            <label>Message</label>
+            <textarea rows="4" placeholder="How can we help?" id="cf-message"></textarea>
+          </div>
+          <button class="btn btn-primary" id="cf-submit">Send Message</button>
+          <p id="cf-status" class="form-status"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sponsors -->
+    {sponsors.length > 0 && (
+      <section class="section-block" id="sponsors">
+        <div class="label" style="margin-bottom:28px">Our Sponsors</div>
+        <p class="sponsors-intro">We thank our sponsors for their continued support of South Wagga Warriors FC.</p>
+        {tiers.filter(t => bySponsorTier[t]?.length > 0).map(tier => (
+          <div class="sponsor-tier">
+            <h3 class="tier-title">{tierLabels[tier]}</h3>
+            <div class="sponsor-grid">
+              {bySponsorTier[tier].map(s => (
+                <a
+                  href={s.website || '#'}
+                  target={s.website ? '_blank' : '_self'}
+                  rel="noopener"
+                  class="sponsor-logo"
+                  title={s.name}
+                >
+                  {s.logo ? (
+                    <img src={fileUrl(s.logo, { width:240, height:96 })} alt={s.name} loading="lazy" />
+                  ) : (
+                    <span class="sponsor-name-text">{s.name}</span>
+                  )}
+                </a>
+              ))}
+            </div>
+          </div>
+        ))}
+        <p class="sponsor-enquiry">
+          Interested in sponsoring the Warriors?
+          <a href="#contact">Get in touch →</a>
+        </p>
+      </section>
+    )}
+
+  </div>
+
+</Base>
+
+<script>
+  document.getElementById('cf-submit')?.addEventListener('click', async () => {
+    const name    = (document.getElementById('cf-name') as HTMLInputElement)?.value;
+    const email   = (document.getElementById('cf-email') as HTMLInputElement)?.value;
+    const message = (document.getElementById('cf-message') as HTMLTextAreaElement)?.value;
+    const status  = document.getElementById('cf-status');
+    if (!name || !email || !message) {
+      if (status) status.textContent = 'Please fill in all fields.';
+      return;
+    }
+    // Send to mailto as fallback (replace with actual form handler if needed)
+    const mailto = `mailto:${document.querySelector('meta[name="contact-email"]')?.getAttribute('content') || 'info@southwagga.com.au'}?subject=Website Enquiry from ${encodeURIComponent(name)}&body=${encodeURIComponent(message)}%0A%0AFrom: ${encodeURIComponent(email)}`;
+    window.location.href = mailto;
+    if (status) status.textContent = 'Opening your email app...';
+  });
+</script>
+
+<style>
+.page-hero { background:linear-gradient(135deg,var(--green-dark),var(--off-black)); border-bottom:1px solid var(--border); padding:60px 48px 48px; }
+.page-hero-inner { max-width:1280px; margin:0 auto; }
+.page-hero h1 { font-size:clamp(48px,6vw,80px); margin:10px 0; }
+
+.page-inner { max-width:1280px; margin:0 auto; padding:56px 48px; }
+.section-block { margin-bottom:64px; }
+
+.about-grid { display:grid; grid-template-columns:1.2fr 1fr; gap:60px; align-items:start; }
+.about-text p { font-size:16px; color:rgba(238,245,239,0.75); line-height:1.75; margin-bottom:16px; }
+.about-stats  { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.stat-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:24px; text-align:center; }
+.stat-num  { display:block; font-family:var(--font-display); font-size:44px; color:var(--green-bright); letter-spacing:2px; }
+.stat-label { display:block; font-family:var(--font-cond); font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+
+.ground-grid { display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:start; }
+.ground-grid h3 { font-family:var(--font-cond); font-size:24px; font-weight:800; margin-bottom:10px; }
+.ground-address { font-size:16px; color:var(--muted); margin-bottom:20px; }
+.ground-details { display:flex; flex-direction:column; gap:10px; }
+.ground-detail  { font-size:14px; color:rgba(238,245,239,0.7); }
+
+.contact-grid { display:grid; grid-template-columns:1fr 1.2fr; gap:32px; align-items:start; }
+.contact-cards { display:flex; flex-direction:column; gap:12px; }
+.contact-card  { display:flex; align-items:center; gap:16px; padding:20px; text-decoration:none; transition:border-color 0.15s; }
+.contact-card:hover { border-color:var(--green); }
+.contact-icon  { font-size:28px; flex-shrink:0; }
+.contact-card strong { display:block; font-family:var(--font-cond); font-size:16px; font-weight:700; margin-bottom:2px; }
+.contact-card span   { font-size:13px; color:var(--muted); }
+
+.contact-form { padding:28px; }
+.contact-form h3 { font-family:var(--font-cond); font-size:22px; font-weight:800; margin-bottom:20px; }
+.form-group { margin-bottom:16px; }
+.form-group label { display:block; font-family:var(--font-cond); font-size:12px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+.form-group input, .form-group textarea {
+  width:100%; background:var(--off-black); border:1px solid var(--border);
+  border-radius:var(--radius); padding:10px 14px; color:var(--white);
+  font-family:var(--font-body); font-size:15px; transition:border-color 0.15s;
+}
+.form-group input:focus, .form-group textarea:focus { outline:none; border-color:var(--green); }
+.form-group textarea { resize:vertical; }
+.form-status { font-size:13px; color:var(--muted); margin-top:10px; }
+
+.sponsors-intro { font-size:15px; color:var(--muted); margin-bottom:32px; }
+.sponsor-tier   { margin-bottom:36px; }
+.tier-title     { font-family:var(--font-cond); font-size:13px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:16px; }
+.sponsor-name-text { font-family:var(--font-cond); font-size:15px; font-weight:700; }
+.sponsor-enquiry { font-size:14px; color:var(--muted); margin-top:24px; }
+.sponsor-enquiry a { color:var(--green-bright); text-decoration:none; }
+
+@media (max-width:900px) {
+  .page-hero { padding:40px 20px 32px; }
+  .page-inner { padding:32px 20px; }
+  .about-grid, .ground-grid, .contact-grid { grid-template-columns:1fr; gap:28px; }
+}
+</style>

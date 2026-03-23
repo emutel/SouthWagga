@@ -1,0 +1,219 @@
+---
+// src/components/Footer.astro
+const { settings = {} } = Astro.props;
+const year = new Date().getFullYear();
+---
+<footer class="footer">
+  <div class="footer-inner">
+
+    <div class="footer-brand">
+      <div class="footer-club-name">South Wagga Warriors FC</div>
+      <p class="footer-tagline">
+        {settings.tagline || 'Serving the South Wagga community. Juniors, Seniors, Women\'s and Social football for all abilities.'}
+      </p>
+      <div class="footer-socials">
+        {settings.facebook_url && (
+          <a href={settings.facebook_url} target="_blank" rel="noopener" class="social-icon" aria-label="Facebook">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          </a>
+        )}
+        {settings.instagram_handle && (
+          <a href={`https://instagram.com/${settings.instagram_handle}`} target="_blank" rel="noopener" class="social-icon" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+        )}
+        {settings.youtube_channel_id && (
+          <a href={`https://youtube.com/channel/${settings.youtube_channel_id}`} target="_blank" rel="noopener" class="social-icon" aria-label="YouTube">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="white"/></svg>
+          </a>
+        )}
+      </div>
+
+      <!-- Facebook Page embed widget (no API needed) -->
+      {settings.facebook_url && (
+        <div class="fb-page-widget">
+          <div class="fb-label">Latest from Facebook</div>
+          <div
+            class="fb-page"
+            data-href={settings.facebook_url}
+            data-tabs="timeline"
+            data-width="320"
+            data-height="200"
+            data-small-header="true"
+            data-adapt-container-width="true"
+            data-hide-cover="false"
+            data-show-facepile="false">
+          </div>
+        </div>
+      )}
+    </div>
+
+    <nav class="footer-nav">
+      <div class="footer-col">
+        <div class="footer-col-title">Club</div>
+        <ul>
+          <li><a href="/about">About Us</a></li>
+          <li><a href="/teams">Teams & Squads</a></li>
+          <li><a href="/sponsors">Sponsors</a></li>
+          <li><a href="/gallery">Gallery</a></li>
+          <li><a href="/about#contact">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Play</div>
+        <ul>
+          <li><a href="/results">Results</a></li>
+          <li><a href="/results#fixtures">Fixtures</a></li>
+          <li><a href="/academy">Academy</a></li>
+          <li><a href="/results#table">Tables</a></li>
+          <li><a href="/events">Twilight League</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">More</div>
+        <ul>
+          <li><a href="/news">News</a></li>
+          <li><a href="/shop">Shop</a></li>
+          <li><a href="/events">Events</a></li>
+          <li><a href="https://fww.dribl.com" target="_blank" rel="noopener">Dribl ↗</a></li>
+        </ul>
+      </div>
+    </nav>
+
+  </div>
+
+  <div class="footer-bottom">
+    <span>© {year} South Wagga Warriors FC · Rawlings Park, South Wagga NSW</span>
+    <span class="footer-powered">
+      Payments <span class="badge">■ SQUARE</span>
+      · Results <span class="badge">DRIBL</span>
+    </span>
+  </div>
+</footer>
+
+<!-- Facebook SDK (only loads if Facebook URL is set) -->
+{settings.facebook_url && (
+  <div id="fb-root"></div>
+  <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_AU/sdk.js#xfbml=1&version=v18.0"></script>
+)}
+
+<style>
+.footer {
+  background: var(--off-black);
+  border-top: 1px solid var(--border);
+  margin-top: 80px;
+}
+
+.footer-inner {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 60px;
+  padding: 56px 48px 40px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.footer-club-name {
+  font-family: var(--font-display);
+  font-size: 26px;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.footer-tagline {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 360px;
+  margin-bottom: 20px;
+}
+
+.footer-socials {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.social-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  transition: all 0.15s;
+}
+.social-icon svg { width: 16px; height: 16px; }
+.social-icon:hover { border-color: var(--green); color: var(--green-bright); }
+
+.fb-page-widget { margin-top: 8px; }
+.fb-label {
+  font-family: var(--font-cond);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.footer-nav {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.footer-col-title {
+  font-family: var(--font-cond);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+.footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+.footer-col ul a {
+  font-size: 14px;
+  color: rgba(238,245,239,0.55);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.footer-col ul a:hover { color: var(--white); }
+
+.footer-bottom {
+  border-top: 1px solid var(--border);
+  padding: 16px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+  max-width: 1280px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.footer-powered { display: flex; align-items: center; gap: 8px; }
+.badge {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-family: var(--font-cond);
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+@media (max-width: 768px) {
+  .footer-inner { grid-template-columns: 1fr; gap: 32px; padding: 40px 20px 24px; }
+  .footer-nav   { grid-template-columns: 1fr 1fr; }
+  .footer-bottom { padding: 14px 20px; font-size: 11px; }
+}
+</style>

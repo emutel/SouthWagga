@@ -1,0 +1,85 @@
+---
+// src/pages/gallery.astro
+import Base from '../layouts/Base.astro';
+import { getGalleryAlbums, getAlbumPhotos, fileUrl } from '../lib/directus.js';
+
+const albums = await getGalleryAlbums({ limit: 24 }) || [];
+---
+<Base title="Gallery" description="Photo galleries from South Wagga Warriors FC — match photography, events and club life.">
+
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <div class="label">Club Photography</div>
+      <h1>Gallery</h1>
+      <p>Match action, training sessions and club events. Photography by the Warriors community.</p>
+    </div>
+  </div>
+
+  <div class="page-inner">
+
+    {albums.length > 0 ? (
+      <div class="albums-grid">
+        {albums.map(album => (
+          <a href={`/gallery/${album.id}`} class="album-card card">
+            <div class="album-cover">
+              {album.cover_photo ? (
+                <img
+                  src={fileUrl(album.cover_photo, { width:600, height:400 })}
+                  alt={album.title}
+                  loading="lazy"
+                />
+              ) : (
+                <div class="album-cover-placeholder">📷</div>
+              )}
+              <div class="album-overlay"></div>
+              <div class="album-info-overlay">
+                <h3>{album.title}</h3>
+                {album.date && (
+                  <span>{new Date(album.date).toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'})}</span>
+                )}
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <div class="empty-state">
+        <p>Photo albums will appear here once uploaded by the club.</p>
+      </div>
+    )}
+
+  </div>
+
+</Base>
+
+<style>
+.page-hero { background:linear-gradient(135deg,var(--green-dark),var(--off-black)); border-bottom:1px solid var(--border); padding:60px 48px 48px; }
+.page-hero-inner { max-width:1280px; margin:0 auto; }
+.page-hero h1 { font-size:clamp(48px,6vw,80px); margin:10px 0 8px; }
+.page-hero p  { color:var(--muted); }
+
+.page-inner { max-width:1280px; margin:0 auto; padding:48px; }
+
+.albums-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+
+.album-card { text-decoration:none; border-radius:var(--radius-lg); overflow:hidden; transition:transform 0.2s; }
+.album-card:hover { transform:translateY(-4px); }
+.album-card:hover img { transform:scale(1.06); }
+
+.album-cover { position:relative; aspect-ratio:3/2; overflow:hidden; background:var(--card); }
+.album-cover img { width:100%; height:100%; object-fit:cover; transition:transform 0.4s; }
+.album-cover-placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:48px; }
+
+.album-overlay { position:absolute; inset:0; background:linear-gradient(to top,rgba(9,12,9,0.9) 0%,transparent 50%); }
+
+.album-info-overlay { position:absolute; bottom:0; left:0; right:0; padding:20px; }
+.album-info-overlay h3 { font-family:var(--font-cond); font-size:18px; font-weight:800; margin-bottom:4px; }
+.album-info-overlay span { font-size:12px; color:rgba(238,245,239,0.6); }
+
+.empty-state { text-align:center; padding:80px 0; color:var(--muted); }
+
+@media (max-width:768px) {
+  .page-hero { padding:40px 20px 32px; }
+  .page-inner { padding:24px 20px; }
+}
+</style>

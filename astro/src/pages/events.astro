@@ -1,0 +1,179 @@
+---
+// src/pages/events.astro
+import Base from '../layouts/Base.astro';
+import { getEvents, fileUrl } from '../lib/directus.js';
+
+const upcoming = await getEvents({ upcomingOnly: true  }) || [];
+const past     = await getEvents({ upcomingOnly: false }) || [];
+const pastOnly  = past.filter(e => !upcoming.find(u => u.id === e.id)).slice(0, 6);
+---
+<Base title="Events & Tickets" description="South Wagga Warriors FC events — presentation nights, Twilight League registrations and more.">
+
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <div class="label">What's On</div>
+      <h1>Events &amp; Tickets</h1>
+      <p>Club events, presentation nights, and Twilight League registrations. Secure payment via Square.</p>
+    </div>
+  </div>
+
+  <div class="page-inner">
+
+    {upcoming.length > 0 ? (
+      <section>
+        <div class="label" style="margin-bottom:28px">Upcoming Events</div>
+        <div class="events-list">
+          {upcoming.map(event => {
+            const date = event.date ? new Date(event.date) : null;
+            const isFeatured = event.is_featured;
+            return (
+              <div class={`event-card card ${isFeatured ? 'event-card--featured' : ''}`}>
+                {event.image && (
+                  <div class="event-img-wrap">
+                    <img
+                      src={fileUrl(event.image, { width:700, height:400 })}
+                      alt={event.name}
+                      class="event-img"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
+                <div class="event-body">
+                  {isFeatured && <span class="event-tag">Featured</span>}
+                  {date && (
+                    <div class="event-date-block">
+                      <span class="event-day">{date.getDate()}</span>
+                      <span class="event-month-year">
+                        {date.toLocaleString('en-AU',{month:'long'})} {date.getFullYear()}
+                      </span>
+                    </div>
+                  )}
+                  <h2>{event.name}</h2>
+                  <div class="event-meta">
+                    {date && <span>🕒 {date.toLocaleString('en-AU',{weekday:'long',hour:'2-digit',minute:'2-digit'})}</span>}
+                    {event.venue && <span>📍 {event.venue}</span>}
+                  </div>
+                  {event.description && (
+                    <div class="event-desc" set:html={event.description} />
+                  )}
+                  <div class="event-footer">
+                    {event.price > 0 ? (
+                      <div class="event-price">
+                        <span class="price-amt">${parseFloat(event.price).toFixed(0)}</span>
+                        {event.price_note && <span class="price-note">{event.price_note}</span>}
+                      </div>
+                    ) : (
+                      <span class="free-badge">Free Entry</span>
+                    )}
+                    {event.square_url ? (
+                      <a href={event.square_url} target="_blank" rel="noopener" class="btn btn-primary">
+                        {event.price > 0 ? 'Get Tickets →' : 'Register →'}
+                      </a>
+                    ) : (
+                      <a href="/about#contact" class="btn btn-secondary">Enquire →</a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    ) : (
+      <div class="empty-state">
+        <p>No upcoming events at the moment.</p>
+        <p class="empty-sub">Check back soon or follow us on Facebook for announcements.</p>
+      </div>
+    )}
+
+    {pastOnly.length > 0 && (
+      <section style="margin-top:56px;">
+        <div class="label" style="margin-bottom:24px">Past Events</div>
+        <div class="past-grid">
+          {pastOnly.map(event => (
+            <div class="past-card card">
+              {event.image && (
+                <img
+                  src={fileUrl(event.image, { width:400, height:220 })}
+                  alt={event.name}
+                  class="past-img"
+                  loading="lazy"
+                />
+              )}
+              <div class="past-body">
+                {event.date && (
+                  <div class="past-date">
+                    {new Date(event.date).toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'})}
+                  </div>
+                )}
+                <h3>{event.name}</h3>
+                {event.venue && <p>📍 {event.venue}</p>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+  </div>
+
+</Base>
+
+<style>
+.page-hero { background:linear-gradient(135deg,var(--green-dark),var(--off-black)); border-bottom:1px solid var(--border); padding:60px 48px 48px; }
+.page-hero-inner { max-width:1280px; margin:0 auto; }
+.page-hero h1 { font-size:clamp(48px,6vw,80px); margin:10px 0 8px; }
+.page-hero p  { color:var(--muted); }
+
+.page-inner { max-width:1280px; margin:0 auto; padding:56px 48px; }
+
+.events-list { display:flex; flex-direction:column; gap:20px; }
+
+.event-card { display:grid; grid-template-columns:1fr; transition:border-color 0.2s; }
+.event-card--featured { border-color:var(--green); }
+.event-card--featured .event-body { background:linear-gradient(135deg,rgba(13,61,28,0.4),transparent); }
+
+.event-img-wrap { overflow:hidden; }
+.event-img { width:100%; height:280px; object-fit:cover; transition:transform 0.3s; }
+.event-card:hover .event-img { transform:scale(1.02); }
+
+.event-body { padding:28px; }
+.event-tag  { display:inline-block; background:var(--green); color:#fff; font-family:var(--font-cond); font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; padding:3px 10px; border-radius:3px; margin-bottom:14px; }
+
+.event-date-block { display:flex; align-items:baseline; gap:10px; margin-bottom:10px; }
+.event-day        { font-family:var(--font-display); font-size:48px; color:var(--green-bright); line-height:1; }
+.event-month-year { font-family:var(--font-cond); font-size:18px; font-weight:700; color:var(--muted); }
+
+.event-body h2 { font-family:var(--font-cond); font-size:clamp(24px,3vw,36px); font-weight:800; margin-bottom:12px; }
+
+.event-meta { display:flex; flex-wrap:wrap; gap:16px; font-size:14px; color:var(--muted); margin-bottom:16px; }
+
+.event-desc { font-size:15px; color:rgba(238,245,239,0.75); line-height:1.65; margin-bottom:24px; }
+.event-desc p { margin-bottom:10px; }
+
+.event-footer { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; padding-top:16px; border-top:1px solid var(--border); }
+.event-price  { display:flex; align-items:baseline; gap:8px; }
+.price-amt    { font-family:var(--font-display); font-size:44px; color:var(--white); }
+.price-note   { font-size:13px; color:var(--muted); }
+.free-badge   { background:rgba(37,160,76,0.15); color:var(--green-bright); font-family:var(--font-cond); font-size:14px; font-weight:700; letter-spacing:1px; padding:6px 16px; border-radius:3px; }
+
+.past-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; }
+.past-card { overflow:hidden; opacity:0.65; transition:opacity 0.15s; }
+.past-card:hover { opacity:1; }
+.past-img  { width:100%; aspect-ratio:16/9; object-fit:cover; }
+.past-body { padding:16px; }
+.past-date { font-size:12px; color:var(--muted); margin-bottom:6px; }
+.past-body h3 { font-family:var(--font-cond); font-size:17px; font-weight:700; margin-bottom:4px; }
+.past-body p  { font-size:12px; color:var(--muted); }
+
+.empty-state { text-align:center; padding:80px 0; }
+.empty-state p { color:var(--muted); font-size:18px; }
+.empty-sub { font-size:14px; margin-top:8px; }
+
+@media (max-width:768px) {
+  .page-hero { padding:40px 20px 32px; }
+  .page-inner { padding:32px 20px; }
+  .event-img  { height:200px; }
+  .event-body { padding:20px; }
+}
+</style>

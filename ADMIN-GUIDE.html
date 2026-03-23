@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Warriors FC — Admin Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --green:#1d7a3a; --green-bright:#25a04c; --black:#090c09; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Barlow',sans-serif; font-size:15px; line-height:1.6; color:#111; background:#f5f5f5; }
+
+  .cover { background:var(--black); color:white; padding:48px; }
+  .cover-crest { font-family:'Bebas Neue',cursive; font-size:72px; color:var(--green-bright); letter-spacing:4px; line-height:1; }
+  .cover h1 { font-family:'Bebas Neue',cursive; font-size:42px; letter-spacing:2px; color:white; margin:8px 0 4px; }
+  .cover p  { color:#6a8a6e; font-size:14px; }
+
+  .page { max-width:900px; margin:0 auto; padding:40px 32px; background:white; }
+
+  h2 { font-family:'Bebas Neue',cursive; font-size:28px; letter-spacing:2px; color:var(--green); margin:36px 0 16px; border-bottom:2px solid #e0e0e0; padding-bottom:8px; }
+  h3 { font-family:'Barlow Condensed',sans-serif; font-size:17px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#333; margin:20px 0 8px; }
+
+  .task {
+    background:#f9f9f9; border:1px solid #e0e0e0; border-left:4px solid var(--green);
+    border-radius:6px; padding:20px; margin-bottom:16px;
+  }
+  .task-title { font-family:'Barlow Condensed',sans-serif; font-size:18px; font-weight:700; color:#111; margin-bottom:8px; }
+  .task ol, .task ul { padding-left:20px; }
+  .task li { margin-bottom:6px; color:#444; }
+  .task .note { background:#fff3cd; border-left:3px solid #c9a030; padding:8px 12px; border-radius:3px; font-size:13px; margin-top:12px; color:#555; }
+  .task .url  { font-family:monospace; background:#eee; padding:2px 6px; border-radius:3px; font-size:13px; color:var(--green); }
+
+  .quick-ref { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px; }
+  .quick-card { background:var(--green); color:white; border-radius:6px; padding:16px; }
+  .quick-card strong { display:block; font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px; }
+  .quick-card span { font-size:13px; opacity:0.85; }
+
+  .tip { background:#e8f7ed; border-left:3px solid var(--green-bright); padding:10px 14px; border-radius:3px; font-size:13px; margin:12px 0; }
+  .warn { background:#fff3cd; border-left:3px solid #e6a800; padding:10px 14px; border-radius:3px; font-size:13px; margin:12px 0; }
+
+  table { width:100%; border-collapse:collapse; margin:12px 0; font-size:14px; }
+  th { background:var(--green); color:white; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:8px 12px; text-align:left; }
+  td { padding:8px 12px; border-bottom:1px solid #eee; }
+  tr:hover td { background:#f9f9f9; }
+
+  @media print { body { background:white; } .cover { padding:32px; } }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="cover-crest">SW</div>
+  <h1>Warriors FC — Website Admin Guide</h1>
+  <p>For club volunteers · Updated 2025</p>
+</div>
+
+<div class="page">
+
+  <h2>Quick Reference</h2>
+  <div class="quick-ref">
+    <div class="quick-card">
+      <strong>Admin CMS Login</strong>
+      <span>admin.southwagga.com.au<br>Use your email + password</span>
+    </div>
+    <div class="quick-card">
+      <strong>Public Website</strong>
+      <span>southwagga.com.au<br>Updates within ~30 seconds of saving</span>
+    </div>
+    <div class="quick-card">
+      <strong>Results update automatically</strong>
+      <span>Pulled from Dribl every 2 hours.<br>No manual entry needed.</span>
+    </div>
+    <div class="quick-card">
+      <strong>Payments via Square</strong>
+      <span>Manage orders and inventory<br>in your Square dashboard.</span>
+    </div>
+  </div>
+
+  <!-- ── NEWS ── -->
+  <h2>📰 Posting News & Announcements</h2>
+
+  <div class="task">
+    <div class="task-title">How to post a news article</div>
+    <ol>
+      <li>Log in to <span class="url">admin.southwagga.com.au</span></li>
+      <li>Click <strong>News</strong> in the left sidebar</li>
+      <li>Click the <strong>+ Create Item</strong> button (top right)</li>
+      <li>Fill in:
+        <ul>
+          <li><strong>Title</strong> — the headline</li>
+          <li><strong>Hero Image</strong> — click to upload a photo (recommended)</li>
+          <li><strong>Excerpt</strong> — 1–2 sentence summary (shown on news list page)</li>
+          <li><strong>Body</strong> — the full article text</li>
+          <li><strong>Author</strong> — your name</li>
+        </ul>
+      </li>
+      <li>Set <strong>Status</strong> to <em>Published</em></li>
+      <li>Click <strong>Save</strong> — the site updates automatically</li>
+    </ol>
+    <div class="note">💡 <strong>Auto-post to Facebook & Instagram:</strong> Make sure "Post to Socials" is turned ON (it is by default). The article will automatically post to the Warriors Facebook page and Instagram when you publish.</div>
+  </div>
+
+  <div class="task">
+    <div class="task-title">Editing or unpublishing an article</div>
+    <ol>
+      <li>Go to <strong>News</strong> → click the article title</li>
+      <li>Make your changes and click <strong>Save</strong></li>
+      <li>To hide an article: change Status to <em>Archived</em> and Save</li>
+    </ol>
+  </div>
+
+  <!-- ── PHOTOS ── -->
+  <h2>📷 Adding Photos to Gallery</h2>
+
+  <div class="task">
+    <div class="task-title">Create a new photo album</div>
+    <ol>
+      <li>Go to <strong>Gallery Albums</strong> in the sidebar</li>
+      <li>Click <strong>+ Create Item</strong></li>
+      <li>Fill in: <strong>Title</strong> (e.g. "Round 14 — Warriors vs Collingullie"), <strong>Date</strong>, and optionally link to a <strong>Team</strong></li>
+      <li>Upload a <strong>Cover Photo</strong> — this is shown in the gallery grid</li>
+      <li>Set Status to <em>Published</em> and Save</li>
+      <li>Now go to <strong>Gallery Photos</strong> → <strong>+ Create Item</strong></li>
+      <li>Select the <strong>Album</strong> you just created</li>
+      <li>Upload your photos one at a time (or ask Andy to bulk upload)</li>
+    </ol>
+    <div class="note">💡 Best photo size: 1200×800px or larger. JPG or WebP format. The site automatically resizes them.</div>
+  </div>
+
+  <!-- ── PLAYERS ── -->
+  <h2>👤 Managing Players & Squads</h2>
+
+  <div class="task">
+    <div class="task-title">Add a new player</div>
+    <ol>
+      <li>Go to <strong>Players</strong> → <strong>+ Create Item</strong></li>
+      <li>Fill in: First Name, Last Name, Photo, Jersey Number, Position, Team</li>
+      <li>Set Status to <em>Active</em> and Save</li>
+    </ol>
+    <div class="note">The player appears on their team's page automatically.</div>
+  </div>
+
+  <div class="task">
+    <div class="task-title">Mark a player as captain</div>
+    <ol>
+      <li>Open the player's record</li>
+      <li>Toggle <strong>Is Captain</strong> to ON</li>
+      <li>Save — a "C" badge will appear on their photo on the team page</li>
+    </ol>
+  </div>
+
+  <div class="task">
+    <div class="task-title">Remove a player (end of season / left club)</div>
+    <ol>
+      <li>Open the player's record</li>
+      <li>Change Status to <em>Inactive</em></li>
+      <li>Save — they'll disappear from the team page but their record is kept</li>
+    </ol>
+  </div>
+
+  <!-- ── SPONSORS ── -->
+  <h2>🤝 Managing Sponsors</h2>
+
+  <div class="task">
+    <div class="task-title">Add a new sponsor</div>
+    <ol>
+      <li>Go to <strong>Sponsors</strong> → <strong>+ Create Item</strong></li>
+      <li>Fill in: Name, Logo (upload), Website URL, Tier (Platinum/Gold/Silver/Bronze)</li>
+      <li><strong>Is Global</strong> ON = appears on the main Sponsors page</li>
+      <li>To link to specific teams: go to that team's record (under <strong>Teams</strong>) and add the sponsor in the Sponsors field</li>
+      <li>Save</li>
+    </ol>
+  </div>
+
+  <!-- ── ACADEMY ── -->
+  <h2>🎓 Academy Programs</h2>
+
+  <div class="task">
+    <div class="task-title">Add or update an academy program</div>
+    <ol>
+      <li>Go to <strong>Academy Programs</strong> → <strong>+ Create Item</strong> (or click an existing one)</li>
+      <li>Fill in: Name, Age Group, Description, Schedule, Price, Price Note</li>
+      <li><strong>Square URL</strong>: paste the checkout link from your Square dashboard</li>
+      <li>Status options: <em>Active</em> (open for enrolment), <em>Full</em> (shows "join waitlist"), <em>Inactive</em> (hidden)</li>
+      <li>Save</li>
+    </ol>
+    <div class="note">💡 To get a Square checkout link: log in to Square → Items → click the item → Share → Copy link</div>
+  </div>
+
+  <!-- ── SHOP ── -->
+  <h2>🛒 Shop Items</h2>
+
+  <div class="task">
+    <div class="task-title">Add a shop item</div>
+    <ol>
+      <li>Go to <strong>Shop Items</strong> → <strong>+ Create Item</strong></li>
+      <li>Fill in: Name, Image, Description, Price, Category, Square URL</li>
+      <li>Optional: add a <strong>Badge</strong> label (e.g. "NEW", "POPULAR")</li>
+      <li>Status: <em>Active</em> = visible, <em>Out of Stock</em> = shown but greyed out, <em>Hidden</em> = not shown</li>
+    </ol>
+  </div>
+
+  <!-- ── EVENTS ── -->
+  <h2>🎟 Events & Tickets</h2>
+
+  <div class="task">
+    <div class="task-title">Add an event (e.g. presentation night)</div>
+    <ol>
+      <li>Go to <strong>Events</strong> → <strong>+ Create Item</strong></li>
+      <li>Fill in: Name, Image, Date, Venue, Description, Price, Square URL</li>
+      <li>Toggle <strong>Is Featured</strong> ON to highlight it on the events page</li>
+      <li>Set Status to <em>Published</em> and Save</li>
+    </ol>
+  </div>
+
+  <!-- ── RESULTS ── -->
+  <h2>⚽ Results & Fixtures</h2>
+
+  <div class="task">
+    <div class="task-title">Results update automatically</div>
+    <p style="margin-bottom:8px;">You don't need to do anything. Results, fixtures, and league tables are pulled from <strong>fww.dribl.com</strong> automatically every 2 hours.</p>
+    <p>On Saturday and Sunday game days, they update every hour from midday onwards.</p>
+    <div class="tip">✓ As long as results are entered in Dribl, they'll appear on the Warriors website automatically.</div>
+  </div>
+
+  <!-- ── SITE SETTINGS ── -->
+  <h2>⚙ Site Settings</h2>
+
+  <div class="task">
+    <div class="task-title">Update contact details, tagline, or social links</div>
+    <ol>
+      <li>Go to <strong>Site Settings</strong> in the sidebar (there's only one record)</li>
+      <li>Update any fields: Club Name, Tagline, Email, Phone, Address, Facebook URL, Instagram Handle</li>
+      <li>Save — changes appear on the website within 30 seconds</li>
+    </ol>
+  </div>
+
+  <!-- ── TROUBLESHOOTING ── -->
+  <h2>🔧 Troubleshooting</h2>
+
+  <table>
+    <thead><tr><th>Problem</th><th>What to do</th></tr></thead>
+    <tbody>
+      <tr><td>Site not updating after I saved</td><td>Wait 60 seconds and hard-refresh (Ctrl+Shift+R). If still not updated, contact Andy.</td></tr>
+      <tr><td>Results not showing</td><td>Check fww.dribl.com is showing results. The sync runs every 2 hours — results from a game may take up to 2 hours to appear.</td></tr>
+      <tr><td>Photo won't upload</td><td>Check file size is under 20MB. Use JPG or PNG format. Try a different browser.</td></tr>
+      <tr><td>Article not auto-posting to Facebook</td><td>Check "Post to Socials" toggle is ON. Contact Andy if Facebook connection needs re-authorising.</td></tr>
+      <tr><td>Can't log in to admin</td><td>Use the "Forgot password" link on the login page, or contact Andy.</td></tr>
+      <tr><td>Square link not working</td><td>Log in to Square dashboard and check the item is still active. Copy a fresh checkout link.</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── CONTACT ── -->
+  <h2>📞 Need Help?</h2>
+  <p>Contact <strong>Andy</strong> for any technical issues or if you need something set up that's not covered here.</p>
+  <br>
+  <p style="color:#999;font-size:12px;">Warriors FC Website · Built on Directus + Astro · Hosted on EmuTel · Results via Dribl · Payments via Square</p>
+
+</div>
+</body>
+</html>
