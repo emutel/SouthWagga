@@ -3,7 +3,7 @@
  * Shared Directus API client for Astro build-time data fetching
  */
 
-const BASE  = import.meta.env.DIRECTUS_URL  || process.env.DIRECTUS_URL  || 'http://localhost:8055';
+const BASE  = import.meta.env.DIRECTUS_URL  || process.env.DIRECTUS_URL  || '';
 const TOKEN = import.meta.env.DIRECTUS_TOKEN || process.env.DIRECTUS_TOKEN || '';
 
 const headers = {
@@ -12,6 +12,7 @@ const headers = {
 };
 
 async function fetchDirectus(path, params = {}) {
+  if (!BASE) return null;
   const url    = new URL(`${BASE}${path}`);
   const qp     = new URLSearchParams(params);
   url.search   = qp.toString();

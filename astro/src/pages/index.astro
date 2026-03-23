@@ -20,13 +20,15 @@ const tickerItems = results.slice(0, 6);
   <div class="ticker">
     <div class="ticker-track">
       {[...tickerItems, ...tickerItems].map((r, i) => (
-        <span class="ticker-item">
-          <span class="ticker-score">
-            {r.home_team} {r.home_score} – {r.away_score} {r.away_team}
+        <Fragment>
+          <span class="ticker-item">
+            <span class="ticker-score">
+              {r.home_team} {r.home_score} – {r.away_score} {r.away_team}
+            </span>
+            {r.competition} · {r.round}
           </span>
-          {r.competition} · {r.round}
-        </span>
-        {i < tickerItems.length * 2 - 1 && <span class="ticker-sep">◆</span>}
+          {i < tickerItems.length * 2 - 1 && <span class="ticker-sep">◆</span>}
+        </Fragment>
       ))}
       {tickerItems.length === 0 && (
         <span class="ticker-item">Welcome to South Wagga Warriors FC — 2025 Season</span>
