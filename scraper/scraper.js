@@ -222,20 +222,21 @@ async function scrape() {
     return;
   }
 
-  // ── FETCH ALL ROUNDS DIRECTLY ─────────────────────────────────
-  // The homepage only loads the current round. Fetch all rounds explicitly
-  // using the season ID and roundrobin type parameter.
+  // ── FETCH ALL ROUNDS VIA BROWSER (avoids server-side blocking) ─
+  // Use page.evaluate() so requests come from the Chromium browser context
+  // with real browser headers/cookies — same as the page itself.
   const TENANT = 'PLBdDg1Kb7';
   const SEASON = process.env.DRIBL_SEASON_ID || 'njdyzW6m5x';
   const TOTAL_ROUNDS = parseInt(process.env.DRIBL_TOTAL_ROUNDS || '18', 10);
-  const API_HEADERS = { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36' };
 
   for (let round = 1; round <= TOTAL_ROUNDS; round++) {
     try {
       const url = `https://mc-api.dribl.com/api/fixtures?date_range=default&season=${SEASON}&type_round=roundrobin_${round}&tenant=${TENANT}&timezone=Australia/Sydney`;
-      const res = await fetch(url, { headers: API_HEADERS });
-      if (!res.ok) continue;
-      const body = await res.json();
+      const body = await page.evaluate(async (fetchUrl) => {
+        const res = await fetch(fetchUrl, { headers: { 'Accept': 'application/json' } });
+        if (!res.ok) return null;
+        return res.json();
+      }, url);
       if (body && body.data && body.data.length > 0) {
         intercepted.fixtures.push({ url, body });
         const sw = body.data.filter(f => JSON.stringify(f).toLowerCase().includes('south wagga'));
