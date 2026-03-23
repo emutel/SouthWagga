@@ -19,7 +19,7 @@
  *   node dribl-scraper.js --discover         # find your club/team IDs
  *
  * CRON (run every 2 hours):
- *   0 */2 * * * /usr/bin/node /path/to/dribl-scraper.js >> /var/log/dribl-scraper.log 2>&1
+ *   0 *\/2 * * * /usr/bin/node /path/to/dribl-scraper.js >> /var/log/dribl-scraper.log 2>&1
  *
  * INSTALL:
  *   npm install puppeteer
