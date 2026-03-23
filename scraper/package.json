@@ -1,5 +1,17 @@
 {
   "name": "warriors-dribl-scraper",
-  "version": "1.0.0",
-  "dependencies": { "puppeteer": "^21.0.0" }
+  "version": "2.2.0",
+  "description": "Headless Chrome scraper for fww.dribl.com — runs on Railway, commits JSON cache to GitHub",
+  "main": "server.js",
+  "scripts": {
+    "start":    "node server.js",
+    "scrape":   "node scraper.js",
+    "discover": "node scraper.js --discover"
+  },
+  "dependencies": {
+    "express":    "^4.18.0",
+    "node-cron":  "^3.0.0",
+    "node-fetch": "^2.7.0",
+    "puppeteer":  "^21.0.0"
+  }
 }

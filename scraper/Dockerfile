@@ -1,32 +1,38 @@
-FROM node:20-alpine
+FROM node:20-slim
 
-# Install Chromium + cron
-RUN apk add --no-cache \
+# Install Chromium and dependencies
+RUN apt-get update && apt-get install -y \
     chromium \
-    nss \
-    freetype \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont \
-    dcron \
-    su-exec
+    fonts-liberation \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libnspr4 \
+    libnss3 \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    xdg-utils \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
-# Tell Puppeteer to use system Chromium
-ENV PUPPETEER_SKIP_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+# Tell Puppeteer to use system Chromium, not download its own
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 WORKDIR /app
+
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --omit=dev
+
 COPY . .
 
-RUN mkdir -p /cache
+RUN mkdir -p /app/cache
+ENV CACHE_DIR=/app/cache
 
-# Set up cron schedule:
-# - Every 2 hours normally
-# - Every hour on Saturdays and Sundays (game days) from 12pm–10pm
-RUN echo "0 */2 * * 1-5   CACHE_DIR=/cache /usr/bin/node /app/scraper.js >> /var/log/dribl.log 2>&1" > /etc/crontabs/root && \
-    echo "0 12-22 * * 6,0  CACHE_DIR=/cache /usr/bin/node /app/scraper.js >> /var/log/dribl.log 2>&1" >> /etc/crontabs/root
+EXPOSE 3000
 
-# Initial run + start cron
-CMD sh -c "CACHE_DIR=/cache node /app/scraper.js >> /var/log/dribl.log 2>&1 && crond -f -l 8"
+CMD ["node", "server.js"]

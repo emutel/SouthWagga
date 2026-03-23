@@ -363,8 +363,12 @@ function normaliseResults(responses) {
 }
 
 // ── MAIN ──────────────────────────────────────────────────────
-scrape().catch(err => {
-  log(`Fatal error: ${err.message}`);
-  log(err.stack);
-  process.exit(1);
-});
+module.exports = { scrape };
+
+if (require.main === module) {
+  scrape().catch(err => {
+    log(`Fatal error: ${err.message}`);
+    log(err.stack);
+    process.exit(1);
+  });
+}
