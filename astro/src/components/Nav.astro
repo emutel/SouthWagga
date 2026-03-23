@@ -22,6 +22,7 @@ const active = (href) => path === href || path.startsWith(href + '/') ? 'active'
       <li><a href="/gallery"  class={active('/gallery')}>Gallery</a></li>
       <li><a href="/news"     class={active('/news')}>News</a></li>
       <li><a href="/events"   class={active('/events')}>Events</a></li>
+      <li><a href="/coaching" class={active('/coaching')}>Coaches</a></li>
     </ul>
 
     <a href="/shop" class="btn btn-primary nav-shop">Shop</a>
@@ -43,6 +44,7 @@ const active = (href) => path === href || path.startsWith(href + '/') ? 'active'
       <li><a href="/events">Events & Tickets</a></li>
       <li><a href="/shop">Shop</a></li>
       <li><a href="/about">About</a></li>
+      <li><a href="/coaching">Coaches Hub</a></li>
     </ul>
     <div class="nav-drawer-socials">
       {settings.facebook_url && <a href={settings.facebook_url} target="_blank" rel="noopener">Facebook</a>}
