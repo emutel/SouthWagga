@@ -8,13 +8,14 @@ import { sessions_u5u7 }   from './sessions_u5u7.js';
 import { sessions_u8u11 }  from './sessions_u8u11.js';
 import { sessions_u12u13 } from './sessions_u12u13.js';
 import { sessions_u14u16 } from './sessions_u14u16.js';
-// sessions_senior added when file is ready
+import { sessions_senior } from './sessions_senior.js';
 
 const ALL_SESSIONS = [
   ...sessions_u5u7,
   ...sessions_u8u11,
   ...sessions_u12u13,
   ...sessions_u14u16,
+  ...sessions_senior,
 ];
 
 // Map agent age_group keys → page display labels
@@ -32,11 +33,23 @@ function normalise(s) {
   const arr = (v) => Array.isArray(v) ? v.join('\n') : (v || null);
 
   // Phase descriptions — handle different phase name conventions
+  // For older groups (u14/senior) that have both 'technical' and 'unit_game':
+  //   technical  → positioning slot  (focused drill)
+  //   unit_game  → game_training slot (conditioned game)
+  //   game_training → training_game slot (culminating 11v11)
+  const hasTechAndUnit = !!(p.technical && p.unit_game);
   const welcome    = p.welcome    || p.activation || {};
   const warmup     = p.warmup     || {};
-  const pos        = p.positioning_game || p.unit_game || p.positioning || {};
-  const gameTraining = p.game_training || p.technical || {};
-  const trainingGame = p.big_game || p.main_game || p.training_game || {};
+  const pos        = p.positioning_game
+    || (hasTechAndUnit ? p.technical : p.unit_game)
+    || p.positioning
+    || {};
+  const gameTraining = hasTechAndUnit
+    ? p.unit_game
+    : (p.game_training || p.technical || {});
+  const trainingGame = hasTechAndUnit
+    ? (p.game_training || p.main_game || p.big_game || p.training_game || {})
+    : (p.big_game || p.main_game || p.training_game || {});
   const warmdown   = p.warmdown   || {};
 
   return {
@@ -45,18 +58,28 @@ function normalise(s) {
     objectives:   arr(s.objectives),
     equipment:    arr(s.equipment),
     phase_welcome_notes:               welcome.description || null,
-    phase_warmup_description:          [warmup.title, warmup.description, arr(warmup.activities)].filter(Boolean).join('\n\n') || null,
-    phase_warmup_coaching_points:      arr(warmup.coaching_points),
+    phase_warmup_title:                warmup.title || null,
+    phase_warmup_description:          warmup.description || null,
+    phase_warmup_activities:           arr(warmup.activities),
+    phase_warmup_setup:                warmup.setup || null,
+    phase_warmup_coaching_points:      warmup.coaching_points || null,
     phase_warmup_progressions:         arr(warmup.progressions),
-    phase_positioning_description:     [pos.title, pos.description].filter(Boolean).join('\n\n') || null,
-    phase_positioning_coaching_points: arr(pos.coaching_points),
+    phase_positioning_title:           pos.title || null,
+    phase_positioning_description:     pos.description || null,
+    phase_positioning_setup:           pos.setup || null,
+    phase_positioning_coaching_points: pos.coaching_points || null,
     phase_positioning_progressions:    arr(pos.progressions),
-    phase_game_training_description:   [gameTraining.title, gameTraining.description].filter(Boolean).join('\n\n') || null,
-    phase_game_training_coaching_points: arr(gameTraining.coaching_points),
+    phase_positioning_rules:           arr(pos.rules),
+    phase_game_training_title:         gameTraining.title || null,
+    phase_game_training_description:   gameTraining.description || null,
+    phase_game_training_setup:         gameTraining.setup || null,
+    phase_game_training_coaching_points: gameTraining.coaching_points || null,
     phase_game_training_progressions:  arr(gameTraining.progressions),
-    phase_training_game_description:   [trainingGame.title, trainingGame.description].filter(Boolean).join('\n\n') || null,
+    phase_game_training_rules:         arr(gameTraining.rules),
+    phase_training_game_title:         trainingGame.title || null,
+    phase_training_game_description:   trainingGame.description || null,
     phase_training_game_rules:         arr(trainingGame.rules),
-    phase_training_game_coaching_points: arr(trainingGame.coaching_points),
+    phase_training_game_coaching_points: trainingGame.coaching_points || null,
     phase_warmdown_notes:              warmdown.description || null,
   };
 }

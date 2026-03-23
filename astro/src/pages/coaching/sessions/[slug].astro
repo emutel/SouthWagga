@@ -2,7 +2,6 @@
 // src/pages/coaching/sessions/[slug].astro
 import Base from '../../../layouts/Base.astro';
 import { getSessionPlan, getAllSessionPlanSlugs } from '../../../lib/sessions.js';
-const fileUrl = () => null;
 
 export async function getStaticPaths() {
   const slugs = await getAllSessionPlanSlugs();
@@ -13,59 +12,255 @@ const { slug } = Astro.params;
 const plan = await getSessionPlan(slug);
 if (!plan) return Astro.redirect('/coaching/sessions');
 
-const ageLabels = { miniroos:'MiniRoos', u12:'U12', u13:'U13', u14:'U14', u15:'U15', u16:'U16', u18:'U18', senior:'Senior', all:'All Ages' };
+const ageLabels = { miniroos:'MiniRoos', 'u5-u7':'MiniRoos 5–7', 'u8-u11':'MiniRoos 8–11', 'u12-u13':'Youth U12–U13', 'u14-u16':'Youth U14–U16', u18:'U18', senior:'Senior / U17–U18', all:'All Ages' };
 
+// ── SVG PITCH DIAGRAMS ────────────────────────────────────────────────────────
+// Generic per-phase pitch diagrams — illustrative setup for each phase type
+
+const pitchBase = (content: string, viewBox = '0 0 420 280') =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" role="img" aria-label="Pitch diagram">
+    <defs>
+      <pattern id="grass" patternUnits="userSpaceOnUse" width="20" height="20">
+        <rect width="20" height="20" fill="#1e6b35"/>
+        <rect width="20" height="10" fill="#1a6030" opacity="0.4"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#grass)" rx="4"/>
+    ${content}
+  </svg>`;
+
+// Warmup: Rondo grid — players around perimeter, 2 defenders inside
+const warmupSVG = pitchBase(`
+  <!-- Grid zone -->
+  <rect x="60" y="40" width="300" height="200" fill="none" stroke="white" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.7"/>
+  <!-- Grid lines -->
+  <line x1="160" y1="40" x2="160" y2="240" stroke="white" stroke-width="0.8" stroke-dasharray="4,6" opacity="0.4"/>
+  <line x1="260" y1="40" x2="260" y2="240" stroke="white" stroke-width="0.8" stroke-dasharray="4,6" opacity="0.4"/>
+  <line x1="60" y1="107" x2="360" y2="107" stroke="white" stroke-width="0.8" stroke-dasharray="4,6" opacity="0.4"/>
+  <line x1="60" y1="173" x2="360" y2="173" stroke="white" stroke-width="0.8" stroke-dasharray="4,6" opacity="0.4"/>
+  <!-- Perimeter players (yellow) -->
+  <circle cx="60" cy="40" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="160" cy="40" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="260" cy="40" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="360" cy="40" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="360" cy="140" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="360" cy="240" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="260" cy="240" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="160" cy="240" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="60" cy="140" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <!-- Inside defenders (red) -->
+  <circle cx="180" cy="130" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <circle cx="240" cy="155" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <!-- Ball -->
+  <circle cx="160" cy="40" r="5" fill="white"/>
+  <circle cx="160" cy="40" r="5" fill="none" stroke="#333" stroke-width="1"/>
+  <!-- Passing arrows -->
+  <line x1="165" y1="44" x2="172" y2="123" stroke="white" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)" opacity="0.8"/>
+  <defs><marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="white"/></marker></defs>
+  <!-- Labels -->
+  <text x="210" y="270" text-anchor="middle" fill="white" font-size="11" font-family="sans-serif" opacity="0.8">Rondo / Grid Warm-Up</text>
+  <text x="85" y="17" fill="#f5c518" font-size="9" font-family="sans-serif">Possession players</text>
+  <text x="200" y="145" fill="#e53935" font-size="9" font-family="sans-serif">Defenders</text>
+`);
+
+// Positioning: Thirds pitch — zones with player positions and movement arrows
+const positioningSVG = pitchBase(`
+  <!-- Pitch outline -->
+  <rect x="30" y="20" width="360" height="240" fill="none" stroke="white" stroke-width="2" rx="2"/>
+  <!-- Centre circle -->
+  <circle cx="210" cy="140" r="35" fill="none" stroke="white" stroke-width="1" opacity="0.5"/>
+  <!-- Half-way line -->
+  <line x1="30" y1="140" x2="390" y2="140" stroke="white" stroke-width="1.5" opacity="0.7"/>
+  <!-- Thirds markers -->
+  <line x1="150" y1="20" x2="150" y2="260" stroke="#f5c518" stroke-width="1" stroke-dasharray="6,4" opacity="0.6"/>
+  <line x1="270" y1="20" x2="270" y2="260" stroke="#f5c518" stroke-width="1" stroke-dasharray="6,4" opacity="0.6"/>
+  <!-- Zone labels -->
+  <text x="90" y="15" text-anchor="middle" fill="#f5c518" font-size="9" font-family="sans-serif" opacity="0.9">DEF THIRD</text>
+  <text x="210" y="15" text-anchor="middle" fill="#f5c518" font-size="9" font-family="sans-serif" opacity="0.9">MID THIRD</text>
+  <text x="330" y="15" text-anchor="middle" fill="#f5c518" font-size="9" font-family="sans-serif" opacity="0.9">ATT THIRD</text>
+  <!-- Mini goals -->
+  <rect x="22" y="120" width="8" height="40" fill="none" stroke="white" stroke-width="2"/>
+  <rect x="390" y="120" width="8" height="40" fill="none" stroke="white" stroke-width="2"/>
+  <!-- Attacking team (yellow) in mid/att thirds -->
+  <circle cx="180" cy="90" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="210" cy="140" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="180" cy="190" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="300" cy="90" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="300" cy="190" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="340" cy="140" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <!-- Defending team (red) -->
+  <circle cx="80" cy="90" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <circle cx="80" cy="140" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <circle cx="80" cy="190" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <circle cx="130" cy="130" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <circle cx="130" cy="155" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <!-- Ball -->
+  <circle cx="210" cy="140" r="5" fill="white"/>
+  <!-- Movement arrows -->
+  <path d="M218 140 Q265 100 292 92" stroke="white" stroke-width="1.5" stroke-dasharray="5,3" fill="none" marker-end="url(#arr2)" opacity="0.8"/>
+  <defs><marker id="arr2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="white"/></marker></defs>
+  <text x="210" y="275" text-anchor="middle" fill="white" font-size="11" font-family="sans-serif" opacity="0.8">Positioning / Phase Game</text>
+`);
+
+// Game Training: Conditioned pitch with zones
+const gameTrainingSVG = pitchBase(`
+  <!-- Pitch outline -->
+  <rect x="30" y="20" width="360" height="240" fill="none" stroke="white" stroke-width="2" rx="2"/>
+  <!-- Half-way line -->
+  <line x1="30" y1="140" x2="390" y2="140" stroke="white" stroke-width="1.5" opacity="0.7"/>
+  <!-- Pressure zone highlight -->
+  <rect x="140" y="20" width="140" height="240" fill="rgba(255,180,0,0.08)" stroke="#f5c518" stroke-width="1" stroke-dasharray="6,4"/>
+  <text x="210" y="38" text-anchor="middle" fill="#f5c518" font-size="9" font-family="sans-serif">TASK ZONE</text>
+  <!-- Goals -->
+  <rect x="22" y="115" width="8" height="50" fill="none" stroke="white" stroke-width="2.5"/>
+  <rect x="390" y="115" width="8" height="50" fill="none" stroke="white" stroke-width="2.5"/>
+  <!-- Penalty areas -->
+  <rect x="30" y="90" width="60" height="100" fill="none" stroke="white" stroke-width="1" opacity="0.5"/>
+  <rect x="330" y="90" width="60" height="100" fill="none" stroke="white" stroke-width="1" opacity="0.5"/>
+  <!-- Team A (yellow) -->
+  <circle cx="70" cy="140" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="110" cy="100" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="110" cy="180" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="175" cy="120" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="175" cy="165" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="245" cy="105" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="245" cy="175" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <!-- Team B (red) -->
+  <circle cx="350" cy="140" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <circle cx="310" cy="100" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <circle cx="310" cy="180" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <circle cx="280" cy="130" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <circle cx="280" cy="155" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <!-- Ball -->
+  <circle cx="175" cy="120" r="5" fill="white"/>
+  <!-- Attack arrow -->
+  <path d="M183 118 Q220 110 238 107" stroke="white" stroke-width="1.5" stroke-dasharray="4,3" fill="none" marker-end="url(#arr3)" opacity="0.9"/>
+  <defs><marker id="arr3" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="white"/></marker></defs>
+  <text x="210" y="275" text-anchor="middle" fill="white" font-size="11" font-family="sans-serif" opacity="0.8">Game Training — Conditioned Match</text>
+`);
+
+// Training Game: Full mini-pitch with goals, kick-off arrangement
+const trainingGameSVG = pitchBase(`
+  <!-- Full pitch -->
+  <rect x="20" y="15" width="380" height="250" fill="none" stroke="white" stroke-width="2.5" rx="3"/>
+  <!-- Half-way -->
+  <line x1="20" y1="140" x2="400" y2="140" stroke="white" stroke-width="1.5" opacity="0.7"/>
+  <!-- Centre circle -->
+  <circle cx="210" cy="140" r="40" fill="none" stroke="white" stroke-width="1.5" opacity="0.6"/>
+  <circle cx="210" cy="140" r="3" fill="white"/>
+  <!-- Penalty areas -->
+  <rect x="20" y="90" width="70" height="100" fill="none" stroke="white" stroke-width="1.5" opacity="0.6"/>
+  <rect x="330" y="90" width="70" height="100" fill="none" stroke="white" stroke-width="1.5" opacity="0.6"/>
+  <!-- Goal boxes -->
+  <rect x="20" y="110" width="30" height="60" fill="none" stroke="white" stroke-width="1" opacity="0.5"/>
+  <rect x="350" y="110" width="30" height="60" fill="none" stroke="white" stroke-width="1" opacity="0.5"/>
+  <!-- Goals -->
+  <rect x="10" y="118" width="10" height="44" fill="none" stroke="white" stroke-width="3"/>
+  <rect x="400" y="118" width="10" height="44" fill="none" stroke="white" stroke-width="3"/>
+  <!-- Corner arcs -->
+  <path d="M20 15 Q30 15 30 25" fill="none" stroke="white" stroke-width="1" opacity="0.5"/>
+  <path d="M400 15 Q390 15 390 25" fill="none" stroke="white" stroke-width="1" opacity="0.5"/>
+  <path d="M20 265 Q30 265 30 255" fill="none" stroke="white" stroke-width="1" opacity="0.5"/>
+  <path d="M400 265 Q390 265 390 255" fill="none" stroke="white" stroke-width="1" opacity="0.5"/>
+  <!-- Team A (yellow) — 4-3-3 -->
+  <circle cx="55" cy="140" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="100" cy="60" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="100" cy="110" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="100" cy="170" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="100" cy="220" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="150" cy="100" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="150" cy="140" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="150" cy="180" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="190" cy="70" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="190" cy="140" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <circle cx="190" cy="210" r="9" fill="#f5c518" stroke="white" stroke-width="1.5"/>
+  <!-- Team B (red) — 4-3-3 -->
+  <circle cx="365" cy="140" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <circle cx="320" cy="60" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <circle cx="320" cy="110" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <circle cx="320" cy="170" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <circle cx="320" cy="220" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <circle cx="270" cy="100" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <circle cx="270" cy="140" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <circle cx="270" cy="180" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <circle cx="230" cy="70" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <circle cx="230" cy="140" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <circle cx="230" cy="210" r="9" fill="#e53935" stroke="white" stroke-width="1.5"/>
+  <!-- Kick-off ball -->
+  <circle cx="210" cy="140" r="6" fill="white"/>
+  <circle cx="210" cy="140" r="6" fill="none" stroke="#222" stroke-width="1.5"/>
+  <text x="210" y="280" text-anchor="middle" fill="white" font-size="11" font-family="sans-serif" opacity="0.8">Training Game — Full Play</text>
+`);
+
+// Phase diagram selector
+function phaseDiagram(id: string): string {
+  if (id === 'warmup')       return warmupSVG;
+  if (id === 'positioning')  return positioningSVG;
+  if (id === 'game_training') return gameTrainingSVG;
+  if (id === 'training_game') return trainingGameSVG;
+  return '';
+}
+
+// ── PHASES CONFIG ──────────────────────────────────────────────────────────────
 const phases = [
   {
-    id:    'welcome',
-    label: 'Welcome & Explanation',
-    time:  '5 min',
-    icon:  '👋',
-    desc:  plan.phase_welcome_notes,
-    note:  'Introduce the theme. Ask players what they know. Set expectations for the session.'
+    id:      'welcome',
+    label:   'Welcome & Explanation',
+    time:    '5 min',
+    icon:    '👋',
+    desc:    plan.phase_welcome_notes,
+    note:    'Introduce the theme. Ask players what they know. Set expectations for the session.',
+    hasDiagram: false,
   },
   {
     id:       'warmup',
-    label:    'Warm Up',
-    time:     '15–20 min',
+    label:    plan.phase_warmup_title ? `Warm Up — ${plan.phase_warmup_title}` : 'Warm Up',
+    time:     '10–20 min',
     icon:     '🏃',
     desc:     plan.phase_warmup_description,
+    setup:    plan.phase_warmup_setup,
+    activities: plan.phase_warmup_activities,
     points:   plan.phase_warmup_coaching_points,
     progress: plan.phase_warmup_progressions,
-    diagram:  plan.phase_warmup_diagram,
-    note:     'With the ball, theme-related. Build physical readiness and introduce the session focus.'
+    note:     'With the ball, theme-related. Build physical readiness and introduce the session focus.',
+    hasDiagram: true,
   },
   {
     id:       'positioning',
-    label:    'Positioning Games',
-    time:     '20 min',
+    label:    plan.phase_positioning_title ? `Skill Practice — ${plan.phase_positioning_title}` : 'Positioning & Skill Practice',
+    time:     '15–20 min',
     icon:     '🔲',
     desc:     plan.phase_positioning_description,
+    setup:    plan.phase_positioning_setup,
     points:   plan.phase_positioning_coaching_points,
     progress: plan.phase_positioning_progressions,
-    diagram:  plan.phase_positioning_diagram,
-    note:     'Spatial awareness, triangle formations, support play. Develop possession-based fundamentals.'
+    rules:    plan.phase_positioning_rules,
+    note:     'Focused practice reinforcing the session theme in a controlled environment.',
+    hasDiagram: true,
   },
   {
     id:       'game_training',
-    label:    'Game Training',
-    time:     '25–30 min',
+    label:    plan.phase_game_training_title ? `Conditioned Game — ${plan.phase_game_training_title}` : 'Game Training',
+    time:     '20–25 min',
     icon:     '🎯',
     desc:     plan.phase_game_training_description,
+    setup:    plan.phase_game_training_setup,
     points:   plan.phase_game_training_coaching_points,
     progress: plan.phase_game_training_progressions,
-    diagram:  plan.phase_game_training_diagram,
-    note:     'Designated team task in a game-realistic scenario. Correct field area, suitable resistance, quality interventions.'
+    rules:    plan.phase_game_training_rules,
+    note:     'Apply the skill in a game-realistic scenario with rules/restraints that expose the theme.',
+    hasDiagram: true,
   },
   {
     id:       'training_game',
-    label:    'Training Game',
-    time:     '20–25 min',
+    label:    plan.phase_training_game_title ? `Training Game — ${plan.phase_training_game_title}` : 'Training Game',
+    time:     '15–25 min',
     icon:     '⚽',
     desc:     plan.phase_training_game_description,
     rules:    plan.phase_training_game_rules,
     points:   plan.phase_training_game_coaching_points,
-    note:     'Match play with rules and restraints that emphasise the team task. Minimal intervention — let them play.'
+    note:     'Match play with rules/restraints that emphasise the team task. Fewer stoppages — let them play.',
+    hasDiagram: true,
   },
   {
     id:    'warmdown',
@@ -73,7 +268,8 @@ const phases = [
     time:  '5–10 min',
     icon:  '✅',
     desc:  plan.phase_warmdown_notes,
-    note:  'Cool down, questions, reflection. What did we learn? What will we do better next time?'
+    note:  'Cool down, questions, reflection. What did we learn? What will we do better next time?',
+    hasDiagram: false,
   },
 ];
 ---
@@ -88,6 +284,7 @@ const phases = [
         {plan.theme        && <span class="meta-tag">{plan.theme}</span>}
         {plan.duration     && <span class="meta-tag">⏱ {plan.duration} min</span>}
         {plan.player_numbers && <span class="meta-tag">👥 {plan.player_numbers}</span>}
+        {plan.week         && <span class="meta-tag">Week {plan.week}</span>}
       </div>
     </div>
   </div>
@@ -99,7 +296,10 @@ const phases = [
       {plan.objectives && (
         <div class="sidebar-block card">
           <h3>Session Objectives</h3>
-          <p>{plan.objectives}</p>
+          {Array.isArray(plan.objectives)
+            ? <ul class="obj-list">{(plan.objectives as string[]).map((o: string) => <li>{o}</li>)}</ul>
+            : <p>{plan.objectives}</p>
+          }
         </div>
       )}
       {plan.equipment && (
@@ -110,13 +310,13 @@ const phases = [
       )}
       <div class="sidebar-block card sidebar-timeline">
         <h3>Session Overview</h3>
-        {phases.map(p => (
+        {phases.map(p => p.desc || p.activities ? (
           <a href={`#${p.id}`} class="timeline-item">
             <span class="tl-icon">{p.icon}</span>
-            <span class="tl-label">{p.label}</span>
+            <span class="tl-label">{p.label.split(' — ')[0]}</span>
             <span class="tl-time">{p.time}</span>
           </a>
-        ))}
+        ) : null)}
       </div>
       {plan.td_notes && (
         <div class="sidebar-block card sidebar-td">
@@ -128,57 +328,99 @@ const phases = [
 
     <!-- Phases -->
     <main class="plan-phases">
-      {phases.map((phase, i) => (
-        <section id={phase.id} class="phase-block card">
-          <div class="phase-header">
-            <span class="phase-num">{i + 1}</span>
-            <span class="phase-icon">{phase.icon}</span>
-            <div class="phase-title-group">
-              <h2>{phase.label}</h2>
-              <span class="phase-time">{phase.time}</span>
+      {phases.map((phase, i) => {
+        const hasContent = phase.desc || (phase as any).activities || (phase as any).setup;
+        if (!hasContent && phase.id !== 'welcome' && phase.id !== 'warmdown') return null;
+        if (!hasContent) return null;
+        const points: string[] | null = (phase as any).points;
+        const diagramSVG = phase.hasDiagram ? phaseDiagram(phase.id) : '';
+        return (
+          <section id={phase.id} class="phase-block card">
+            <div class="phase-header">
+              <span class="phase-num">{i + 1}</span>
+              <span class="phase-icon">{phase.icon}</span>
+              <div class="phase-title-group">
+                <h2>{phase.label}</h2>
+                <span class="phase-time">{phase.time}</span>
+              </div>
             </div>
-          </div>
-          <p class="phase-framework-note">{phase.note}</p>
+            <p class="phase-framework-note">{phase.note}</p>
 
-          {phase.desc && (
-            <div class="phase-section">
-              <h4>Activity</h4>
-              {phase.id === 'welcome' || phase.id === 'warmdown'
-                ? <p>{phase.desc}</p>
-                : <div class="rich-content" set:html={phase.desc} />
-              }
-            </div>
-          )}
+            <div class="phase-body">
+              <!-- Left: content -->
+              <div class="phase-content">
+                {phase.desc && (
+                  <div class="phase-section">
+                    <h4>Activity Description</h4>
+                    <p class="activity-text">{phase.desc}</p>
+                  </div>
+                )}
 
-          {phase.diagram && (
-            <div class="phase-section">
-              <h4>Diagram</h4>
-              <img src={fileUrl(phase.diagram, { width: 800 })} alt="Pitch diagram" class="phase-diagram" loading="lazy" />
-            </div>
-          )}
+                {(phase as any).setup && (
+                  <div class="phase-section phase-section--setup">
+                    <h4>⚙️ Setup</h4>
+                    <p class="activity-text">{(phase as any).setup}</p>
+                  </div>
+                )}
 
-          {phase.points && (
-            <div class="phase-section phase-section--green">
-              <h4>Coaching Points</h4>
-              <p class="whitespace">{phase.points}</p>
-            </div>
-          )}
+                {(phase as any).activities && (
+                  <div class="phase-section">
+                    <h4>Activities</h4>
+                    <ul class="activity-list">
+                      {((phase as any).activities as string).split('\n').filter(Boolean).map((a: string) => (
+                        <li>{a}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
-          {phase.rules && (
-            <div class="phase-section phase-section--amber">
-              <h4>Rules &amp; Restraints</h4>
-              <p class="whitespace">{phase.rules}</p>
-            </div>
-          )}
+                {(phase as any).rules && (
+                  <div class="phase-section phase-section--amber">
+                    <h4>📋 Rules &amp; Restraints</h4>
+                    <p class="whitespace">{(phase as any).rules}</p>
+                  </div>
+                )}
 
-          {phase.progress && (
-            <div class="phase-section phase-section--muted">
-              <h4>Progressions</h4>
-              <p class="whitespace">{phase.progress}</p>
+                {(phase as any).progress && (
+                  <div class="phase-section phase-section--muted">
+                    <h4>📈 Progressions</h4>
+                    <p class="whitespace">{(phase as any).progress}</p>
+                  </div>
+                )}
+              </div>
+
+              <!-- Right: diagram (only for phases with hasDiagram) -->
+              {phase.hasDiagram && diagramSVG && (
+                <div class="phase-diagram-col">
+                  <div class="phase-diagram" set:html={diagramSVG} />
+                </div>
+              )}
             </div>
-          )}
-        </section>
-      ))}
+
+            <!-- Coaching cues callout — full width below content+diagram -->
+            {points && points.length > 0 && (
+              <div class="coaching-cues">
+                <div class="cues-header">
+                  <span class="cues-icon">🔍</span>
+                  <span>Look For — Coaching Cues</span>
+                </div>
+                <div class="cues-grid">
+                  {points.map((pt: string) => (
+                    <div class="cue-item">
+                      <span class="cue-check">✓</span>
+                      <span class="cue-text">{pt}</span>
+                    </div>
+                  ))}
+                </div>
+                <div class="intervention-tip">
+                  <span class="int-label">💬 Intervention approach:</span>
+                  <span class="int-text">Freeze the drill, demonstrate the desired behaviour, ask a guiding question, then resume. Keep stoppages under 45 seconds.</span>
+                </div>
+              </div>
+            )}
+          </section>
+        );
+      })}
     </main>
 
   </div>
@@ -201,6 +443,8 @@ const phases = [
 .sidebar-block      { padding: 20px; }
 .sidebar-block h3   { font-family: var(--font-cond); font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--green-bright); margin-bottom: 10px; }
 .sidebar-block p    { font-size: 13px; color: var(--muted); line-height: 1.6; white-space: pre-line; }
+.obj-list           { margin: 0; padding-left: 16px; font-size: 13px; color: var(--muted); line-height: 1.7; }
+.obj-list li        { margin-bottom: 4px; }
 .sidebar-td         { border-color: var(--green); }
 .sidebar-td h3      { color: var(--green-bright); }
 .timeline-item      { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); text-decoration: none; color: var(--text); font-size: 13px; }
@@ -217,28 +461,57 @@ const phases = [
 .phase-num          { font-family: var(--font-cond); font-size: 13px; font-weight: 700; color: var(--muted); width: 20px; }
 .phase-icon         { font-size: 24px; }
 .phase-title-group  { flex: 1; }
-.phase-title-group h2 { font-family: var(--font-cond); font-size: 20px; font-weight: 800; margin: 0; }
+.phase-title-group h2 { font-family: var(--font-cond); font-size: 18px; font-weight: 800; margin: 0; line-height: 1.2; }
 .phase-time         { font-size: 12px; color: var(--green-bright); font-weight: 600; }
 .phase-framework-note { font-size: 12px; color: var(--muted); font-style: italic; padding: 10px 24px; border-bottom: 1px solid var(--border); margin: 0; }
-.phase-section      { padding: 20px 24px; border-bottom: 1px solid var(--border); }
+
+/* Phase body: content + diagram side by side */
+.phase-body         { display: grid; grid-template-columns: 1fr 340px; gap: 0; }
+.phase-content      { border-right: 1px solid var(--border); }
+.phase-diagram-col  { padding: 20px; display: flex; align-items: flex-start; }
+.phase-diagram      { width: 100%; }
+.phase-diagram svg  { width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--border); display: block; }
+
+.phase-section      { padding: 16px 24px; border-bottom: 1px solid var(--border); }
 .phase-section:last-child { border-bottom: none; }
 .phase-section h4   { font-family: var(--font-cond); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
-.phase-section p    { font-size: 14px; line-height: 1.7; color: var(--text); }
-.phase-section--green { background: rgba(37, 160, 76, 0.06); }
-.phase-section--green h4 { color: var(--green-bright); }
+.phase-section--setup { background: rgba(255,255,255,0.02); }
+.phase-section--setup h4 { color: #888; }
 .phase-section--amber { background: rgba(255, 180, 0, 0.06); }
 .phase-section--amber h4 { color: #ffb400; }
 .phase-section--muted { background: rgba(255,255,255,0.02); }
-.phase-diagram      { width: 100%; border-radius: 4px; border: 1px solid var(--border); }
-.rich-content       { font-size: 14px; line-height: 1.7; }
-.rich-content ul, .rich-content ol { padding-left: 20px; }
-.rich-content li    { margin-bottom: 4px; }
-.whitespace         { white-space: pre-line; }
+.activity-text      { font-size: 14px; line-height: 1.75; color: var(--text); margin: 0; }
+.activity-list      { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.7; color: var(--muted); }
+.activity-list li   { margin-bottom: 4px; }
+.whitespace         { white-space: pre-line; font-size: 14px; line-height: 1.7; color: var(--text); }
+
+/* Coaching cues callout */
+.coaching-cues      { border-top: 2px solid var(--green); background: rgba(37, 160, 76, 0.05); padding: 20px 24px; }
+.cues-header        { display: flex; align-items: center; gap: 8px; font-family: var(--font-cond); font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--green-bright); margin-bottom: 14px; }
+.cues-icon          { font-size: 16px; }
+.cues-grid          { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px 20px; margin-bottom: 14px; }
+.cue-item           { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; }
+.cue-check          { color: var(--green-bright); font-weight: 700; margin-top: 1px; flex-shrink: 0; }
+.cue-text           { color: var(--text); }
+.intervention-tip   { border-top: 1px solid rgba(37,160,76,0.2); padding-top: 12px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+.int-label          { color: var(--green-bright); font-weight: 600; margin-right: 6px; }
+.int-text           { }
+
+@media (max-width: 1100px) {
+  .phase-body { grid-template-columns: 1fr; }
+  .phase-content { border-right: none; }
+  .phase-diagram-col { border-top: 1px solid var(--border); }
+  .phase-diagram svg { max-width: 420px; }
+}
 
 @media (max-width: 900px) {
   .plan-layout { grid-template-columns: 1fr; padding: 24px 20px 60px; }
   .plan-sidebar { display: contents; }
   .sidebar-timeline { order: -1; }
   .page-hero { padding: 40px 20px 32px; }
+}
+
+@media (max-width: 600px) {
+  .cues-grid { grid-template-columns: 1fr; }
 }
 </style>

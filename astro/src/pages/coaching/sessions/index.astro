@@ -8,12 +8,19 @@ const plans = await getSessionPlans() || [];
 const ageGroups = ['u5-u7','u8-u11','u12-u13','u14-u16','senior'];
 const ageLabels = { 'u5-u7':'MiniRoos 5–7', 'u8-u11':'MiniRoos 8–11', 'u12-u13':'Youth U12–U13', 'u14-u16':'Youth U14–U16', 'senior':'Senior / U17–U18' };
 
-// Group by age group
-const grouped = ageGroups.reduce((acc, ag) => {
-  const group = plans.filter(p => p.age_group === ag);
-  if (group.length) acc[ag] = group;
-  return acc;
-}, {});
+// Get all unique themes for filter
+const themes = [...new Set(plans.map(p => p.theme).filter(Boolean))].sort();
+
+// Embed plan data for client-side filtering
+const plansJson = JSON.stringify(plans.map(p => ({
+  slug: p.slug,
+  title: p.title,
+  theme: p.theme,
+  age_group: p.age_group,
+  duration: p.duration,
+  objectives: p.objectives,
+  week: p.week,
+})));
 ---
 <Base title="Session Plans — Coaches Hub" description="Football Australia format session plans for Warriors FC coaches.">
 
@@ -22,36 +29,57 @@ const grouped = ageGroups.reduce((acc, ag) => {
       <a href="/coaching" class="back-link">← Coaches Hub</a>
       <div class="label">Football Australia Format</div>
       <h1>Session Plans</h1>
-      <p>90-minute session plans organised by age group and theme. Tap a plan to open the full session on your device.</p>
+      <p>{plans.length} sessions across 4 age groups. Filter by age group or theme, or search by keyword.</p>
     </div>
   </div>
 
-  <section class="section">
-
-    {plans.length === 0 && (
-      <p class="empty">No session plans published yet — check back soon.</p>
-    )}
-
-    {Object.entries(grouped).map(([ag, agPlans]) => (
-      <div class="age-group-block">
-        <h2 class="age-heading">{ageLabels[ag] ?? ag}</h2>
-        <div class="plans-grid">
-          {agPlans.map(plan => (
-            <a href={`/coaching/sessions/${plan.slug}`} class="plan-card card">
-              <div class="plan-theme">{plan.theme || 'General'}</div>
-              <h3>{plan.title}</h3>
-              <div class="plan-meta">
-                {plan.duration && <span>⏱ {plan.duration} min</span>}
-                {plan.player_numbers && <span>👥 {plan.player_numbers}</span>}
-              </div>
-              {plan.objectives && <p class="plan-obj">{plan.objectives}</p>}
-              <div class="plan-footer">View Session Plan →</div>
-            </a>
-          ))}
-        </div>
+  <!-- ── FILTERS ── -->
+  <div class="filters-bar">
+    <div class="filters-inner">
+      <input type="text" id="search" placeholder="Search sessions..." class="search-input" />
+      <div class="filter-chips" id="age-filters">
+        <button class="chip chip--active" data-age="">All Ages</button>
+        {ageGroups.map(ag => (
+          <button class="chip" data-age={ag}>{ageLabels[ag]}</button>
+        ))}
       </div>
-    ))}
+      <select id="theme-filter" class="theme-select">
+        <option value="">All Themes</option>
+        {themes.map(t => <option value={t}>{t}</option>)}
+      </select>
+    </div>
+    <div class="results-count" id="results-count"></div>
+  </div>
 
+  <section class="section" id="sessions-container">
+    {ageGroups.map(ag => {
+      const agPlans = plans.filter(p => p.age_group === ag);
+      if (!agPlans.length) return null;
+      return (
+        <div class="age-group-block" data-age-block={ag}>
+          <h2 class="age-heading">{ageLabels[ag]}</h2>
+          <div class="plans-grid">
+            {agPlans.map(plan => (
+              <a href={`/coaching/sessions/${plan.slug}`} class="plan-card card"
+                 data-age={plan.age_group}
+                 data-theme={plan.theme}
+                 data-title={plan.title?.toLowerCase()}
+                 data-objectives={plan.objectives?.toLowerCase()}>
+                <div class="plan-theme">{plan.theme || 'General'}</div>
+                <h3>{plan.title}</h3>
+                <div class="plan-meta">
+                  {plan.duration && <span>⏱ {plan.duration} min</span>}
+                  <span>Week {plan.week}</span>
+                </div>
+                {plan.objectives && <p class="plan-obj">{plan.objectives}</p>}
+                <div class="plan-footer">View Session Plan →</div>
+              </a>
+            ))}
+          </div>
+        </div>
+      );
+    })}
+    <p class="empty" id="no-results" style="display:none">No sessions match your filters.</p>
   </section>
 
 </Base>
@@ -63,6 +91,19 @@ const grouped = ageGroups.reduce((acc, ag) => {
 .back-link:hover  { text-decoration: underline; }
 .page-hero h1     { font-size: clamp(40px, 5vw, 72px); margin: 10px 0 8px; }
 .page-hero p      { color: var(--muted); max-width: 600px; }
+
+.filters-bar      { background: var(--surface-2); border-bottom: 1px solid var(--border); padding: 16px 48px; position: sticky; top: 68px; z-index: 50; }
+.filters-inner    { max-width: 1280px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.search-input     { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 14px; border-radius: 6px; font-size: 13px; width: 220px; outline: none; }
+.search-input:focus { border-color: var(--green); }
+.filter-chips     { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip             { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 20px; font-family: var(--font-cond); font-size: 12px; font-weight: 600; letter-spacing: 1px; cursor: pointer; transition: all 0.15s; }
+.chip:hover       { border-color: var(--green); color: var(--white); }
+.chip--active     { background: var(--green); border-color: var(--green); color: var(--white); }
+.theme-select     { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; outline: none; }
+.theme-select:focus { border-color: var(--green); }
+.results-count    { max-width: 1280px; margin: 6px auto 0; font-size: 12px; color: var(--muted); width: 100%; }
+
 .section          { padding: 60px 48px; max-width: 1280px; margin: 0 auto; }
 .age-group-block  { margin-bottom: 48px; }
 .age-heading      { font-family: var(--font-cond); font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--green-bright); border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 20px; }
@@ -75,5 +116,62 @@ const grouped = ageGroups.reduce((acc, ag) => {
 .plan-obj         { font-size: 13px; color: var(--muted); padding: 0 16px; flex: 1; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .plan-footer      { margin-top: auto; padding: 12px 16px; border-top: 1px solid var(--border); font-family: var(--font-cond); font-size: 12px; font-weight: 600; letter-spacing: 1px; color: var(--green-bright); }
 .empty            { color: var(--muted); font-style: italic; }
-@media (max-width: 768px) { .page-hero { padding: 40px 20px 32px; } .section { padding: 40px 20px; } }
+
+@media (max-width: 768px) {
+  .page-hero { padding: 40px 20px 32px; }
+  .section { padding: 40px 20px; }
+  .filters-bar { padding: 12px 20px; top: 60px; }
+  .search-input { width: 100%; }
+}
 </style>
+
+<script>
+  const searchEl    = document.getElementById('search') as HTMLInputElement;
+  const themeEl     = document.getElementById('theme-filter') as HTMLSelectElement;
+  const ageButtons  = document.querySelectorAll<HTMLButtonElement>('.chip[data-age]');
+  const cards       = document.querySelectorAll<HTMLElement>('.plan-card');
+  const blocks      = document.querySelectorAll<HTMLElement>('[data-age-block]');
+  const noResults   = document.getElementById('no-results');
+  const countEl     = document.getElementById('results-count');
+
+  let activeAge = '';
+
+  function filter() {
+    const q     = searchEl.value.toLowerCase().trim();
+    const theme = themeEl.value;
+    let visible = 0;
+
+    cards.forEach(card => {
+      const matchAge   = !activeAge || card.dataset.age === activeAge;
+      const matchTheme = !theme     || card.dataset.theme === theme;
+      const matchQ     = !q || (card.dataset.title || '').includes(q) || (card.dataset.objectives || '').includes(q) || (card.dataset.theme || '').toLowerCase().includes(q);
+      const show = matchAge && matchTheme && matchQ;
+      card.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    // Hide empty age-group blocks
+    blocks.forEach(block => {
+      const anyVisible = [...block.querySelectorAll('.plan-card')].some(c => (c as HTMLElement).style.display !== 'none');
+      block.style.display = anyVisible ? '' : 'none';
+    });
+
+    if (noResults) noResults.style.display = visible === 0 ? '' : 'none';
+    if (countEl) countEl.textContent = `Showing ${visible} session${visible !== 1 ? 's' : ''}`;
+  }
+
+  ageButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      ageButtons.forEach(b => b.classList.remove('chip--active'));
+      btn.classList.add('chip--active');
+      activeAge = btn.dataset.age || '';
+      filter();
+    });
+  });
+
+  searchEl?.addEventListener('input', filter);
+  themeEl?.addEventListener('change', filter);
+
+  // Init count
+  filter();
+</script>
