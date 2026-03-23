@@ -222,6 +222,29 @@ async function scrape() {
     return;
   }
 
+  // ── FETCH FULL SEASON FIXTURES DIRECTLY ──────────────────────
+  // The page only loads date_range=default (next ~2 weeks).
+  // Supplement with direct API calls for broader date ranges.
+  const TENANT = 'PLBdDg1Kb7';
+  const dateRanges = ['default', 'this_month', 'next_month', 'season'];
+  for (const range of dateRanges) {
+    try {
+      const url = `https://mc-api.dribl.com/api/fixtures?date_range=${range}&tenant=${TENANT}&timezone=Australia/Sydney`;
+      const res = await fetch(url, {
+        headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' }
+      });
+      if (res.ok) {
+        const body = await res.json();
+        if (body && body.data && body.data.length > 0) {
+          intercepted.fixtures.push({ url, body });
+          log(`  → Direct API fixtures (${range}): ${body.data.length} items`);
+        }
+      }
+    } catch (e) {
+      log(`  → Direct API fetch failed (${range}): ${e.message}`);
+    }
+  }
+
   // ── PROCESS & NORMALISE DATA ──────────────────────────────────
 
   // Normalise fixtures
