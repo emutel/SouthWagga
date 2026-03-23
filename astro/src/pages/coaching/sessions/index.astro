@@ -1,12 +1,12 @@
 ---
 // src/pages/coaching/sessions/index.astro
 import Base from '../../../layouts/Base.astro';
-import { getSessionPlans } from '../../../lib/directus.js';
+import { getSessionPlans } from '../../../lib/sessions.js';
 
 const plans = await getSessionPlans() || [];
 
-const ageGroups = ['miniroos','u12','u13','u14','u15','u16','u18','senior','all'];
-const ageLabels = { miniroos:'MiniRoos', u12:'U12', u13:'U13', u14:'U14', u15:'U15', u16:'U16', u18:'U18', senior:'Senior', all:'All Ages' };
+const ageGroups = ['u5-u7','u8-u11','u12-u13','u14-u16','senior'];
+const ageLabels = { 'u5-u7':'MiniRoos 5–7', 'u8-u11':'MiniRoos 8–11', 'u12-u13':'Youth U12–U13', 'u14-u16':'Youth U14–U16', 'senior':'Senior / U17–U18' };
 
 // Group by age group
 const grouped = ageGroups.reduce((acc, ag) => {

@@ -1,7 +1,8 @@
 ---
 // src/pages/coaching/sessions/[slug].astro
 import Base from '../../../layouts/Base.astro';
-import { getSessionPlan, getAllSessionPlanSlugs, fileUrl } from '../../../lib/directus.js';
+import { getSessionPlan, getAllSessionPlanSlugs } from '../../../lib/sessions.js';
+const fileUrl = () => null;
 
 export async function getStaticPaths() {
   const slugs = await getAllSessionPlanSlugs();
