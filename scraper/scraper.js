@@ -272,17 +272,23 @@ function normaliseFixtures(responses) {
     const items = Array.isArray(body) ? body : (body.data || body.fixtures || body.matches || []);
 
     items.forEach(item => {
-      // Try multiple field name conventions Dribl might use
+      // Support both flat format and Dribl's JSON:API format (fields under .attributes)
+      const a = item.attributes || item;
+
       const fixture = {
-        id:           item.id || item.match_id || item.fixture_id,
-        date:         item.date || item.match_date || item.scheduled_at || item.kickoff,
-        time:         item.time || item.kickoff_time || item.start_time,
-        home_team:    item.home_team?.name || item.home?.name || item.team_home || item.home_club,
-        away_team:    item.away_team?.name || item.away?.name || item.team_away || item.away_club,
-        venue:        item.venue?.name || item.ground || item.location,
-        round:        item.round?.name || item.round_number || item.round,
-        competition:  item.competition?.name || item.league?.name || item.division,
-        status:       item.status || 'scheduled',
+        id:           item.hash_id || item.id || item.match_id || item.fixture_id,
+        date:         a.date || a.match_date || a.scheduled_at || a.kickoff,
+        home_team:    a.home_team_name || a.home_team?.name || a.home?.name || a.team_home || a.home_club,
+        away_team:    a.away_team_name || a.away_team?.name || a.away?.name || a.team_away || a.away_club,
+        home_logo:    a.home_logo || null,
+        away_logo:    a.away_logo || null,
+        venue:        a.ground_name || a.venue?.name || a.ground || a.location,
+        field:        a.field_name || null,
+        round:        a.full_round || a.round?.name || a.round_number || a.round,
+        competition:  a.competition_name || a.league_name || a.competition?.name || a.league?.name || a.division,
+        status:       a.status || 'scheduled',
+        home_team_id: a.home_team_hash_id || null,
+        away_team_id: a.away_team_hash_id || null,
         is_warriors:  false,
       };
 
@@ -313,21 +319,23 @@ function normaliseResults(responses) {
     const items = Array.isArray(body) ? body : (body.data || body.results || body.matches || []);
 
     items.forEach(item => {
-      const id = String(item.id || item.match_id || Math.random());
+      // Support both flat format and Dribl's JSON:API format (fields under .attributes)
+      const a = item.attributes || item;
+
+      const id = String(item.hash_id || item.id || item.match_id || Math.random());
       if (seen.has(id)) return;
       seen.add(id);
 
-      // Support various score field patterns
-      const homeScore = item.home_score ?? item.home_goals ?? item.score_home ?? item.home?.score;
-      const awayScore = item.away_score ?? item.away_goals ?? item.score_away ?? item.away?.score;
-      const homeTeam  = item.home_team?.name || item.home?.name || item.team_home;
-      const awayTeam  = item.away_team?.name || item.away?.name || item.team_away;
+      const homeScore = a.home_score ?? a.home_goals ?? a.score_home ?? a.home?.score;
+      const awayScore = a.away_score ?? a.away_goals ?? a.score_away ?? a.away?.score;
+      const homeTeam  = a.home_team_name || a.home_team?.name || a.home?.name || a.team_home;
+      const awayTeam  = a.away_team_name || a.away_team?.name || a.away?.name || a.team_away;
 
-      if (homeScore === undefined || awayScore === undefined) return;
+      if (homeScore == null || awayScore == null) return;
 
       const teams = [homeTeam, awayTeam].join(' ').toLowerCase();
       const isWarriors  = teams.includes('warriors') || teams.includes('south wagga');
-      const warriorsHome = isWarriors && (homeTeam || '').toLowerCase().includes('warriors');
+      const warriorsHome = isWarriors && (homeTeam || '').toLowerCase().includes('warriors') || (homeTeam || '').toLowerCase().includes('south wagga');
 
       const warriorsScore  = warriorsHome ? homeScore : awayScore;
       const opponentScore  = warriorsHome ? awayScore : homeScore;
@@ -339,17 +347,17 @@ function normaliseResults(responses) {
 
       results.push({
         id,
-        date:          item.date || item.match_date || item.played_at,
-        time:          item.time || item.kickoff_time,
+        date:          a.date || a.match_date || a.played_at,
         home_team:     homeTeam,
         away_team:     awayTeam,
         home_score:    homeScore,
         away_score:    awayScore,
-        venue:         item.venue?.name || item.ground,
-        round:         item.round?.name || item.round_number || item.round,
-        competition:   item.competition?.name || item.league?.name || item.division,
+        home_logo:     a.home_logo || null,
+        away_logo:     a.away_logo || null,
+        venue:         a.ground_name || a.venue?.name || a.ground,
+        round:         a.full_round || a.round?.name || a.round_number || a.round,
+        competition:   a.competition_name || a.league_name || a.competition?.name || a.league?.name || a.division,
         is_warriors:   isWarriors,
-        // Warriors-specific convenience fields
         warriors_score:  isWarriors ? warriorsScore  : null,
         opponent_score:  isWarriors ? opponentScore  : null,
         opponent:        isWarriors ? opponent       : null,
