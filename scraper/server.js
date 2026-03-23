@@ -120,7 +120,7 @@ async function commitCacheToGitHub() {
     } catch {}
 
     const body = {
-      message: `chore: update Dribl cache [skip ci]`,
+      message: `chore: update Dribl cache [skip ci][skip railway]`,
       content: encoded,
       ...(sha ? { sha } : {}),
     };
