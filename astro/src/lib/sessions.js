@@ -1,7 +1,7 @@
 /**
  * lib/sessions.js
- * Static coaching session data — provides the same API as directus.js
- * so coaching pages work fully without CMS content.
+ * Coaching session data — reads from Directus CMS at build time.
+ * Falls back to static JS data if Directus is unavailable or has no sessions.
  */
 
 import { sessions_u5u7 }   from './sessions_u5u7.js';
@@ -9,6 +9,21 @@ import { sessions_u8u11 }  from './sessions_u8u11.js';
 import { sessions_u12u13 } from './sessions_u12u13.js';
 import { sessions_u14u16 } from './sessions_u14u16.js';
 import { sessions_senior } from './sessions_senior.js';
+
+// ── DIRECTUS FETCH ────────────────────────────────────────────
+const DIRECTUS_BASE  = import.meta.env.DIRECTUS_URL  || process.env.DIRECTUS_URL  || '';
+const DIRECTUS_TOKEN = import.meta.env.DIRECTUS_TOKEN || process.env.DIRECTUS_TOKEN || '';
+
+async function fetchFromDirectus() {
+  if (!DIRECTUS_BASE || !DIRECTUS_TOKEN) return null;
+  try {
+    const url = `${DIRECTUS_BASE}/items/session_plans?filter[status][_eq]=published&limit=300&sort[]=age_group&sort[]=week`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${DIRECTUS_TOKEN}` } });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data?.length ? json.data : null;
+  } catch { return null; }
+}
 
 const ALL_SESSIONS = [
   ...sessions_u5u7,
@@ -84,19 +99,33 @@ function normalise(s) {
   };
 }
 
-const SESSIONS = ALL_SESSIONS.map(normalise);
+// Static sessions as fallback
+const STATIC_SESSIONS = ALL_SESSIONS.map(normalise);
 
-export function getSessionPlans({ ageGroup, theme, limit = 200 } = {}) {
-  let data = SESSIONS;
-  if (ageGroup) data = data.filter(s => s.age_group === ageGroup);
-  if (theme)    data = data.filter(s => s.theme === theme);
+// Cache the Directus result within a single build
+let _directusSessions: any[] | null = null;
+
+async function getSessions(): Promise<any[]> {
+  if (_directusSessions !== null) return _directusSessions;
+  const fromCMS = await fetchFromDirectus();
+  // Directus sessions already have flat fields — no normalise needed
+  _directusSessions = fromCMS ?? STATIC_SESSIONS;
+  return _directusSessions;
+}
+
+export async function getSessionPlans({ ageGroup, theme, limit = 300 } = {} as any) {
+  let data = await getSessions();
+  if (ageGroup) data = data.filter((s: any) => s.age_group === ageGroup);
+  if (theme)    data = data.filter((s: any) => s.theme === theme);
   return data.slice(0, limit);
 }
 
-export function getSessionPlan(slug) {
-  return SESSIONS.find(s => s.slug === slug) || null;
+export async function getSessionPlan(slug: string) {
+  const data = await getSessions();
+  return data.find((s: any) => s.slug === slug) || null;
 }
 
-export function getAllSessionPlanSlugs() {
-  return SESSIONS.map(s => s.slug);
+export async function getAllSessionPlanSlugs() {
+  const data = await getSessions();
+  return data.map((s: any) => s.slug);
 }
