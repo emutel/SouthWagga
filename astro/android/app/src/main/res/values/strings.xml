@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Warriors FC</string>
+    <string name="title_activity_main">Warriors FC</string>
+    <string name="package_name">au.com.southwagga.warriors</string>
+    <string name="custom_url_scheme">au.com.southwagga.warriors</string>
+</resources>
