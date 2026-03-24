@@ -103,9 +103,9 @@ function normalise(s) {
 const STATIC_SESSIONS = ALL_SESSIONS.map(normalise);
 
 // Cache the Directus result within a single build
-let _directusSessions: any[] | null = null;
+let _directusSessions = null;
 
-async function getSessions(): Promise<any[]> {
+async function getSessions() {
   if (_directusSessions !== null) return _directusSessions;
   const fromCMS = await fetchFromDirectus();
   // Directus sessions already have flat fields — no normalise needed
@@ -113,19 +113,19 @@ async function getSessions(): Promise<any[]> {
   return _directusSessions;
 }
 
-export async function getSessionPlans({ ageGroup, theme, limit = 300 } = {} as any) {
+export async function getSessionPlans({ ageGroup, theme, limit = 300 } = {}) {
   let data = await getSessions();
-  if (ageGroup) data = data.filter((s: any) => s.age_group === ageGroup);
-  if (theme)    data = data.filter((s: any) => s.theme === theme);
+  if (ageGroup) data = data.filter((s) => s.age_group === ageGroup);
+  if (theme)    data = data.filter((s) => s.theme === theme);
   return data.slice(0, limit);
 }
 
-export async function getSessionPlan(slug: string) {
+export async function getSessionPlan(slug) {
   const data = await getSessions();
-  return data.find((s: any) => s.slug === slug) || null;
+  return data.find((s) => s.slug === slug) || null;
 }
 
 export async function getAllSessionPlanSlugs() {
   const data = await getSessions();
-  return data.map((s: any) => s.slug);
+  return data.map((s) => s.slug);
 }
