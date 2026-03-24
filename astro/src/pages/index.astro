@@ -39,14 +39,18 @@ const tickerItems = results.slice(0, 6);
   <!-- ── HERO ── -->
   <section class="hero">
     <div class="hero-bg"></div>
-    <div class="hero-number" aria-hidden="true">9</div>
-    <div class="hero-content">
-      <div class="label">2025 Season · Greater Wagga Football</div>
-      <h1 class="hero-title">South<br>Wagga<br><span>Warriors.</span></h1>
-      <p class="hero-sub">Grassroots football in South Wagga. From Mini Roos to Seniors — we play for the love of the game.</p>
-      <div class="hero-actions">
-        <a href="/results" class="btn btn-primary">⚽ Latest Results</a>
-        <a href="/academy" class="btn btn-secondary">Academy →</a>
+    <div class="hero-inner">
+      <div class="hero-content">
+        <div class="label">2025 Season · Greater Wagga Football</div>
+        <h1 class="hero-title">South<br>Wagga<br><span>Warriors.</span></h1>
+        <p class="hero-sub">Grassroots football in South Wagga. From Mini Roos to Seniors — we play for the love of the game.</p>
+        <div class="hero-actions">
+          <a href="/results" class="btn btn-primary">⚽ Latest Results</a>
+          <a href="/academy" class="btn btn-secondary">Academy →</a>
+        </div>
+      </div>
+      <div class="hero-logo-wrap" aria-hidden="true">
+        <img src="/logo.png" alt="" class="hero-logo" />
       </div>
     </div>
   </section>
@@ -236,8 +240,8 @@ const tickerItems = results.slice(0, 6);
 .hero {
   min-height: 92vh;
   display: flex;
-  align-items: flex-end;
-  padding: 0 48px 80px;
+  align-items: center;
+  padding: 0 48px;
   position: relative;
   overflow: hidden;
 }
@@ -252,24 +256,36 @@ const tickerItems = results.slice(0, 6);
   background-color: #0d1a10;
 }
 
-.hero-number {
-  position: absolute;
-  right: -60px;
-  top: 50%;
-  transform: translateY(-60%);
-  font-family: var(--font-display);
-  font-size: clamp(260px, 30vw, 460px);
-  color: rgba(29,122,58,0.06);
-  line-height: 1;
-  pointer-events: none;
-  user-select: none;
+.hero-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
 }
 
 .hero-content {
-  position: relative;
-  z-index: 2;
-  max-width: 680px;
+  flex: 1;
   animation: fadeUp 0.8s ease both;
+}
+
+.hero-logo-wrap {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-logo {
+  width: clamp(180px, 22vw, 340px);
+  height: auto;
+  opacity: 0.92;
+  filter: drop-shadow(0 0 40px rgba(37,160,76,0.25));
+  animation: fadeUp 1s 0.2s ease both;
 }
 
 @keyframes fadeUp {
@@ -464,7 +480,10 @@ const tickerItems = results.slice(0, 6);
 .instagram-placeholder { color: var(--muted); font-style: italic; padding: 40px; text-align: center; grid-column: 1/-1; }
 
 @media (max-width: 768px) {
-  .hero { padding: 0 20px 60px; }
+  .hero { padding: 60px 20px; }
+  .hero-inner { flex-direction: column-reverse; align-items: center; text-align: center; }
+  .hero-logo { width: clamp(120px, 50vw, 200px); }
+  .hero-actions { justify-content: center; }
   .academy-cta-inner { grid-template-columns: 1fr; }
 }
 </style>
