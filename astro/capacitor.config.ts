@@ -4,6 +4,10 @@ const config: CapacitorConfig = {
   appId: 'au.com.southwagga.warriors',
   appName: 'Warriors FC',
   webDir: 'dist',
+  server: {
+    url: 'https://south-wagga.vercel.app',
+    cleartext: false,
+  },
   ios: {
     contentInset: 'always',
   },
