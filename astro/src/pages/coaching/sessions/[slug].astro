@@ -144,7 +144,10 @@ const hasContent = (p: any) => p.desc || p.activities || p.setup;
       {phases.map((phase, i) => {
         if (!hasContent(phase) && phase.id !== 'welcome' && phase.id !== 'warmdown') return null;
         if (!hasContent(phase)) return null;
-        const points: string[] | null = (phase as any).points;
+        const rawPoints = (phase as any).points;
+        const points: string[] | null = Array.isArray(rawPoints)
+          ? rawPoints
+          : (rawPoints ? String(rawPoints).split('\n').filter(Boolean) : null);
         return (
           <section id={phase.id} class="phase-block card">
             <div class="phase-header">
