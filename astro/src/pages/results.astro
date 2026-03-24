@@ -3,15 +3,23 @@
 import Base from '../layouts/Base.astro';
 import { getResults, getFixtures, getStandings } from '../lib/dribl.js';
 
-const { data: allResults, cachedAt } = getResults({ limit: 40 });
-const { data: fixtures }             = getFixtures({ limit: 20 });
+const { data: allResults, cachedAt } = getResults({ limit: 100 });
+const { data: fixtures, cachedAt: fxCachedAt } = getFixtures({ limit: 300 });
 const { data: standings }            = getStandings();
 
-// All unique divisions
-const divisions = [...new Set([
-  ...allResults.map(r => r.competition).filter(Boolean),
-  ...fixtures.map(f => f.competition).filter(Boolean),
-])];
+// Team groups derived from fixtures warrior_team field
+const fixtureTeams = [...new Set(fixtures.map(f => f.warriors_team).filter(Boolean))].sort();
+// Result divisions from competition (may be same for all) — fall back to team-based
+const resultDivisions = [...new Set(allResults.map(r => r.competition).filter(Boolean))];
+
+// Group fixtures by warriors_team
+const fixturesByTeam: Record<string, typeof fixtures> = {};
+fixtures.forEach(f => {
+  const team = f.warriors_team || 'Other';
+  if (!fixturesByTeam[team]) fixturesByTeam[team] = [];
+  fixturesByTeam[team].push(f);
+});
+const effectiveCachedAt = cachedAt || fxCachedAt;
 ---
 <Base title="Results & Fixtures" description="Latest match results, upcoming fixtures and league tables for South Wagga Warriors FC.">
 
@@ -19,7 +27,7 @@ const divisions = [...new Set([
     <div class="page-hero-inner">
       <div class="label">fww.dribl.com</div>
       <h1>Results &amp; Fixtures</h1>
-      <p>All Warriors teams · Updated automatically from Dribl{cachedAt ? ` · ${new Date(cachedAt).toLocaleString('en-AU')}` : ''}</p>
+      <p>All Warriors teams · Updated automatically from Dribl{effectiveCachedAt ? ` · ${new Date(effectiveCachedAt).toLocaleString('en-AU')}` : ''}</p>
     </div>
   </div>
 
@@ -44,12 +52,12 @@ const divisions = [...new Set([
         <button class="tab" data-tab="table" role="tab">League Table</button>
       </div>
 
-      <!-- Division filter -->
-      {divisions.length > 1 && (
+      <!-- Team filter pills -->
+      {fixtureTeams.length > 1 && (
         <div class="div-pills" id="div-pills">
           <button class="div-pill active" data-div="all">All Teams</button>
-          {divisions.map(d => (
-            <button class="div-pill" data-div={d}>{d}</button>
+          {fixtureTeams.map(t => (
+            <button class="div-pill" data-div={t}>{t}</button>
           ))}
         </div>
       )}
@@ -83,29 +91,38 @@ const divisions = [...new Set([
 
       <!-- ── FIXTURES PANEL ── -->
       <div class="tab-panel" id="panel-fixtures">
-        <div class="fixtures-list">
-          {fixtures.map(f => {
-            const d = f.date ? new Date(f.date) : null;
-            return (
-              <div class="fixture-card" data-div={f.competition || 'all'}>
-                <div class="fx-date">
-                  <span class="fx-day">{d ? d.getDate() : '--'}</span>
-                  <span class="fx-month">{d ? d.toLocaleString('en-AU',{month:'short'}) : '--'}</span>
-                </div>
-                <div class="fx-info">
-                  <div class="fx-matchup">{f.home_team} vs {f.away_team}</div>
-                  <div class="fx-detail">
-                    {f.time && <span>🕒 {f.time}</span>}
-                    {f.venue && <span>📍 {f.venue}</span>}
-                    {f.round && <span>{f.round}</span>}
+        {fixtures.length === 0 && <p class="empty">No upcoming fixtures found.</p>}
+        {Object.keys(fixturesByTeam).sort().map(team => (
+          <div class="team-fixtures-block" data-div={team}>
+            <h3 class="team-fixtures-heading">{team}</h3>
+            <div class="fixtures-list">
+              {fixturesByTeam[team].map(f => {
+                const d = f.date ? new Date(f.date) : null;
+                const isHome = (f.home_team || '').toLowerCase().includes('south wagga');
+                return (
+                  <div class="fixture-card" data-div={team}>
+                    <div class="fx-date">
+                      <span class="fx-day">{d ? d.getDate() : '--'}</span>
+                      <span class="fx-month">{d ? d.toLocaleString('en-AU',{month:'short'}) : '--'}</span>
+                    </div>
+                    <div class="fx-info">
+                      <div class="fx-matchup">
+                        <span class={isHome ? 'fx-us' : 'fx-them'}>{f.home_team?.replace(/south wagga football club\s*/i,'').trim() || f.home_team}</span>
+                        <span class="fx-vs">vs</span>
+                        <span class={!isHome ? 'fx-us' : 'fx-them'}>{f.away_team?.replace(/south wagga football club\s*/i,'').trim() || f.away_team}</span>
+                      </div>
+                      <div class="fx-detail">
+                        {f.venue && <span>📍 {f.venue}{f.field ? ` · ${f.field}` : ''}</span>}
+                        {f.round && <span class="fx-round">{f.round}</span>}
+                      </div>
+                    </div>
+                    <span class={`fx-venue-badge ${isHome ? 'home' : 'away'}`}>{isHome ? 'HOME' : 'AWAY'}</span>
                   </div>
-                </div>
-                {f.competition && <span class="fx-div">{f.competition}</span>}
-              </div>
-            );
-          })}
-          {fixtures.length === 0 && <p class="empty">No upcoming fixtures found.</p>}
-        </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
       <!-- ── TABLE PANEL ── -->
@@ -168,7 +185,7 @@ const divisions = [...new Set([
 
       <p class="dribl-credit">
         Data sourced from <a href="https://fww.dribl.com" target="_blank" rel="noopener">fww.dribl.com</a>
-        {cachedAt && ` · Last synced ${new Date(cachedAt).toLocaleString('en-AU')}`}
+        {effectiveCachedAt && ` · Last synced ${new Date(effectiveCachedAt).toLocaleString('en-AU')}`}
       </p>
     </div>
   </div>
@@ -186,13 +203,17 @@ const divisions = [...new Set([
     });
   });
 
-  // Division filter
+  // Team filter — show/hide entire team-fixtures-block sections
   document.querySelectorAll('.div-pill').forEach(pill => {
     pill.addEventListener('click', () => {
       document.querySelectorAll('.div-pill').forEach(p => p.classList.remove('active'));
       pill.classList.add('active');
       const div = pill.dataset.div;
-      document.querySelectorAll('[data-div]').forEach(card => {
+      document.querySelectorAll('.team-fixtures-block').forEach(block => {
+        block.style.display = (div === 'all' || block.dataset.div === div) ? '' : 'none';
+      });
+      // Also filter result cards
+      document.querySelectorAll('.result-card[data-div]').forEach(card => {
         card.style.display = (div === 'all' || card.dataset.div === div) ? '' : 'none';
       });
     });
@@ -279,21 +300,29 @@ const divisions = [...new Set([
 .digits { font-family: var(--font-display); font-size: 28px; letter-spacing: 3px; min-width: 68px; text-align: center; }
 .div-label { font-size: 11px; color: var(--green-bright); font-family: var(--font-cond); text-transform: uppercase; letter-spacing: 0.8px; }
 
-.fixtures-list { display: flex; flex-direction: column; gap: 10px; max-width: 800px; }
+.team-fixtures-block { margin-bottom: 36px; }
+.team-fixtures-heading { font-family: var(--font-cond); font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--green-bright); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 14px; }
+.fixtures-list { display: flex; flex-direction: column; gap: 8px; max-width: 800px; }
 .fixture-card {
   display: flex; align-items: center; gap: 14px;
   background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 14px;
+  border-radius: var(--radius); padding: 12px 14px;
   transition: border-color 0.15s;
 }
 .fixture-card:hover { border-color: var(--green); }
-.fx-date { text-align: center; background: var(--green-dark); border-radius: 6px; padding: 8px 10px; min-width: 46px; }
+.fx-date { text-align: center; background: var(--green-dark); border-radius: 6px; padding: 8px 10px; min-width: 46px; flex-shrink: 0; }
 .fx-day   { display: block; font-family: var(--font-display); font-size: 26px; line-height: 1; color: var(--green-bright); }
 .fx-month { display: block; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
-.fx-info  { flex: 1; }
-.fx-matchup { font-family: var(--font-cond); font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.fx-info  { flex: 1; min-width: 0; }
+.fx-matchup { display: flex; align-items: baseline; gap: 8px; font-family: var(--font-cond); font-size: 15px; font-weight: 700; margin-bottom: 4px; flex-wrap: wrap; }
+.fx-us    { color: var(--white); }
+.fx-them  { color: var(--muted); }
+.fx-vs    { font-size: 11px; color: var(--muted); font-weight: 400; }
 .fx-detail  { font-size: 12px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; }
-.fx-div { font-family: var(--font-cond); font-size: 11px; font-weight: 700; text-transform: uppercase; background: rgba(37,160,76,0.15); color: var(--green-bright); padding: 4px 10px; border-radius: 3px; white-space: nowrap; }
+.fx-round   { font-family: var(--font-cond); font-weight: 700; color: var(--green-bright); font-size: 11px; letter-spacing: 0.5px; }
+.fx-venue-badge { font-family: var(--font-cond); font-size: 10px; font-weight: 700; letter-spacing: 1.5px; padding: 3px 8px; border-radius: 3px; flex-shrink: 0; }
+.fx-venue-badge.home { background: rgba(37,160,76,0.2); color: var(--green-bright); border: 1px solid var(--green); }
+.fx-venue-badge.away { background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid var(--border); }
 
 .table-section { margin-bottom: 40px; }
 .table-section h3 { font-family: var(--font-cond); font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--green-bright); margin-bottom: 12px; }
