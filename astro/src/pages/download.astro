@@ -1,0 +1,150 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Download — Warriors FC App">
+
+  <div class="download-page">
+    <div class="download-inner">
+
+      <img src="/logo.png" alt="Warriors FC" class="download-logo" />
+      <h1>Warriors FC</h1>
+      <p class="download-sub">Android App — Beta</p>
+
+      <div class="steps card">
+        <h2>How to install</h2>
+        <ol class="step-list">
+          <li>Tap the button below to download the app</li>
+          <li>When prompted, tap <strong>Download anyway</strong></li>
+          <li>Open the downloaded file from your notifications</li>
+          <li>If asked, allow <strong>Install from unknown sources</strong> for your browser</li>
+          <li>Tap <strong>Install</strong> — done!</li>
+        </ol>
+      </div>
+
+      <a href="/downloads/warriors-fc.apk" class="btn-download" download>
+        <span class="dl-icon">⬇</span>
+        Download Warriors FC App
+        <span class="dl-size">Android · ~5 MB</span>
+      </a>
+
+      <p class="download-note">
+        This is a beta build for testing. An iOS version requires an Apple Developer account.<br>
+        Requires Android 7.0 or later.
+      </p>
+
+    </div>
+  </div>
+
+</Base>
+
+<style>
+.download-page {
+  min-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+}
+
+.download-inner {
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.download-logo {
+  width: 120px;
+  height: auto;
+  filter: drop-shadow(0 0 24px rgba(37,160,76,0.3));
+}
+
+.download-inner h1 {
+  font-size: clamp(36px, 6vw, 56px);
+  margin: 0;
+}
+
+.download-sub {
+  font-family: var(--font-cond);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--green-bright);
+  margin: -16px 0 0;
+}
+
+.steps {
+  width: 100%;
+  padding: 24px 28px;
+  text-align: left;
+}
+
+.steps h2 {
+  font-family: var(--font-cond);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--green-bright);
+  margin-bottom: 16px;
+}
+
+.step-list {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.step-list strong {
+  color: var(--text);
+}
+
+.btn-download {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--green);
+  color: #fff;
+  text-decoration: none;
+  font-family: var(--font-cond);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 20px 40px;
+  border-radius: var(--radius);
+  width: 100%;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.btn-download:hover {
+  background: var(--green-bright);
+  transform: translateY(-2px);
+}
+
+.dl-icon {
+  font-size: 28px;
+}
+
+.dl-size {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.75;
+  letter-spacing: 1px;
+}
+
+.download-note {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+</style>
