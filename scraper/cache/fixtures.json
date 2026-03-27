@@ -1,6 +1,6 @@
 {
-  "cached_at": "2026-03-27T03:00:09.762Z",
-  "cached_unix": 1774580409,
+  "cached_at": "2026-03-27T05:00:09.790Z",
+  "cached_unix": 1774587609,
   "data": [
     {
       "id": "EN2p5PAbld",
@@ -301,22 +301,6 @@
       "is_warriors": true
     },
     {
-      "id": "Rdk2ZYRyAK",
-      "date": "2026-04-17T09:00:00.000000Z",
-      "home_team": "Wagga United Football Club  Crows",
-      "away_team": "South Wagga Football Club  Warriors",
-      "home_logo": "https://ocean.dribl.com/e92bc086c2604445bf99a95b030db1c6",
-      "away_logo": "https://ocean.dribl.com/68a0a83efa6b41dbb9dac18f94cd579d",
-      "venue": "Rawlings Park",
-      "field": "Field 2",
-      "round": "Round 2",
-      "competition": "Home and Away",
-      "status": "pending",
-      "home_team_id": "1K3v5AQ9NQ",
-      "away_team_id": "pN69rQkpm0",
-      "is_warriors": true
-    },
-    {
       "id": "WdgqL5XbpN",
       "date": "2026-04-17T09:00:00.000000Z",
       "home_team": "South Wagga Football Club  Vikings",
@@ -362,6 +346,22 @@
       "status": "pending",
       "home_team_id": "jmaBZ1k3NR",
       "away_team_id": "BdD95vg4mb",
+      "is_warriors": true
+    },
+    {
+      "id": "Rdk2ZYRyAK",
+      "date": "2026-04-17T09:00:00.000000Z",
+      "home_team": "Wagga United Football Club  Crows",
+      "away_team": "South Wagga Football Club  Warriors",
+      "home_logo": "https://ocean.dribl.com/e92bc086c2604445bf99a95b030db1c6",
+      "away_logo": "https://ocean.dribl.com/68a0a83efa6b41dbb9dac18f94cd579d",
+      "venue": "Rawlings Park",
+      "field": "Field 2",
+      "round": "Round 2",
+      "competition": "Home and Away",
+      "status": "pending",
+      "home_team_id": "1K3v5AQ9NQ",
+      "away_team_id": "pN69rQkpm0",
       "is_warriors": true
     },
     {
