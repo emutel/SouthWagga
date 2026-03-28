@@ -1,6 +1,6 @@
 {
-  "cached_at": "2026-03-28T04:00:09.145Z",
-  "cached_unix": 1774670409,
+  "cached_at": "2026-03-28T05:00:10.356Z",
+  "cached_unix": 1774674010,
   "data": [
     {
       "id": "EN2p5PAbld",
@@ -637,6 +637,22 @@
       "is_warriors": true
     },
     {
+      "id": "BdDbW6MA4N",
+      "date": "2026-05-01T22:30:00.000000Z",
+      "home_team": "Henwood Park ",
+      "away_team": "South Wagga Football Club  Warriors",
+      "home_logo": "https://ocean.dribl.com/f87ecf40ab8b4560a9278ff4d3398205",
+      "away_logo": "https://ocean.dribl.com/68a0a83efa6b41dbb9dac18f94cd579d",
+      "venue": "Rawlings Park",
+      "field": "Field 4",
+      "round": "Round 2",
+      "competition": "Home and Away",
+      "status": "pending",
+      "home_team_id": "OmeXvX2Pd0",
+      "away_team_id": "pmvwjZJyNv",
+      "is_warriors": true
+    },
+    {
       "id": "ydoRek4XLK",
       "date": "2026-05-01T22:30:00.000000Z",
       "home_team": "Lake Albert Soccer Club  Red Sharks",
@@ -650,6 +666,22 @@
       "status": "pending",
       "home_team_id": "Pmrqy9GAdo",
       "away_team_id": "RmwyVy8ZKE",
+      "is_warriors": true
+    },
+    {
+      "id": "BdDbW6MA4N",
+      "date": "2026-05-01T22:30:00.000000Z",
+      "home_team": "Henwood Park ",
+      "away_team": "South Wagga Football Club  Warriors",
+      "home_logo": "https://ocean.dribl.com/f87ecf40ab8b4560a9278ff4d3398205",
+      "away_logo": "https://ocean.dribl.com/68a0a83efa6b41dbb9dac18f94cd579d",
+      "venue": "Rawlings Park",
+      "field": "Field 4",
+      "round": "Round 2",
+      "competition": "Home and Away",
+      "status": "pending",
+      "home_team_id": "OmeXvX2Pd0",
+      "away_team_id": "pmvwjZJyNv",
       "is_warriors": true
     },
     {
