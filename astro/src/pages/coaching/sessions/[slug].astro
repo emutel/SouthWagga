@@ -308,69 +308,47 @@ const hasContent = (p: any) => p.desc || p.activities || p.setup;
 }
 
 @media print {
-  /* Hide site chrome */
-  .nav-outer, nav, footer, .footer, .print-btn, .back-link { display: none !important; }
+  /* Hide everything except content */
+  .nav-outer, nav, footer, .footer, .print-btn, .back-link,
+  .phase-framework-note, .sidebar-timeline, .intervention-tip,
+  .label, .cues-icon, .phase-icon, .phase-num { display: none !important; }
 
-  /* White page */
-  html, body { background: white !important; color: black !important; font-size: 11pt; }
+  /* Plain white page */
+  *, html, body { background: white !important; color: black !important; box-shadow: none !important; border: none !important; }
+  body { font-family: Georgia, serif; font-size: 11pt; line-height: 1.5; }
 
-  /* Hero: strip dark gradient */
-  .page-hero {
-    background: white !important;
-    border-bottom: 2px solid #000 !important;
-    padding: 20px 0 16px !important;
-    color: black !important;
-  }
-  .page-hero h1 { color: black !important; font-size: 22pt; }
-  .label        { color: #333 !important; border-color: #333 !important; background: #eee !important; }
-  .meta-tag     { background: #eee !important; border-color: #999 !important; color: #333 !important; }
+  /* Hero: just the title and meta as plain text */
+  .page-hero { padding: 0 0 12pt !important; border-bottom: 1pt solid #000 !important; }
+  .page-hero h1 { font-size: 18pt; margin: 0 0 6pt; }
+  .plan-meta { display: block; font-size: 10pt; color: #333 !important; }
+  .meta-tag { display: inline; background: none !important; border: none !important; padding: 0; margin-right: 12pt; }
 
-  /* Layout: single column for print */
+  /* Single column, no sidebar */
   .plan-layout  { display: block !important; padding: 0 !important; max-width: 100% !important; }
-  .plan-sidebar { display: block !important; margin-bottom: 16pt !important; }
+  .plan-sidebar { display: none !important; }
 
-  /* Cards: white with border */
-  .card, .phase-block, .sidebar-block {
-    background: white !important;
-    border: 1px solid #ccc !important;
-    box-shadow: none !important;
-    color: black !important;
-  }
+  /* Phase blocks: plain headings, no boxes */
+  .card, .phase-block { border: none !important; padding: 0 !important; margin-bottom: 14pt; }
+  .phase-header { background: none !important; border: none !important; padding: 0 !important; border-bottom: 1pt solid #999 !important; margin-bottom: 6pt; display: block !important; }
+  .phase-title-group h2 { font-size: 12pt; font-weight: bold; margin: 0; display: inline; }
+  .phase-time { font-size: 10pt; color: #444 !important; margin-left: 8pt; }
 
-  /* Phase headers */
-  .phase-header   { background: #f0f0f0 !important; border-bottom: 1px solid #ccc !important; }
-  .phase-icon     { display: none; }
-  .phase-num      { color: #333 !important; }
-  .phase-title-group h2 { color: black !important; font-size: 13pt; }
-  .phase-time     { color: #555 !important; }
-  .phase-framework-note { color: #555 !important; border-bottom-color: #ccc !important; }
+  /* Sections: plain text, no backgrounds */
+  .phase-section { border: none !important; padding: 2pt 0 !important; }
+  .phase-section h4 { font-size: 10pt; font-weight: bold; text-transform: none; letter-spacing: 0; color: #333 !important; margin-bottom: 2pt; }
+  .activity-text, .whitespace, .setup-text { font-size: 10pt; }
+  .activity-list { padding-left: 18pt; font-size: 10pt; }
 
-  /* Phase sections */
-  .phase-section         { border-bottom-color: #ddd !important; }
-  .phase-section--setup  { background: #fafafa !important; }
-  .phase-section--amber  { background: #fffdf0 !important; }
-  .phase-section h4      { color: #333 !important; }
-  .activity-text, .whitespace, .setup-text { color: black !important; }
-  .activity-list         { color: #222 !important; }
-
-  /* Coaching cues: strip green tint */
-  .coaching-cues  { background: #f8f8f8 !important; border-top: 2px solid #333 !important; }
-  .cues-header    { color: #333 !important; }
-  .cue-check      { color: #333 !important; }
-  .cue-text       { color: black !important; }
-  .intervention-tip { border-top-color: #ccc !important; color: #444 !important; }
-  .int-label      { color: #333 !important; }
-
-  /* Sidebar */
-  .sidebar-block h3 { color: #333 !important; }
-  .sidebar-block p, .obj-list { color: #222 !important; }
-  .sidebar-td       { border-color: #333 !important; }
-  .timeline-item    { color: black !important; border-bottom-color: #ddd !important; }
-  .tl-time          { color: #555 !important; }
+  /* Coaching cues: simple bullet list */
+  .coaching-cues { background: none !important; border: none !important; border-top: 1pt solid #999 !important; padding: 4pt 0 0 !important; }
+  .cues-header { font-size: 10pt; font-weight: bold; color: black !important; margin-bottom: 4pt; }
+  .cues-grid { display: block !important; }
+  .cue-item { display: list-item; margin-left: 18pt; list-style: disc; font-size: 10pt; }
+  .cue-check { display: none; }
+  .cue-text { color: black !important; }
 
   /* Page breaks */
-  .phase-block      { page-break-inside: avoid; margin-bottom: 16pt; }
-  .plan-sidebar     { page-break-after: avoid; }
-  h1, h2, h3, h4   { page-break-after: avoid; }
+  .phase-block { page-break-inside: avoid; }
+  h1, h2, h3, h4 { page-break-after: avoid; }
 }
 </style>

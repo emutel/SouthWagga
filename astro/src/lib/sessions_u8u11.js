@@ -3058,7 +3058,7 @@ const sessions_u8u11 = [
   },
 
   // S&C 2–10 ──────────────────────────────────────────────────────────────────
-  { id:"u8u11-sc-02", slug:"youth-sc-speed-machines",    title:"Speed Machines",           age_group:"u8-u11", theme:"Strength and Conditioning", duration:30, player_numbers:"6–20",
+  { id:"u8u11-sc-02", slug:"youth-sc-speed-machines",    title:"Speed Machines",           age_group:"u8-u11", theme:"Strength & Conditioning", duration:30, player_numbers:"6–20",
     objectives:["Develop explosive first-step acceleration and sprint mechanics","Learn controlled deceleration and stopping technique"],
     equipment:["Flat disc cones","Coloured bibs (2 sets)","Whistle"],
     td_notes:"Focus on mechanics over raw speed. Never compare players speeds publicly. For U14+: add resistance band sprints and increase distances to 20–25m.",
@@ -3077,7 +3077,7 @@ const sessions_u8u11 = [
       warmdown:{description:"Walk two slow laps. Stretch: hamstring (30 sec), hip flexor lunge (30 sec each side), calf stretch. Circle up — one player names the hardest moment. Speed is not just a gift — it is a skill. You trained it today."}
     }, fa_principle:"Athletic Development / Speed & Acceleration" },
 
-  { id:"u8u11-sc-03", slug:"youth-sc-agility-warriors",  title:"Zig-Zag Warriors",         age_group:"u8-u11", theme:"Strength and Conditioning", duration:30, player_numbers:"6–20",
+  { id:"u8u11-sc-03", slug:"youth-sc-agility-warriors",  title:"Zig-Zag Warriors",         age_group:"u8-u11", theme:"Strength & Conditioning", duration:30, player_numbers:"6–20",
     objectives:["Develop rapid change-of-direction mechanics and deceleration control","Build reactive agility responding to a visual cue","Improve footwork precision through cone patterns"],
     equipment:["Flat disc cones","Coloured bibs (2 sets)","Whistle"],
     td_notes:"Watch for knee cave on sharp turns. Cue: bend your knee over your toes. For U14+: use T-drill and L-drill with timed trials.",
@@ -3096,7 +3096,7 @@ const sessions_u8u11 = [
       warmdown:{description:"Slow jog one lap, walk one lap. Quad stretch, hip flexor stretch, groin butterfly stretch. Circle: Which round was hardest to avoid being tagged, and why?"}
     }, fa_principle:"Athletic Development / Agility & Change of Direction" },
 
-  { id:"u8u11-sc-04", slug:"youth-sc-jump-lab",          title:"Jump Lab",                  age_group:"u8-u11", theme:"Strength and Conditioning", duration:30, player_numbers:"6–20",
+  { id:"u8u11-sc-04", slug:"youth-sc-jump-lab",          title:"Jump Lab",                  age_group:"u8-u11", theme:"Strength & Conditioning", duration:30, player_numbers:"6–20",
     objectives:["Master safe landing mechanics — soft, controlled and quiet","Develop explosive jump power through two-foot and single-foot patterns","Connect jumping to aerial challenges and heading"],
     equipment:["Flat disc cones","Whistle"],
     td_notes:"Prioritise the landing pattern (bend, stick, balance) before adding height or distance. For U14+: add single-leg hop sequences and depth jumps off a low box.",
@@ -3115,7 +3115,7 @@ const sessions_u8u11 = [
       warmdown:{description:"Walk one slow lap. Seated: hamstring reach (30 sec each), butterfly groin stretch (30 sec), lying quad stretch (30 sec each). Roll ankles. Circle: What part of your body worked hardest?"}
     }, fa_principle:"Athletic Development / Plyometrics & Jump Power" },
 
-  { id:"u8u11-sc-05", slug:"youth-sc-balance-champions", title:"Balance Champions",         age_group:"u8-u11", theme:"Strength and Conditioning", duration:30, player_numbers:"6–20",
+  { id:"u8u11-sc-05", slug:"youth-sc-balance-champions", title:"Balance Champions",         age_group:"u8-u11", theme:"Strength & Conditioning", duration:30, player_numbers:"6–20",
     objectives:["Develop single-leg stability and proprioception","Improve coordination through multi-step movement sequences","Connect balance skills to taking a touch, shooting and holding off opponents"],
     equipment:["Flat disc cones","Whistle"],
     td_notes:"For U8–10 use two-foot balance before progressing to single-leg. For U14+: add eyes-closed holds and combined balance and ball-reception challenges.",
@@ -3134,7 +3134,7 @@ const sessions_u8u11 = [
       warmdown:{description:"Slow walk shaking out legs. Seated: cross-legged hip stretch, hamstring hold (30 sec each), pull knee to chest (30 sec each). Close: Which leg is your weaker balance leg? Every time you wait somewhere, stand on that leg."}
     }, fa_principle:"Athletic Development / Balance & Proprioception" },
 
-  { id:"u8u11-sc-06", slug:"youth-sc-iron-core",         title:"Iron Core",                 age_group:"u8-u11", theme:"Strength and Conditioning", duration:30, player_numbers:"6–20",
+  { id:"u8u11-sc-06", slug:"youth-sc-iron-core",         title:"Iron Core",                 age_group:"u8-u11", theme:"Strength & Conditioning", duration:30, player_numbers:"6–20",
     objectives:["Develop anti-extension and anti-rotation core stability","Build endurance in the deep stabilising muscles of the trunk","Connect core strength to shielding the ball, heading and winning physical duels"],
     equipment:["Flat disc cones","Whistle"],
     td_notes:"Focus on stability under load (bracing) not spinal flexion (crunches). Watch for lower back arching during planks. For U14+: extend plank holds to 45–60 sec and add rollouts using a ball.",
@@ -3153,7 +3153,7 @@ const sessions_u8u11 = [
       warmdown:{description:"Slow roll onto the back. Knees-to-chest hug (30 sec), spinal twist each side (30 sec), seated forward fold (30 sec). Circle: Which exercise did you feel most in your stomach? A strong core means you can hold off opponents and run more efficiently. These exercises can be done at home."}
     }, fa_principle:"Athletic Development / Core Stability" },
 
-  { id:"u8u11-sc-07", slug:"youth-sc-upper-body",        title:"Strong Arms, Strong Game",  age_group:"u8-u11", theme:"Strength and Conditioning", duration:30, player_numbers:"6–20",
+  { id:"u8u11-sc-07", slug:"youth-sc-upper-body",        title:"Strong Arms, Strong Game",  age_group:"u8-u11", theme:"Strength & Conditioning", duration:30, player_numbers:"6–20",
     objectives:["Develop pushing and pulling strength using bodyweight only","Build shoulder stability for shielding, throw-ins and aerial challenges","Create body confidence through progressive strength challenges"],
     equipment:["Flat disc cones","Wall or fence for wall push-ups","Whistle"],
     td_notes:"Keep push-up volume low for U8–11 — quality over quantity. For U14+: progress to full push-ups, tricep dips on a low step, and partner resistance rows.",
@@ -3172,7 +3172,7 @@ const sessions_u8u11 = [
       warmdown:{description:"Gentle arm shake-out. Cross-body shoulder stretch (30 sec each), chest opener by clasping hands behind back. Childs pose 30 sec. Seated wrist stretch. Circle: What surprised you about upper body work for football?"}
     }, fa_principle:"Athletic Development / Upper Body Strength" },
 
-  { id:"u8u11-sc-08", slug:"youth-sc-running-mechanics", title:"Running Machines",          age_group:"u8-u11", theme:"Strength and Conditioning", duration:30, player_numbers:"8–20",
+  { id:"u8u11-sc-08", slug:"youth-sc-running-mechanics", title:"Running Machines",          age_group:"u8-u11", theme:"Strength & Conditioning", duration:30, player_numbers:"8–20",
     objectives:["Develop efficient running form: arm drive, posture and foot strike","Build aerobic base through varied running patterns","Introduce pacing awareness and understanding of effort levels"],
     equipment:["Flat disc cones","Coloured bibs (2 sets)","Whistle"],
     td_notes:"Running form rarely gets taught in junior football. Focus on heel striking and over-striding as the two most common faults. For U14+: introduce structured interval sets (30 sec on, 30 sec off x6).",
@@ -3191,7 +3191,7 @@ const sessions_u8u11 = [
       warmdown:{description:"Easy jog two laps, drop to a walk. Hamstring stretch (30 sec each). Hip flexor lunge (30 sec each). Walk on heels 30 sec, then tiptoes 30 sec. Circle: one player names their biggest running form improvement."}
     }, fa_principle:"Athletic Development / Running Mechanics" },
 
-  { id:"u8u11-sc-09", slug:"youth-sc-lateral-power",     title:"Side to Side Power",       age_group:"u8-u11", theme:"Strength and Conditioning", duration:30, player_numbers:"6–20",
+  { id:"u8u11-sc-09", slug:"youth-sc-lateral-power",     title:"Side to Side Power",       age_group:"u8-u11", theme:"Strength & Conditioning", duration:30, player_numbers:"6–20",
     objectives:["Develop lateral explosive power through bounding and shuffling","Strengthen the hips and glutes to support sideways movement","Improve defensive positioning mechanics"],
     equipment:["Flat disc cones","Coloured bibs (2 sets)","Whistle"],
     td_notes:"The most common fault is a crossover step rather than a true shuffle. Insist on the shuffle pattern at slow speeds before adding pace. For U14+: introduce resisted lateral walks and bigger bounding distances.",
@@ -3210,7 +3210,7 @@ const sessions_u8u11 = [
       warmdown:{description:"Walk two laps with long hip-swing strides. Standing lateral stretch (reach one arm overhead to opposite side, 30 sec each). Pigeon-pose hip opener (30 sec each). Slow carioca one final lap. Circle: What did you feel in your hips? Those are your glutes and hip flexors — the most undertrained muscles in football."}
     }, fa_principle:"Athletic Development / Lateral Power & Hip Strength" },
 
-  { id:"u8u11-sc-10", slug:"youth-sc-combine",           title:"Warriors Athletic Combine", age_group:"u8-u11", theme:"Strength and Conditioning", duration:30, player_numbers:"8–20",
+  { id:"u8u11-sc-10", slug:"youth-sc-combine",           title:"Warriors Athletic Combine", age_group:"u8-u11", theme:"Strength & Conditioning", duration:30, player_numbers:"8–20",
     objectives:["Test all major physical qualities in a fun competitive combine format","Celebrate individual athletic improvement and team effort","Give players a personal benchmark to measure progress over the season"],
     equipment:["Flat disc cones","Coloured bibs (2 sets)","Whistle","Pen and paper or phone to record results (optional)"],
     td_notes:"Use this session 2–3 times per season to track athletic development. Record results individually. Never rank players publicly by score. For U14+: use a stopwatch for sprint and agility tests.",
