@@ -100,7 +100,7 @@ import Base from '../../layouts/Base.astro';
     </div>
 
     <!-- ── ENROLLMENT DETAIL MODAL ─────────────────── -->
-    <div id="enr-modal" class="modal-overlay" hidden>
+    <div id="enr-modal" class="modal-overlay" style="display:none">
       <div class="modal-box card">
         <div class="modal-header">
           <h3 id="modal-title">Enrollment</h3>
@@ -402,12 +402,12 @@ ${enr.status === 'accepted' && hasProfile ? `
     });
   }
 
-  document.getElementById('enr-modal').hidden = false;
+  document.getElementById('enr-modal').style.display = 'flex';
 }
 
 function openCreateProfileModal(enr) { openEnrollmentModal(enr); }
 
-function closeModal() { document.getElementById('enr-modal').hidden = true; }
+function closeModal() { document.getElementById('enr-modal').style.display = 'none'; }
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('enr-modal').addEventListener('click', (e) => { if (e.target === document.getElementById('enr-modal')) closeModal(); });
 
@@ -733,8 +733,7 @@ input:focus,select:focus,textarea:focus { outline:none; border-color:var(--green
 .reply-input { resize:vertical; }
 
 /* Modal */
-.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:200; padding:20px; }
-.modal-overlay:not([hidden]) { display:flex; }
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; z-index:200; padding:20px; }
 .modal-box { width:100%; max-width:600px; max-height:90vh; overflow-y:auto; }
 .modal-header { display:flex; justify-content:space-between; align-items:center; padding:24px 28px 0; }
 .modal-header h3 { font-size:32px; }
