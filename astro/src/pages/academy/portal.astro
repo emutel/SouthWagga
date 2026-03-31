@@ -610,13 +610,13 @@ async function loadPlayerData(profile) {
     const historyData = await api(
       `/items/academy_assessments?filter[player][_eq]=${profile.id}&sort[]=-assessment_date&limit=5&fields=*`
     );
-    const allAssessments = historyData || [];
+    const allAssessments = Array.isArray(historyData) ? historyData : [];
 
     // Messages
     const messagesData = await api(
       `/items/academy_messages?filter[player][_eq]=${profile.id}&sort[]=date_created&fields=*`
     );
-    const messages = messagesData || [];
+    const messages = Array.isArray(messagesData) ? messagesData : [];
 
     renderPlayerContent(profile, latestAssessment, allAssessments, messages);
 
