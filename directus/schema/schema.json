@@ -195,6 +195,136 @@
         { "field": "square_url",  "type": "string",    "meta": { "interface": "input", "note": "Square ticket/registration link" } },
         { "field": "is_featured", "type": "boolean",   "schema": { "default_value": false }, "meta": { "interface": "boolean", "width": "half" } }
       ]
+    },
+
+    {
+      "collection": "academy_enrollments",
+      "meta": {
+        "icon": "how_to_reg",
+        "note": "Registration of interest submissions from parents. TD reviews here and changes status to accepted/enrolled.",
+        "sort_field": "date_created"
+      },
+      "schema": { "name": "academy_enrollments" },
+      "fields": [
+        { "field": "id",                  "type": "uuid",      "schema": { "is_primary_key": true }, "meta": { "hidden": true } },
+        { "field": "date_created",        "type": "timestamp", "meta": { "hidden": false, "readonly": true, "note": "Auto-set on submission" } },
+        { "field": "status",              "type": "string",    "schema": { "default_value": "pending" },
+          "meta": { "interface": "select-dropdown", "width": "half",
+            "options": { "choices": [
+              {"text":"Pending Review",  "value":"pending"},
+              {"text":"Accepted",        "value":"accepted"},
+              {"text":"Enrolled",        "value":"enrolled"},
+              {"text":"Inactive",        "value":"inactive"}
+            ]},
+            "note": "Change to Accepted, then invite parent as a Directus user with the 'parent' role." } },
+        { "field": "program",             "type": "uuid",      "meta": { "interface": "select-dropdown-m2o", "note": "Program they expressed interest in", "width": "half" } },
+        { "field": "parent_first_name",   "type": "string",    "meta": { "interface": "input", "required": true, "width": "half" } },
+        { "field": "parent_last_name",    "type": "string",    "meta": { "interface": "input", "required": true, "width": "half" } },
+        { "field": "parent_email",        "type": "string",    "meta": { "interface": "input", "required": true, "width": "half" } },
+        { "field": "parent_phone",        "type": "string",    "meta": { "interface": "input", "width": "half" } },
+        { "field": "player_first_name",   "type": "string",    "meta": { "interface": "input", "required": true, "width": "half" } },
+        { "field": "player_last_name",    "type": "string",    "meta": { "interface": "input", "required": true, "width": "half" } },
+        { "field": "player_dob",          "type": "date",      "meta": { "interface": "datetime", "width": "half" } },
+        { "field": "age_group",           "type": "string",    "schema": { "default_value": "u10-u11" },
+          "meta": { "interface": "select-dropdown", "width": "half",
+            "options": { "choices": [
+              {"text":"U8 – U9 (Foundation)",              "value":"u8-u9"},
+              {"text":"U10 – U11 (Foundation/Development)","value":"u10-u11"},
+              {"text":"U12 – U13 (Development)",           "value":"u12-u13"},
+              {"text":"U14 – U16 (Advanced)",              "value":"u14-u16"}
+            ]}}},
+        { "field": "previous_experience", "type": "text",      "meta": { "interface": "input-multiline", "note": "Parent's description of prior football experience" } },
+        { "field": "medical_notes",       "type": "text",      "meta": { "interface": "input-multiline", "note": "Medical conditions, allergies, injuries" } },
+        { "field": "directus_user_id",    "type": "string",    "meta": { "interface": "input", "note": "Fill this with the parent's Directus user ID after creating their account", "width": "half" } }
+      ]
+    },
+
+    {
+      "collection": "academy_player_profiles",
+      "meta": {
+        "icon": "sports",
+        "note": "One profile per enrolled player. Link to their enrollment record. Coaches manage position, photo and jersey number here."
+      },
+      "schema": { "name": "academy_player_profiles" },
+      "fields": [
+        { "field": "id",             "type": "uuid",    "schema": { "is_primary_key": true }, "meta": { "hidden": true } },
+        { "field": "enrollment",     "type": "uuid",    "meta": { "interface": "select-dropdown-m2o", "required": true, "note": "Link to the academy_enrollments record" } },
+        { "field": "position",       "type": "string",  "schema": { "default_value": "midfielder" },
+          "meta": { "interface": "select-dropdown", "width": "half",
+            "options": { "choices": [
+              {"text":"Goalkeeper","value":"goalkeeper"},
+              {"text":"Defender",  "value":"defender"},
+              {"text":"Midfielder","value":"midfielder"},
+              {"text":"Forward",   "value":"forward"}
+            ]}}},
+        { "field": "jersey_number",  "type": "integer", "meta": { "interface": "input", "width": "half", "note": "Optional squad number" } },
+        { "field": "photo",          "type": "uuid",    "meta": { "interface": "file-image", "note": "Player headshot — appears on their FIFA card" } },
+        { "field": "notes",          "type": "text",    "meta": { "interface": "input-multiline", "note": "Internal coach notes — NOT shown to parents" } }
+      ]
+    },
+
+    {
+      "collection": "academy_assessments",
+      "meta": {
+        "icon": "bar_chart",
+        "note": "Each assessment is a historical snapshot of a player's FIFA card attributes. 'is_latest' = true marks the current card. Use the coach dashboard to add assessments — do not edit is_latest manually.",
+        "sort_field": "assessment_date"
+      },
+      "schema": { "name": "academy_assessments" },
+      "fields": [
+        { "field": "id",                 "type": "uuid",    "schema": { "is_primary_key": true }, "meta": { "hidden": true } },
+        { "field": "player",             "type": "uuid",    "meta": { "interface": "select-dropdown-m2o", "required": true } },
+        { "field": "is_latest",          "type": "boolean", "schema": { "default_value": false },
+          "meta": { "interface": "boolean", "width": "half", "note": "True = this is the player's current card. Managed automatically by coach dashboard." } },
+        { "field": "assessment_date",    "type": "date",    "meta": { "interface": "datetime", "width": "half" } },
+        { "field": "age_group_at_time",  "type": "string",  "schema": { "default_value": "u10-u11" },
+          "meta": { "interface": "select-dropdown", "width": "half",
+            "options": { "choices": [
+              {"text":"U8 – U9",   "value":"u8-u9"},
+              {"text":"U10 – U11", "value":"u10-u11"},
+              {"text":"U12 – U13", "value":"u12-u13"},
+              {"text":"U14 – U16", "value":"u14-u16"}
+            ]},
+            "note": "Always record the age group AT THE TIME of assessment, even if the player moves up later." } },
+        { "field": "assessed_by",        "type": "string",  "meta": { "interface": "input", "width": "half", "note": "Coach name" } },
+        { "field": "pace_raw",           "type": "integer", "schema": { "default_value": 5 },
+          "meta": { "interface": "slider", "options": { "minValue": 1, "maxValue": 10, "stepInterval": 1 }, "width": "half",
+            "note": "1–10. Displayed value on card is age-normalised automatically." } },
+        { "field": "shooting_raw",       "type": "integer", "schema": { "default_value": 5 },
+          "meta": { "interface": "slider", "options": { "minValue": 1, "maxValue": 10, "stepInterval": 1 }, "width": "half" } },
+        { "field": "passing_raw",        "type": "integer", "schema": { "default_value": 5 },
+          "meta": { "interface": "slider", "options": { "minValue": 1, "maxValue": 10, "stepInterval": 1 }, "width": "half" } },
+        { "field": "dribbling_raw",      "type": "integer", "schema": { "default_value": 5 },
+          "meta": { "interface": "slider", "options": { "minValue": 1, "maxValue": 10, "stepInterval": 1 }, "width": "half" } },
+        { "field": "defending_raw",      "type": "integer", "schema": { "default_value": 5 },
+          "meta": { "interface": "slider", "options": { "minValue": 1, "maxValue": 10, "stepInterval": 1 }, "width": "half" } },
+        { "field": "physical_raw",       "type": "integer", "schema": { "default_value": 5 },
+          "meta": { "interface": "slider", "options": { "minValue": 1, "maxValue": 10, "stepInterval": 1 }, "width": "half" } },
+        { "field": "notes",              "type": "text",    "meta": { "interface": "input-multiline", "note": "Coach feedback — visible to parents in the portal" } }
+      ]
+    },
+
+    {
+      "collection": "academy_messages",
+      "meta": {
+        "icon": "chat",
+        "note": "Per-player message thread between parents and the Technical Director. Managed via the coach dashboard — use that interface rather than editing here directly."
+      },
+      "schema": { "name": "academy_messages" },
+      "fields": [
+        { "field": "id",           "type": "uuid",      "schema": { "is_primary_key": true }, "meta": { "hidden": true } },
+        { "field": "date_created", "type": "timestamp", "meta": { "readonly": true } },
+        { "field": "player",       "type": "uuid",      "meta": { "interface": "select-dropdown-m2o", "required": true } },
+        { "field": "sender_role",  "type": "string",
+          "meta": { "interface": "select-dropdown", "width": "half",
+            "options": { "choices": [
+              {"text":"Parent","value":"parent"},
+              {"text":"Coach / TD","value":"coach"}
+            ]}}},
+        { "field": "sender_name",  "type": "string",    "meta": { "interface": "input", "width": "half" } },
+        { "field": "body",         "type": "text",      "meta": { "interface": "input-multiline", "required": true } },
+        { "field": "read_at",      "type": "timestamp", "meta": { "interface": "datetime", "note": "Nullable — set when the other party reads the message" } }
+      ]
     }
 
   ],
@@ -230,6 +360,26 @@
       "collection": "team_sponsors",
       "field": "sponsors_id",
       "related_collection": "sponsors"
+    },
+    {
+      "collection": "academy_enrollments",
+      "field": "program",
+      "related_collection": "academy_programs"
+    },
+    {
+      "collection": "academy_player_profiles",
+      "field": "enrollment",
+      "related_collection": "academy_enrollments"
+    },
+    {
+      "collection": "academy_assessments",
+      "field": "player",
+      "related_collection": "academy_player_profiles"
+    },
+    {
+      "collection": "academy_messages",
+      "field": "player",
+      "related_collection": "academy_player_profiles"
     }
   ]
 }

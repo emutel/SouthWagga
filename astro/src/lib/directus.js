@@ -208,6 +208,29 @@ export async function getCoachingResources({ category, ageGroup, limit = 100 } =
   });
 }
 
+// ── ACADEMY — PUBLIC (build-time only) ────────────────────────
+// Client-side authenticated functions live in portal.astro / coach.astro
+// to avoid exposing tokens at build time.
+
+/**
+ * Submit a registration of interest (uses public enrollment token).
+ * Called client-side from register.astro.
+ * Token is PUBLIC_ACADEMY_ENROLLMENT_TOKEN — scoped write-only to academy_enrollments.
+ */
+export async function submitEnrollment(data) {
+  const base  = import.meta.env.PUBLIC_DIRECTUS_URL  || '';
+  const token = import.meta.env.PUBLIC_ACADEMY_ENROLLMENT_TOKEN || '';
+  if (!base || !token) return null;
+  const res = await fetch(`${base}/items/academy_enrollments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({ status: 'pending', ...data }),
+  });
+  if (!res.ok) return null;
+  const json = await res.json();
+  return json.data ?? null;
+}
+
 // ── DIRECTUS FILE URL ────────────────────────────────────────
 export function fileUrl(fileId, { width, height, quality = 80, format = 'webp' } = {}) {
   if (!fileId) return null;

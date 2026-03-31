@@ -1,0 +1,381 @@
+---
+// src/pages/academy/register.astro
+import Base from '../../layouts/Base.astro';
+import { getAcademyPrograms } from '../../lib/directus.js';
+
+const programs = await getAcademyPrograms() || [];
+const activePrograms = programs.filter(p => p.status === 'active');
+---
+<Base
+  title="Academy — Register Interest"
+  description="Register your child's interest in the South Wagga Warriors FC Academy development program."
+>
+
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <div class="label">Academy Registration</div>
+      <h1>Register Interest</h1>
+      <p>Fill in the form below and our Technical Director will be in touch within 3 business days. Submitting this form does not guarantee a place — we'll confirm availability and match your child to the right program tier.</p>
+    </div>
+  </div>
+
+  <div class="page-inner">
+    <div class="form-layout">
+
+      <!-- Main form -->
+      <div class="form-card card" id="form-container">
+        <form id="register-form" novalidate>
+
+          <fieldset>
+            <legend>Parent / Guardian Details</legend>
+            <div class="field-row">
+              <div class="field">
+                <label for="parent_first_name">First Name <span class="req">*</span></label>
+                <input type="text" id="parent_first_name" name="parent_first_name" autocomplete="given-name" required>
+                <span class="field-error" id="err-parent_first_name"></span>
+              </div>
+              <div class="field">
+                <label for="parent_last_name">Last Name <span class="req">*</span></label>
+                <input type="text" id="parent_last_name" name="parent_last_name" autocomplete="family-name" required>
+                <span class="field-error" id="err-parent_last_name"></span>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="parent_email">Email Address <span class="req">*</span></label>
+                <input type="email" id="parent_email" name="parent_email" autocomplete="email" required>
+                <span class="field-error" id="err-parent_email"></span>
+              </div>
+              <div class="field">
+                <label for="parent_phone">Phone Number <span class="req">*</span></label>
+                <input type="tel" id="parent_phone" name="parent_phone" autocomplete="tel" required>
+                <span class="field-error" id="err-parent_phone"></span>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Player Details</legend>
+            <div class="field-row">
+              <div class="field">
+                <label for="player_first_name">Player's First Name <span class="req">*</span></label>
+                <input type="text" id="player_first_name" name="player_first_name" required>
+                <span class="field-error" id="err-player_first_name"></span>
+              </div>
+              <div class="field">
+                <label for="player_last_name">Player's Last Name <span class="req">*</span></label>
+                <input type="text" id="player_last_name" name="player_last_name" required>
+                <span class="field-error" id="err-player_last_name"></span>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="player_dob">Date of Birth <span class="req">*</span></label>
+                <input type="date" id="player_dob" name="player_dob" required>
+                <span class="field-error" id="err-player_dob"></span>
+              </div>
+              <div class="field">
+                <label for="age_group">Age Group <span class="req">*</span></label>
+                <select id="age_group" name="age_group" required>
+                  <option value="">— Select —</option>
+                  <option value="u8-u9">U8 – U9 (Foundation)</option>
+                  <option value="u10-u11">U10 – U11 (Foundation / Development)</option>
+                  <option value="u12-u13">U12 – U13 (Development)</option>
+                  <option value="u14-u16">U14 – U16 (Advanced)</option>
+                </select>
+                <span class="field-error" id="err-age_group"></span>
+              </div>
+            </div>
+            {activePrograms.length > 0 && (
+              <div class="field">
+                <label for="program_interest">Program of Interest</label>
+                <select id="program_interest" name="program_interest">
+                  <option value="">— Not sure yet —</option>
+                  {activePrograms.map(p => (
+                    <option value={p.id}>{p.name}{p.age_group ? ` (${p.age_group})` : ''}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </fieldset>
+
+          <fieldset>
+            <legend>Background</legend>
+            <div class="field">
+              <label for="previous_experience">Previous Football Experience</label>
+              <textarea id="previous_experience" name="previous_experience" rows="3" placeholder="e.g. Club competition for 2 years, no prior experience, school PE only..."></textarea>
+            </div>
+            <div class="field">
+              <label for="medical_notes">Medical Notes or Anything Our Coaches Should Know</label>
+              <textarea id="medical_notes" name="medical_notes" rows="3" placeholder="Allergies, injuries, conditions, anything relevant to physical activity..."></textarea>
+            </div>
+          </fieldset>
+
+          <div class="field field--check">
+            <label class="check-label">
+              <input type="checkbox" id="acknowledge" name="acknowledge" required>
+              <span>I understand that submitting this form does not guarantee a place. The Academy Technical Director will review the application and confirm availability. <span class="req">*</span></span>
+            </label>
+            <span class="field-error" id="err-acknowledge"></span>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-submit" id="submit-btn">
+              Submit Registration →
+            </button>
+            <p class="form-note">We'll respond within 3 business days. Sessions run Tuesday &amp; Thursday, 5:00–6:30pm at Rawlings Park.</p>
+          </div>
+
+          <div id="form-error" class="form-msg form-msg--error" hidden>
+            Something went wrong. Please try again or <a href="/about#contact">contact us directly</a>.
+          </div>
+        </form>
+      </div>
+
+      <!-- Success state (hidden initially) -->
+      <div class="success-card card" id="success-container" hidden>
+        <div class="success-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--green-bright)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+        </div>
+        <h2>You're registered!</h2>
+        <p>Thanks for your interest in the Warriors Academy. Our Technical Director will review your registration and be in touch within 3 business days.</p>
+        <p class="success-detail">Keep an eye on <strong id="success-email"></strong> for your confirmation.</p>
+        <div class="success-actions">
+          <a href="/academy" class="btn btn-primary">Back to Academy</a>
+          <a href="/academy/portal" class="btn btn-secondary">Parent Portal Login</a>
+        </div>
+      </div>
+
+      <!-- Side info -->
+      <aside class="reg-aside">
+        <div class="aside-card card">
+          <h3>What Happens Next</h3>
+          <ol class="steps-list">
+            <li><span class="step-n">1</span><div><strong>We receive your registration</strong><p>Your application goes to our Technical Director immediately.</p></div></li>
+            <li><span class="step-n">2</span><div><strong>We review &amp; confirm</strong><p>We'll match your child to the right tier and confirm a spot is available.</p></div></li>
+            <li><span class="step-n">3</span><div><strong>You get an invite</strong><p>You'll receive login details for the parent portal where you can access resources and track your child's progress.</p></div></li>
+            <li><span class="step-n">4</span><div><strong>First session</strong><p>Bring boots, shin pads, a ball and a water bottle. Come at 5:00pm for a welcome introduction.</p></div></li>
+          </ol>
+        </div>
+        <div class="aside-card card">
+          <h3>Sessions</h3>
+          <div class="session-info">
+            <div class="si-row">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green-bright)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Tuesday &amp; Thursday
+            </div>
+            <div class="si-row">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green-bright)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              5:00 – 6:30 pm
+            </div>
+            <div class="si-row">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green-bright)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Rawlings Park, South Wagga
+            </div>
+          </div>
+        </div>
+        <a href="/academy" class="btn btn-secondary" style="width:100%;justify-content:center">← Back to Academy</a>
+      </aside>
+
+    </div>
+  </div>
+
+</Base>
+
+<script>
+const DIRECTUS_URL  = import.meta.env.PUBLIC_DIRECTUS_URL  || '';
+const ENROLL_TOKEN  = import.meta.env.PUBLIC_ACADEMY_ENROLLMENT_TOKEN || '';
+
+const form           = document.getElementById('register-form');
+const submitBtn      = document.getElementById('submit-btn');
+const formContainer  = document.getElementById('form-container');
+const successContainer = document.getElementById('success-container');
+const successEmail   = document.getElementById('success-email');
+const formError      = document.getElementById('form-error');
+
+const REQUIRED_FIELDS = [
+  'parent_first_name', 'parent_last_name', 'parent_email', 'parent_phone',
+  'player_first_name', 'player_last_name', 'player_dob', 'age_group'
+];
+
+function showError(field, msg) {
+  const el = document.getElementById(`err-${field}`);
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+  const input = document.getElementById(field);
+  if (input) input.classList.add('input-error');
+}
+
+function clearErrors() {
+  document.querySelectorAll('.field-error').forEach(el => { el.textContent = ''; el.style.display = 'none'; });
+  document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+}
+
+function validateForm(data) {
+  let valid = true;
+  for (const f of REQUIRED_FIELDS) {
+    if (!data[f] || !data[f].toString().trim()) {
+      showError(f, 'This field is required.');
+      valid = false;
+    }
+  }
+  if (data.parent_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.parent_email)) {
+    showError('parent_email', 'Please enter a valid email address.');
+    valid = false;
+  }
+  const ack = document.getElementById('acknowledge');
+  if (ack && !ack.checked) {
+    showError('acknowledge', 'Please acknowledge before submitting.');
+    valid = false;
+  }
+  return valid;
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  clearErrors();
+  formError.hidden = true;
+
+  const fd = new FormData(form);
+  const data = Object.fromEntries(fd.entries());
+
+  if (!validateForm(data)) return;
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Submitting…';
+
+  // Build payload — only fields in the collection
+  const payload = {
+    status: 'pending',
+    parent_first_name:   data.parent_first_name.trim(),
+    parent_last_name:    data.parent_last_name.trim(),
+    parent_email:        data.parent_email.trim().toLowerCase(),
+    parent_phone:        data.parent_phone.trim(),
+    player_first_name:   data.player_first_name.trim(),
+    player_last_name:    data.player_last_name.trim(),
+    player_dob:          data.player_dob,
+    age_group:           data.age_group,
+    previous_experience: data.previous_experience?.trim() || null,
+    medical_notes:       data.medical_notes?.trim() || null,
+    program:             data.program_interest || null,
+  };
+
+  try {
+    const res = await fetch(`${DIRECTUS_URL}/items/academy_enrollments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${ENROLL_TOKEN}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    // Show success
+    successEmail.textContent = data.parent_email.trim().toLowerCase();
+    formContainer.hidden = true;
+    successContainer.hidden = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  } catch (err) {
+    console.error('Enrollment submission failed:', err);
+    formError.hidden = false;
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit Registration →';
+  }
+});
+</script>
+
+<style>
+.page-hero { background: linear-gradient(135deg, var(--green-dark), var(--off-black)); border-bottom: 1px solid var(--border); padding: 60px 48px 48px; }
+.page-hero-inner { max-width: 1280px; margin: 0 auto; }
+.page-hero h1 { font-size: clamp(48px, 6vw, 72px); margin: 10px 0 12px; }
+.page-hero p  { color: var(--muted); max-width: 600px; line-height: 1.65; }
+
+.page-inner { max-width: 1280px; margin: 0 auto; padding: 48px 48px 80px; }
+
+.form-layout { display: grid; grid-template-columns: 1fr 320px; gap: 32px; align-items: start; }
+.form-card   { padding: 40px; grid-column: 1; }
+.success-card { padding: 56px 40px; text-align: center; grid-column: 1; }
+
+/* Form elements */
+fieldset { border: none; padding: 0; margin: 0 0 32px; }
+legend {
+  font-family: var(--font-cond); font-size: 13px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--green-bright);
+  margin-bottom: 20px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  width: 100%; display: flex; align-items: center; gap: 10px;
+}
+legend::before { content: ''; display: block; width: 16px; height: 2px; background: var(--green-bright); }
+
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+.field label { font-family: var(--font-cond); font-size: 14px; font-weight: 700; letter-spacing: 0.5px; }
+.req { color: var(--green-bright); }
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="date"],
+select,
+textarea {
+  background: var(--black); border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--white); font-family: var(--font-body); font-size: 15px; padding: 11px 14px;
+  width: 100%; transition: border-color 0.15s; resize: vertical;
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--green); }
+input.input-error, select.input-error, textarea.input-error { border-color: #d93025; }
+select option { background: var(--card); }
+
+.field-error { font-size: 12px; color: #d93025; display: none; }
+.field--check { margin-bottom: 24px; }
+.check-label { display: flex; gap: 12px; cursor: pointer; align-items: flex-start; }
+.check-label input[type="checkbox"] { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--green); flex-shrink: 0; }
+.check-label span { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+.form-actions { display: flex; flex-direction: column; gap: 12px; }
+.btn-submit { align-self: flex-start; }
+.form-note  { font-size: 13px; color: var(--muted); }
+
+.form-msg--error {
+  background: rgba(217,48,37,0.1); border: 1px solid rgba(217,48,37,0.3);
+  border-radius: var(--radius); padding: 14px 16px; font-size: 14px;
+  color: #ff6b6b; margin-top: 16px;
+}
+.form-msg--error a { color: var(--green-bright); text-decoration: underline; }
+
+/* Success */
+.success-icon { margin-bottom: 20px; }
+.success-card h2 { font-size: 48px; margin-bottom: 12px; }
+.success-card p { color: var(--muted); max-width: 440px; margin: 0 auto 10px; line-height: 1.65; }
+.success-detail strong { color: var(--white); }
+.success-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 28px; }
+
+/* Aside */
+.reg-aside { display: flex; flex-direction: column; gap: 16px; }
+.aside-card { padding: 24px; }
+.aside-card h3 { font-family: var(--font-cond); font-size: 17px; font-weight: 800; margin-bottom: 16px; }
+
+.steps-list { list-style: none; display: flex; flex-direction: column; gap: 16px; }
+.steps-list li { display: flex; gap: 14px; align-items: flex-start; }
+.step-n {
+  width: 26px; height: 26px; border-radius: 50%; background: rgba(37,160,76,0.2);
+  border: 1px solid rgba(37,160,76,0.4); color: var(--green-bright);
+  font-family: var(--font-cond); font-size: 13px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.steps-list strong { font-family: var(--font-cond); font-size: 14px; display: block; margin-bottom: 3px; }
+.steps-list p { font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0; }
+
+.session-info { display: flex; flex-direction: column; gap: 10px; }
+.si-row { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+
+@media (max-width: 900px) {
+  .page-hero  { padding: 40px 20px 32px; }
+  .page-inner { padding: 32px 20px 56px; }
+  .form-layout { grid-template-columns: 1fr; }
+  .form-card   { padding: 24px 20px; }
+  .field-row   { grid-template-columns: 1fr; }
+  .reg-aside   { order: -1; }
+}
+</style>
