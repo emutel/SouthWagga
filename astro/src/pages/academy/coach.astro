@@ -1,6 +1,6 @@
 ---
 // src/pages/academy/coach.astro
-// Coach Dashboard — redesigned with tabbed detail panel
+// Coach Dashboard — full rewrite, clipboard-style UI
 import Base from '../../layouts/Base.astro';
 ---
 <Base
@@ -8,254 +8,469 @@ import Base from '../../layouts/Base.astro';
   description="Warriors FC Academy coach dashboard — manage player assessments and messages."
 >
 
-  <!-- ── LOGIN ── -->
-  <div id="view-login" class="coach-view">
-    <div class="login-hero">
-      <div class="login-hero-inner">
-        <div class="label">Warriors Academy</div>
-        <h1>Coach Dashboard</h1>
-        <p>Sign in with your coach account to manage players, assessments and messages.</p>
+<!-- View: Login -->
+<div id="view-login" class="view">
+  <div class="login-hero">
+    <span class="login-label">Warriors Academy</span>
+    <h1 class="login-title">Coach Dashboard</h1>
+    <p class="login-sub">Sign in to manage your players</p>
+  </div>
+  <div class="login-outer">
+    <div class="login-card">
+      <div class="field-group">
+        <label>Email</label>
+        <input id="login-email" type="email" autocomplete="email">
       </div>
+      <div class="field-group">
+        <label>Password</label>
+        <input id="login-password" type="password" autocomplete="current-password">
+      </div>
+      <button id="login-btn" class="btn-green">Sign In →</button>
+      <p id="login-error" class="error-msg" hidden></p>
+      <p class="login-note">Need access? Contact the club administrator.</p>
     </div>
-    <div class="login-wrap">
-      <div class="login-box card">
-        <h2>Coach Sign In</h2>
-        <form id="coach-login-form" novalidate>
-          <div class="field">
-            <label for="c-email">Email</label>
-            <input type="email" id="c-email" autocomplete="email" required>
-          </div>
-          <div class="field">
-            <label for="c-password">Password</label>
-            <input type="password" id="c-password" autocomplete="current-password" required>
-          </div>
-          <div id="c-login-error" class="form-error" hidden></div>
-          <button type="submit" class="btn btn-primary btn-full" id="c-login-btn">Sign In →</button>
-        </form>
-        <p class="login-help">Need access? Contact the club administrator.</p>
+  </div>
+</div>
+
+<!-- View: Dashboard -->
+<div id="view-dashboard" class="view" hidden>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="topbar-brand">
+        <span class="brand-label">Warriors Academy</span>
+        <span class="brand-title">Coach Dashboard</span>
+      </div>
+      <div class="topbar-actions">
+        <a href="/coaching/sessions" target="_blank" class="btn-outline-green">Session Plans ↗</a>
+        <span id="coach-badge" class="coach-badge"></span>
+        <button id="logout-btn" class="btn-ghost">Sign Out</button>
       </div>
     </div>
   </div>
 
-  <!-- ── DASHBOARD ── -->
-  <div id="view-dashboard" class="coach-view" hidden>
+  <!-- Loading state -->
+  <div id="coach-loading" class="full-loading">
+    <div class="spinner"></div>
+    <p>Loading players…</p>
+  </div>
 
-    <!-- Topbar -->
-    <div class="topbar">
-      <div class="topbar-inner">
-        <div class="topbar-brand">
-          <div class="label">Warriors Academy</div>
-          <h1 class="topbar-title">Coach Dashboard</h1>
-        </div>
-        <div class="topbar-actions">
-          <a href="/coaching/sessions" target="_blank" class="btn btn-outline-green btn-sm">Session Plans ↗</a>
-          <span id="coach-name-display" class="coach-badge"></span>
-          <button class="btn btn-secondary btn-sm" id="c-logout-btn">Sign Out</button>
-        </div>
+  <!-- Main two-pane layout -->
+  <div id="coach-body" class="coach-body" hidden>
+
+    <!-- LEFT: Player roster -->
+    <div class="roster-col">
+      <div class="roster-header">
+        <input id="player-search" type="search" placeholder="Search players…" class="search-input">
+        <span id="player-count" class="player-count"></span>
       </div>
+      <div id="player-list" class="player-list"></div>
     </div>
 
-    <!-- Loading -->
-    <div id="c-loading" class="state-msg">
-      <div class="spinner"></div>
-      <p>Loading players…</p>
-    </div>
+    <!-- RIGHT: Detail panel -->
+    <div class="detail-col">
 
-    <!-- Access denied -->
-    <div id="c-access-denied" class="state-msg" hidden>
-      <p style="color:var(--muted)">Access denied. Your account does not have coach permissions.</p>
-      <button id="c-back-login" class="btn btn-secondary" style="margin-top:16px">Back to Login</button>
-    </div>
+      <!-- Empty state -->
+      <div id="detail-empty" class="detail-empty">
+        <div class="empty-icon">👥</div>
+        <p>Select a player from the roster to view their card, assess their stats, and send messages.</p>
+      </div>
 
-    <!-- Main content -->
-    <div id="c-content" class="coach-body" hidden>
+      <!-- Player detail -->
+      <div id="detail-panel" hidden>
 
-      <!-- LEFT: Player list -->
-      <aside class="player-col">
-        <div class="player-col-header">
-          <input id="player-search" type="text" placeholder="Search players…" class="search-input">
-          <div id="player-count" class="player-count"></div>
-        </div>
-        <div id="player-list" class="player-list"></div>
-      </aside>
-
-      <!-- RIGHT: Detail panel -->
-      <main class="detail-col">
-
-        <!-- Empty state -->
-        <div id="no-player-selected" class="no-selection">
-          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.1"><circle cx="12" cy="8" r="4"/><path d="M4 20 Q4 14 12 14 Q20 14 20 20"/></svg>
-          <p>Select a player to view their card, assess their stats, and message their family.</p>
+        <!-- Detail header -->
+        <div class="detail-header">
+          <div class="detail-header-left">
+            <h2 id="detail-name" class="detail-name"></h2>
+            <div class="detail-chips">
+              <span id="detail-age-chip" class="chip chip--blue"></span>
+              <span id="detail-pos-chip" class="chip chip--green"></span>
+              <span id="detail-jersey" class="chip chip--gray"></span>
+            </div>
+          </div>
+          <a id="detail-plans-link" href="/coaching/sessions" target="_blank" class="plans-link">
+            View Session Plans ↗
+          </a>
         </div>
 
-        <!-- Player detail (shown on selection) -->
-        <div id="player-detail" hidden>
+        <!-- Tab bar -->
+        <div class="detail-tabs">
+          <button class="dtab dtab--active" data-tab="assessment">Assessment</button>
+          <button class="dtab" data-tab="history">History</button>
+          <button class="dtab" data-tab="messages">Messages <span id="msg-badge" class="msg-badge" hidden>0</span></button>
+        </div>
 
-          <!-- Player header -->
-          <div class="detail-header" id="detail-player-info">
-            <!-- rendered by JS -->
-          </div>
-
-          <!-- Tab nav -->
-          <div class="detail-tabs">
-            <button class="dtab dtab--active" data-tab="assess">Assessment</button>
-            <button class="dtab" data-tab="history">History</button>
-            <button class="dtab" data-tab="messages">Messages</button>
-          </div>
-
-          <!-- ── TAB: ASSESSMENT ── -->
-          <div id="dtab-assess" class="dtab-panel">
-            <div class="assess-layout">
-
-              <!-- Card preview column -->
-              <div class="card-preview-col">
-                <div class="preview-label">Live Preview</div>
-                <div id="detail-card-preview"></div>
+        <!-- Tab: Assessment -->
+        <div id="dtab-assessment" class="dtab-panel">
+          <div class="assess-layout">
+            <!-- Left: Live card preview -->
+            <div class="card-preview-col">
+              <p class="preview-label">Live Preview</p>
+              <div id="card-preview"></div>
+            </div>
+            <!-- Right: Sliders -->
+            <div class="sliders-col">
+              <div id="save-banner" class="save-banner"></div>
+              <div class="sliders-grid" id="sliders-grid">
+                <!-- Injected by JS -->
               </div>
-
-              <!-- Sliders column -->
-              <div class="sliders-col">
-                <form id="assessment-form">
-                  <input type="hidden" id="assess-player-id">
-                  <input type="hidden" id="assess-age-group">
-                  <input type="hidden" id="assess-position">
-
-                  <div class="sliders-grid">
-
-                    <div class="slider-field" data-attr="pace">
-                      <div class="slider-header">
-                        <label>PAC — Pace</label>
-                        <div class="slider-vals">
-                          <span class="sv" id="sv-pace">5</span>
-                          <span class="slider-norm" id="sn-pace"></span>
-                        </div>
-                      </div>
-                      <input type="range" min="1" max="10" value="5" id="slider-pace" class="attr-slider" data-attr="pace">
-                    </div>
-
-                    <div class="slider-field" data-attr="shooting">
-                      <div class="slider-header">
-                        <label>SHO — Shooting</label>
-                        <div class="slider-vals">
-                          <span class="sv" id="sv-shooting">5</span>
-                          <span class="slider-norm" id="sn-shooting"></span>
-                        </div>
-                      </div>
-                      <input type="range" min="1" max="10" value="5" id="slider-shooting" class="attr-slider" data-attr="shooting">
-                    </div>
-
-                    <div class="slider-field" data-attr="passing">
-                      <div class="slider-header">
-                        <label>PAS — Passing</label>
-                        <div class="slider-vals">
-                          <span class="sv" id="sv-passing">5</span>
-                          <span class="slider-norm" id="sn-passing"></span>
-                        </div>
-                      </div>
-                      <input type="range" min="1" max="10" value="5" id="slider-passing" class="attr-slider" data-attr="passing">
-                    </div>
-
-                    <div class="slider-field" data-attr="dribbling">
-                      <div class="slider-header">
-                        <label>DRI — Dribbling</label>
-                        <div class="slider-vals">
-                          <span class="sv" id="sv-dribbling">5</span>
-                          <span class="slider-norm" id="sn-dribbling"></span>
-                        </div>
-                      </div>
-                      <input type="range" min="1" max="10" value="5" id="slider-dribbling" class="attr-slider" data-attr="dribbling">
-                    </div>
-
-                    <div class="slider-field" data-attr="defending">
-                      <div class="slider-header">
-                        <label>DEF — Defending</label>
-                        <div class="slider-vals">
-                          <span class="sv" id="sv-defending">5</span>
-                          <span class="slider-norm" id="sn-defending"></span>
-                        </div>
-                      </div>
-                      <input type="range" min="1" max="10" value="5" id="slider-defending" class="attr-slider" data-attr="defending">
-                    </div>
-
-                    <div class="slider-field" data-attr="physical">
-                      <div class="slider-header">
-                        <label>PHY — Physical</label>
-                        <div class="slider-vals">
-                          <span class="sv" id="sv-physical">5</span>
-                          <span class="slider-norm" id="sn-physical"></span>
-                        </div>
-                      </div>
-                      <input type="range" min="1" max="10" value="5" id="slider-physical" class="attr-slider" data-attr="physical">
-                    </div>
-
-                  </div><!-- /sliders-grid -->
-
-                  <div class="field notes-field">
-                    <label for="assess-notes">Coach Notes <span class="field-hint">(visible to parent)</span></label>
-                    <textarea id="assess-notes" rows="3" placeholder="What went well? What to work on?"></textarea>
-                  </div>
-
-                  <div class="form-actions">
-                    <button type="submit" class="btn btn-primary" id="save-assess-btn">Save Assessment →</button>
-                    <span id="assess-saved-msg" class="save-ok" hidden>✓ Assessment saved</span>
-                    <span id="assess-error-msg" class="save-err" hidden>Failed to save. Try again.</span>
-                  </div>
-
-                </form>
-              </div><!-- /sliders-col -->
-
-            </div><!-- /assess-layout -->
-          </div><!-- /dtab-assess -->
-
-          <!-- ── TAB: HISTORY ── -->
-          <div id="dtab-history" class="dtab-panel" hidden>
-            <div id="assess-history" class="history-list"></div>
+              <div class="notes-field">
+                <label class="notes-label">Coach Notes</label>
+                <textarea id="assess-notes" class="notes-textarea" rows="3" placeholder="Optional notes about this assessment…"></textarea>
+              </div>
+              <button id="save-btn" class="btn-green btn-save">Save Assessment →</button>
+              <p id="assess-error" class="error-msg" hidden></p>
+            </div>
           </div>
+        </div>
 
-          <!-- ── TAB: MESSAGES ── -->
-          <div id="dtab-messages" class="dtab-panel" hidden>
-            <div id="coach-message-thread" class="message-thread"></div>
-            <form id="coach-msg-form" class="compose-form">
-              <textarea id="coach-msg-input" rows="3" placeholder="Write a message to the player's family…"></textarea>
-              <button type="submit" class="btn btn-primary btn-sm" id="coach-send-btn">Send →</button>
-            </form>
-          </div>
+        <!-- Tab: History -->
+        <div id="dtab-history" class="dtab-panel" hidden>
+          <div id="history-content"></div>
+        </div>
 
-        </div><!-- /player-detail -->
-      </main>
-    </div><!-- /coach-body -->
-  </div><!-- /view-dashboard -->
+        <!-- Tab: Messages -->
+        <div id="dtab-messages" class="dtab-panel" hidden>
+          <div id="message-thread" class="message-thread"></div>
+          <form id="msg-form" class="msg-form">
+            <textarea id="msg-body" class="msg-textarea" rows="3" placeholder="Write a message to the player's family…"></textarea>
+            <div class="msg-form-footer">
+              <span id="msg-send-error" class="error-msg" hidden></span>
+              <button type="submit" id="msg-send-btn" class="btn-green btn-sm">Send Message →</button>
+            </div>
+          </form>
+        </div>
 
-</Base>
+      </div><!-- /detail-panel -->
+    </div><!-- /detail-col -->
+  </div><!-- /coach-body -->
+</div><!-- /view-dashboard -->
 
-<script>
-const DURL = import.meta.env.PUBLIC_DIRECTUS_URL || '';
+<style>
+:root {
+  --bg: #f8f9fa;
+  --surface: #ffffff;
+  --card: #f1f3f5;
+  --border: #dee2e6;
+  --text: #1a1d23;
+  --muted: #6c757d;
+  --green: #1d7a3a;
+  --green-light: #e8f5ee;
+  --green-accent: #25a04c;
+  --amber: #b45309;
+  --amber-light: #fef3c7;
+  --red: #dc2626;
+  --red-light: #fee2e2;
+  --font-body: 'Barlow', sans-serif;
+  --font-cond: 'Barlow Condensed', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 15px; }
 
-// ── AUTH ──────────────────────────────────────────────────────
+/* Login */
+.login-hero { background: linear-gradient(135deg, #1d3a28 0%, #0f2018 100%); padding: 60px 24px; text-align: center; }
+.login-label { font-family: var(--font-cond); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: #6db38a; }
+.login-title { font-family: var(--font-cond); font-size: 40px; font-weight: 800; color: #fff; margin-top: 8px; }
+.login-sub { color: rgba(255,255,255,0.5); font-size: 14px; margin-top: 8px; }
+.login-outer { display: flex; justify-content: center; padding: 32px 24px 48px; }
+.login-card { width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 28px; display: flex; flex-direction: column; gap: 16px; }
+.field-group { display: flex; flex-direction: column; gap: 6px; }
+.field-group label { font-size: 13px; font-weight: 600; color: var(--text); }
+.field-group input { padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background: var(--bg); color: var(--text); }
+.field-group input:focus { outline: none; border-color: var(--green-accent); }
+.login-note { font-size: 12px; color: var(--muted); text-align: center; }
+
+/* Topbar */
+.topbar { background: var(--surface); border-bottom: 3px solid var(--green); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.topbar-inner { max-width: 1400px; margin: 0 auto; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.brand-label { font-family: var(--font-cond); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: block; }
+.brand-title { font-family: var(--font-cond); font-size: 18px; font-weight: 800; color: var(--text); }
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+.coach-badge { background: var(--green-light); color: var(--green); border-radius: 20px; padding: 5px 14px; font-family: var(--font-cond); font-size: 13px; font-weight: 700; letter-spacing: 0.04em; }
+
+/* Two-pane layout */
+.coach-body { display: grid; grid-template-columns: 300px 1fr; height: calc(100vh - 67px); }
+.roster-col { border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; background: var(--surface); }
+.detail-col { overflow-y: auto; background: var(--bg); }
+
+/* Roster */
+.roster-header { padding: 12px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+.search-input { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background: var(--bg); }
+.search-input:focus { outline: none; border-color: var(--green-accent); }
+.player-count { font-size: 12px; color: var(--muted); font-family: var(--font-cond); }
+.player-list { flex: 1; overflow-y: auto; }
+
+/* Group headers */
+.group-header { padding: 8px 12px 4px; font-family: var(--font-cond); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); background: var(--card); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1; }
+
+/* Player cards in roster */
+.player-row {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  border-bottom: 1px solid var(--border); cursor: pointer; background: var(--surface);
+  border-left: 3px solid transparent; transition: background 0.15s;
+}
+.player-row:hover { background: var(--card); }
+.player-row.selected { background: var(--green-light); border-left-color: var(--green-accent); }
+.pr-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.pr-dot--unread { background: var(--amber); }
+.pr-dot--empty { background: transparent; }
+.pr-info { flex: 1; min-width: 0; }
+.pr-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pr-meta { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.tier-chip { font-family: var(--font-cond); font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; letter-spacing: 0.05em; white-space: nowrap; }
+.tier-bronze { background: rgba(180,80,20,0.12); color: #b44a14; }
+.tier-silver { background: rgba(80,100,150,0.12); color: #5070a0; }
+.tier-gold   { background: rgba(160,120,20,0.15); color: #9a7010; }
+.tier-elite  { background: rgba(0,60,140,0.12); color: #0040a0; }
+.tier-unrated { background: var(--card); color: var(--muted); }
+
+/* Detail header */
+.detail-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 20px 24px 0; }
+.detail-name { font-family: var(--font-cond); font-size: 26px; font-weight: 800; color: var(--text); }
+.detail-chips { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.chip { font-family: var(--font-cond); font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.04em; }
+.chip--blue  { background: #dbeafe; color: #1d4ed8; }
+.chip--green { background: var(--green-light); color: var(--green); }
+.chip--gray  { background: var(--card); color: var(--muted); }
+.plans-link { font-family: var(--font-cond); font-size: 13px; font-weight: 700; color: var(--green-accent); text-decoration: none; border: 1px solid var(--green-accent); padding: 6px 14px; border-radius: 6px; white-space: nowrap; margin-top: 2px; }
+.plans-link:hover { background: var(--green-light); }
+
+/* Detail tabs */
+.detail-tabs { display: flex; border-bottom: 2px solid var(--border); margin: 16px 24px 0; gap: 2px; }
+.dtab { padding: 10px 16px; font-family: var(--font-cond); font-size: 13px; font-weight: 700; letter-spacing: 0.05em; background: none; border: none; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+.dtab:hover { color: var(--text); }
+.dtab--active { color: var(--green); border-bottom-color: var(--green); }
+.msg-badge { background: var(--green-accent); color: #fff; border-radius: 10px; padding: 1px 6px; font-size: 11px; font-family: var(--font-cond); font-weight: 700; }
+.dtab-panel { padding: 20px 24px; }
+
+/* Assessment layout */
+.assess-layout { display: grid; grid-template-columns: 180px 1fr; gap: 24px; align-items: start; }
+.card-preview-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.preview-label { font-size: 11px; font-family: var(--font-cond); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+/* Sliders */
+.sliders-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; margin-bottom: 16px; }
+.slider-field { display: flex; flex-direction: column; gap: 4px; }
+.slider-label { display: flex; justify-content: space-between; align-items: center; }
+.slider-label-text { font-family: var(--font-cond); font-size: 13px; font-weight: 700; letter-spacing: 0.06em; color: var(--text); }
+.slider-val-chip { font-family: var(--font-cond); font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+.chip-green  { background: #dcfce7; color: #166534; }
+.chip-amber  { background: #fef3c7; color: #92400e; }
+.chip-red    { background: #fee2e2; color: #991b1b; }
+input[type=range] { width: 100%; height: 6px; accent-color: var(--green-accent); cursor: pointer; }
+input[type=range]::-webkit-slider-thumb { width: 22px; height: 22px; }
+
+/* Save banner */
+.save-banner { display: none; background: var(--green); color: #fff; border-radius: 6px; padding: 10px 14px; font-family: var(--font-cond); font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+.save-banner.visible { display: flex; align-items: center; gap: 8px; }
+
+/* Notes */
+.notes-field { margin-bottom: 12px; }
+.notes-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.notes-textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; font-family: var(--font-body); resize: vertical; }
+.notes-textarea:focus { outline: none; border-color: var(--green-accent); }
+
+/* History */
+.hist-entry { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+.hist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.hist-date { font-size: 13px; color: var(--muted); font-family: var(--font-cond); }
+.hist-bars { display: grid; grid-template-columns: repeat(6,1fr); gap: 6px; }
+.hb-item { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.hb-track { width: 100%; height: 4px; background: var(--card); border-radius: 2px; overflow: hidden; }
+.hb-fill  { height: 100%; background: var(--green-accent); border-radius: 2px; }
+.hb-label { font-size: 9px; font-family: var(--font-cond); color: var(--muted); }
+.hb-val   { font-size: 11px; font-family: var(--font-cond); font-weight: 700; }
+.hist-notes { margin-top: 10px; font-size: 13px; color: var(--muted); font-style: italic; border-top: 1px solid var(--border); padding-top: 8px; }
+.hist-empty { color: var(--muted); font-style: italic; padding: 16px 0; }
+
+/* Messages */
+.message-thread { max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 12px; background: var(--card); border-radius: 10px; margin-bottom: 12px; }
+.msg-bubble { max-width: 80%; }
+.msg--parent { align-self: flex-end; }
+.msg--coach  { align-self: flex-start; }
+.msg-body { padding: 9px 13px; border-radius: 10px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; }
+.msg--parent .msg-body { background: #dcfce7; border: 1px solid #a7f3d0; }
+.msg--coach  .msg-body { background: var(--surface); border: 1px solid var(--border); }
+.msg-meta { font-size: 11px; color: var(--muted); font-family: var(--font-cond); margin-top: 3px; }
+.msg--parent .msg-meta { text-align: right; }
+.msg-empty { color: var(--muted); font-style: italic; text-align: center; padding: 20px 0; }
+.msg-form { display: flex; flex-direction: column; gap: 8px; }
+.msg-textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; font-family: var(--font-body); resize: vertical; }
+.msg-textarea:focus { outline: none; border-color: var(--green-accent); }
+.msg-form-footer { display: flex; justify-content: space-between; align-items: center; }
+
+/* Buttons */
+.btn-green { background: var(--green); color: #fff; border: none; border-radius: 8px; padding: 12px 20px; font-family: var(--font-cond); font-size: 14px; font-weight: 800; letter-spacing: 0.04em; cursor: pointer; }
+.btn-green:hover { background: var(--green-accent); }
+.btn-green:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-sm { padding: 8px 16px; font-size: 13px; }
+.btn-save { width: 100%; }
+.btn-outline-green { background: none; border: 1px solid var(--green-accent); color: var(--green-accent); border-radius: 6px; padding: 7px 14px; font-family: var(--font-cond); font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; }
+.btn-outline-green:hover { background: var(--green-light); }
+.btn-ghost { background: none; border: none; color: var(--muted); font-family: var(--font-cond); font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px 10px; }
+.btn-ghost:hover { color: var(--text); }
+
+/* Misc */
+.error-msg { color: var(--red); font-size: 13px; }
+.full-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; gap: 16px; color: var(--muted); }
+.detail-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; gap: 16px; color: var(--muted); text-align: center; padding: 40px; }
+.empty-icon { font-size: 48px; }
+.spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--green-accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* FIFA card styles */
+.fifa-card { width: 160px; border-radius: 12px; padding: 14px 12px 12px; position: relative; filter: drop-shadow(0 8px 24px rgba(0,0,0,0.3)); }
+.card-bronze { background: linear-gradient(145deg, #3d2008 0%, #7c4010 40%, #b86020 100%); }
+.card-silver { background: linear-gradient(145deg, #1a1f2e 0%, #3a4060 40%, #6070a0 100%); }
+.card-gold   { background: linear-gradient(145deg, #2a1f00 0%, #7a5800 40%, #c09020 100%); }
+.card-elite  { background: linear-gradient(145deg, #001a2e 0%, #003060 40%, #0060b0 100%); }
+.fc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.fc-overall { font-size: 32px; font-weight: 900; color: #fff; line-height: 1; font-family: var(--font-cond); }
+.fc-pos   { font-size: 10px; color: rgba(255,255,255,0.7); font-family: var(--font-cond); font-weight: 700; }
+.fc-tier  { font-size: 9px; color: rgba(255,255,255,0.5); font-family: var(--font-cond); text-transform: uppercase; }
+.fc-photo { display: flex; justify-content: center; margin: 6px 0; }
+.fc-photo-img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.3); }
+.fc-name  { text-align: center; font-size: 11px; font-weight: 800; color: #fff; font-family: var(--font-cond); letter-spacing: 0.06em; margin: 4px 0 2px; }
+.fc-age   { text-align: center; font-size: 8px; color: rgba(255,255,255,0.5); font-family: var(--font-cond); margin-bottom: 8px; }
+.fc-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 3px 6px; }
+.fc-stat  { display: flex; flex-direction: column; align-items: center; }
+.fc-sv    { font-size: 12px; font-weight: 800; color: #fff; font-family: var(--font-cond); line-height: 1; }
+.fc-sl    { font-size: 7px; color: rgba(255,255,255,0.6); font-family: var(--font-cond); }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .assess-layout { grid-template-columns: 1fr; }
+  .card-preview-col { flex-direction: row; align-items: center; gap: 16px; }
+}
+@media (max-width: 900px) {
+  .coach-body { grid-template-columns: 1fr; height: auto; }
+  .roster-col { max-height: 300px; border-right: none; border-bottom: 1px solid var(--border); }
+}
+@media (max-width: 600px) {
+  .sliders-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<script is:inline>
+const DURL = import.meta.env.PUBLIC_DIRECTUS_URL || 'https://directus-production-ebbb.up.railway.app';
+
+// ── asArray helper — prevents all API bugs ──
+function asArray(v) { return Array.isArray(v) ? v : []; }
+
+// ── Auth — sessionStorage ──
 const CLS = {
   get token()   { return sessionStorage.getItem('warriors_coach_token'); },
   get refresh() { return sessionStorage.getItem('warriors_coach_refresh'); },
-  get user()    { try { return JSON.parse(sessionStorage.getItem('warriors_coach_user') || 'null'); } catch { return null; } },
+  get user()    { try { return JSON.parse(sessionStorage.getItem('warriors_coach_user')||'null'); } catch { return null; } },
   set token(v)  { sessionStorage.setItem('warriors_coach_token', v); },
   set refresh(v){ sessionStorage.setItem('warriors_coach_refresh', v); },
   set user(v)   { sessionStorage.setItem('warriors_coach_user', JSON.stringify(v)); },
   clear()       { ['warriors_coach_token','warriors_coach_refresh','warriors_coach_user'].forEach(k => sessionStorage.removeItem(k)); },
 };
 
-async function capi(path, opts = {}, token = CLS.token) {
-  const headers = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${DURL}${path}`, { ...opts, headers: { ...headers, ...(opts.headers||{}) } });
-  if (res.status === 401) {
-    const refreshed = await tryRefresh();
-    if (refreshed) return capi(path, opts, CLS.token);
-    showCoachLogin(); return null;
-  }
-  if (!res.ok) return null;
-  const json = await res.json();
-  return json.data ?? json;
+// ── State ──
+let allPlayers = [];
+let assessMap  = {};
+let unreadSet  = new Set();
+let selectedIdx = -1;
+let selectedPlayer = null;
+let selectedPlayerMessages = [];
+
+// ── AGE_SCALE / stat math ──
+const AGE_SCALE = {
+  'u8-u9':   { min: 30, max: 72 },
+  'u10-u11': { min: 35, max: 78 },
+  'u12-u13': { min: 40, max: 83 },
+  'u14-u16': { min: 45, max: 90 },
+};
+function normalize(raw, ag) {
+  const s = AGE_SCALE[ag] || AGE_SCALE['u12-u13'];
+  return Math.round(s.min + (raw - 1) * (s.max - s.min) / 9);
+}
+function calcOverall(attrs, position) {
+  const { pac, sho, pas, dri, def, phy } = attrs;
+  const isAtk = ['forward','midfielder'].includes(position);
+  return isAtk ? Math.round((dri*2+sho*2+pac+pas+phy)/7)
+               : Math.round((def*2+phy*2+pac+pas+dri)/7);
+}
+function tierInfo(ov) {
+  if (ov >= 90) return { name: 'Elite',  cls: 'card-elite'  };
+  if (ov >= 75) return { name: 'Gold',   cls: 'card-gold'   };
+  if (ov >= 60) return { name: 'Silver', cls: 'card-silver' };
+  return              { name: 'Bronze', cls: 'card-bronze' };
+}
+function posLabel(p) {
+  return { goalkeeper: 'GK', defender: 'CB', midfielder: 'MID', forward: 'FWD' }[p] || 'MID';
 }
 
+// ── FIFA card builder ──
+function buildFIFACard(enrollment, profile, rawAttrs) {
+  const ag  = enrollment?.age_group || 'u12-u13';
+  const pos = profile?.position || 'midfielder';
+  const fn  = enrollment?.player_first_name || '';
+  const ln  = enrollment?.player_last_name  || '';
+  const name = `${fn} ${(ln[0]||'')}.`.trim();
+  const agLbl = {'u8-u9':'U9','u10-u11':'U11','u12-u13':'U13','u14-u16':'U16'}[ag] || ag.toUpperCase();
+  const photoSrc = profile?.photo ? `${DURL}/assets/${profile.photo}?width=160&height=160&format=webp&fit=cover` : null;
+  const photoHtml = photoSrc
+    ? `<img src="${photoSrc}" class="fc-photo-img" alt="${fn}">`
+    : `<svg viewBox="0 0 80 100" width="60" height="75" fill="none"><circle cx="40" cy="26" r="18" fill="rgba(255,255,255,0.2)"/><path d="M8 95 C8 65 20 54 40 52 C60 54 72 65 72 95" fill="rgba(255,255,255,0.2)"/></svg>`;
+
+  if (!rawAttrs || rawAttrs.pace == null) {
+    return `<div class="fifa-card card-bronze">
+      <div class="fc-header"><div><div class="fc-overall">—</div><div class="fc-pos">${posLabel(pos)}</div><div class="fc-tier">Unrated</div></div></div>
+      <div class="fc-photo">${photoHtml}</div>
+      <div class="fc-name">${name.toUpperCase()}</div>
+      <div class="fc-age">${agLbl} · Warriors FC</div>
+    </div>`;
+  }
+
+  const attrs = {
+    pac: normalize(rawAttrs.pace,      ag),
+    sho: normalize(rawAttrs.shooting,  ag),
+    pas: normalize(rawAttrs.passing,   ag),
+    dri: normalize(rawAttrs.dribbling, ag),
+    def: normalize(rawAttrs.defending, ag),
+    phy: normalize(rawAttrs.physical,  ag),
+  };
+  const ov   = calcOverall(attrs, pos);
+  const tier = tierInfo(ov);
+
+  return `<div class="fifa-card ${tier.cls}">
+    <div class="fc-header">
+      <div><div class="fc-overall">${ov}</div><div class="fc-pos">${posLabel(pos)}</div><div class="fc-tier">${tier.name}</div></div>
+      <svg viewBox="0 0 40 40" width="24" height="24" fill="none"><polygon points="20,3 37,12 37,28 20,37 3,28 3,12" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/><text x="20" y="26" text-anchor="middle" font-size="13" font-weight="bold" fill="rgba(255,255,255,0.7)" font-family="Arial">W</text></svg>
+    </div>
+    <div class="fc-photo">${photoHtml}</div>
+    <div class="fc-name">${name.toUpperCase()}</div>
+    <div class="fc-age">${agLbl} · Warriors FC</div>
+    <div class="fc-stats">
+      ${[['PAC',attrs.pac],['SHO',attrs.sho],['PAS',attrs.pas],['DRI',attrs.dri],['DEF',attrs.def],['PHY',attrs.phy]].map(([l,v])=>`<div class="fc-stat"><span class="fc-sv">${v}</span><span class="fc-sl">${l}</span></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ── API helper ──
+async function capi(path, opts = {}, token = CLS.token) {
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${DURL}${path}`, { ...opts, headers: { ...headers, ...(opts.headers||{}) } });
+    if (res.status === 401) {
+      const ok = await tryRefresh();
+      if (ok) return capi(path, opts, CLS.token);
+      showLogin(); return null;
+    }
+    if (res.status === 204) return { ok: true };
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data ?? json;
+  } catch(e) { console.error('capi error', path, e); return null; }
+}
+
+// ── Token refresh ──
 async function tryRefresh() {
   if (!CLS.refresh) return false;
   try {
@@ -270,671 +485,486 @@ async function tryRefresh() {
   } catch { return false; }
 }
 
-// ── FIFA CARD UTILS ───────────────────────────────────────────
-const AGE_SCALE = {
-  'u8-u9':  { min:30, max:72 }, 'u10-u11': { min:35, max:78 },
-  'u12-u13':{ min:40, max:83 }, 'u14-u16': { min:45, max:90 },
-};
-function normalize(raw, ag) {
-  const s = AGE_SCALE[ag] || AGE_SCALE['u12-u13'];
-  return Math.round(s.min + (raw - 1) * (s.max - s.min) / 9);
-}
-function calcOverall(attrs, position) {
-  const { pac, sho, pas, dri, def, phy } = attrs;
-  const isAtk = ['forward','midfielder'].includes(position);
-  return isAtk ? Math.round((dri*2+sho*2+pac+pas+phy)/7)
-               : Math.round((def*2+phy*2+pac+pas+dri)/7);
-}
-function tierInfo(ov) {
-  if (ov >= 90) return { name:'Elite',  cls:'card-elite'  };
-  if (ov >= 75) return { name:'Gold',   cls:'card-gold'   };
-  if (ov >= 60) return { name:'Silver', cls:'card-silver' };
-  return              { name:'Bronze', cls:'card-bronze' };
-}
-const posLabel = p => ({ goalkeeper:'GK', defender:'CB', midfielder:'MID', forward:'FWD' }[p] || 'MID');
+// ── View helpers ──
+function showLogin()     { CLS.clear(); document.getElementById('view-login').hidden = false; document.getElementById('view-dashboard').hidden = true; }
+function showDashboard() { document.getElementById('view-login').hidden = true; document.getElementById('view-dashboard').hidden = false; }
 
-function buildFIFACard(enrollment, profile, rawAttrs) {
-  const ag  = enrollment?.age_group || 'u12-u13';
-  const pos = profile?.position || 'midfielder';
-  const attrs = {
-    pac: normalize(rawAttrs.pace,      ag), sho: normalize(rawAttrs.shooting,  ag),
-    pas: normalize(rawAttrs.passing,   ag), dri: normalize(rawAttrs.dribbling, ag),
-    def: normalize(rawAttrs.defending, ag), phy: normalize(rawAttrs.physical,  ag),
-  };
-  const ov    = calcOverall(attrs, pos);
-  const tier  = tierInfo(ov);
-  const agLbl = {'u8-u9':'U9','u10-u11':'U11','u12-u13':'U13','u14-u16':'U16'}[ag] || ag.toUpperCase();
-  const fn    = enrollment?.player_first_name || '';
-  const ln    = enrollment?.player_last_name  || '';
-  const name  = `${fn} ${(ln[0]||'')}.`.trim();
-  return `
-<div class="fifa-card ${tier.cls}">
-  <div class="fc-header">
-    <div class="fc-left">
-      <div class="fc-overall">${ov}</div>
-      <div class="fc-pos">${posLabel(pos)}</div>
-      <div class="fc-tier">${tier.name}</div>
-    </div>
-    <div class="fc-badge"><svg viewBox="0 0 40 40" width="34" height="34" fill="none"><polygon points="20,3 37,12 37,28 20,37 3,28 3,12" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/><text x="20" y="26" text-anchor="middle" font-size="13" font-weight="bold" fill="rgba(255,255,255,0.7)" font-family="Arial">W</text></svg></div>
-  </div>
-  <div class="fc-photo"><svg viewBox="0 0 80 100" fill="none" width="80" height="100"><circle cx="40" cy="26" r="18" fill="rgba(255,255,255,0.2)"/><path d="M8 95 C8 65 20 54 40 52 C60 54 72 65 72 95" fill="rgba(255,255,255,0.2)"/></svg></div>
-  <div class="fc-name">${name.toUpperCase()}</div>
-  <div class="fc-club">${agLbl} · Warriors FC</div>
-  <div class="fc-stats">
-    ${[['PAC',attrs.pac],['SHO',attrs.sho],['PAS',attrs.pas],['DRI',attrs.dri],['DEF',attrs.def],['PHY',attrs.phy]].map(([l,v])=>`<div class="fc-stat"><span class="fc-sv">${v}</span><span class="fc-sl">${l}</span></div>`).join('')}
-  </div>
-</div>`;
-}
-
-// ── STATE ─────────────────────────────────────────────────────
-let allPlayers = [];
-let selectedIdx = -1;
-let _lastAssessMap = {};
-
-// ── VIEWS ─────────────────────────────────────────────────────
-function showCoachLogin() {
-  CLS.clear();
-  document.getElementById('view-login').hidden = false;
-  document.getElementById('view-dashboard').hidden = true;
-}
-function showCoachDashboard(user) {
-  document.getElementById('view-login').hidden = true;
-  document.getElementById('view-dashboard').hidden = false;
-  const name = user?.first_name ? `${user.first_name}${user.last_name ? ' ' + user.last_name[0] + '.' : ''}` : 'Coach';
-  document.getElementById('coach-name-display').textContent = name;
-}
-
-// ── DETAIL TABS ───────────────────────────────────────────────
-function switchDetailTab(name) {
-  document.querySelectorAll('.dtab').forEach(b => b.classList.toggle('dtab--active', b.dataset.tab === name));
-  document.querySelectorAll('.dtab-panel').forEach(p => { p.hidden = true; });
-  const panel = document.getElementById(`dtab-${name}`);
-  if (panel) panel.hidden = false;
-}
-document.querySelectorAll('.dtab').forEach(btn => {
-  btn.addEventListener('click', () => switchDetailTab(btn.dataset.tab));
-});
-
-// ── LOAD PLAYERS ──────────────────────────────────────────────
+// ── Load all players ──
 async function loadAllPlayers() {
-  document.getElementById('c-loading').hidden = false;
-  document.getElementById('c-content').hidden = true;
+  const [profilesRaw, assessRaw, unreadRaw] = await Promise.all([
+    capi('/items/academy_player_profiles?fields=id,position,photo,jersey_number,enrollment.id,enrollment.age_group,enrollment.player_first_name,enrollment.player_last_name,enrollment.parent_email,enrollment.status&limit=200'),
+    capi('/items/academy_assessments?filter[is_latest][_eq]=true&limit=200&fields=player,pace_raw,shooting_raw,passing_raw,dribbling_raw,defending_raw,physical_raw,assessment_date'),
+    capi('/items/academy_messages?filter[sender_role][_eq]=parent&filter[read_at][_null]=true&limit=200&fields=player'),
+  ]);
 
-  const profiles = await capi(
-    '/items/academy_player_profiles?fields=id,position,photo,jersey_number,enrollment.id,enrollment.age_group,enrollment.player_first_name,enrollment.player_last_name,enrollment.parent_email&limit=200'
-  );
-  if (!profiles) { document.getElementById('c-loading').hidden = true; return; }
+  allPlayers = asArray(profilesRaw);
 
-  allPlayers = (Array.isArray(profiles) ? profiles : []).map(p => ({ profile: p, enrollment: p.enrollment }));
+  assessMap = {};
+  asArray(assessRaw).forEach(a => { assessMap[String(a.player)] = a; });
 
-  const latestData = await capi('/items/academy_assessments?filter[is_latest][_eq]=true&limit=200&fields=player,pace_raw,shooting_raw,passing_raw,dribbling_raw,defending_raw,physical_raw,assessment_date');
-  const assessMap = {};
-  (Array.isArray(latestData) ? latestData : []).forEach(a => { assessMap[String(a.player)] = a; });
+  unreadSet = new Set(asArray(unreadRaw).map(m => String(m.player)));
 
-  renderPlayerList(allPlayers, assessMap);
-  document.getElementById('c-loading').hidden = true;
-  document.getElementById('c-content').hidden = false;
+  document.getElementById('coach-loading').hidden = true;
+  document.getElementById('coach-body').hidden = false;
+
+  renderPlayerList(allPlayers);
 }
 
-function renderPlayerList(players, assessMap) {
-  if (assessMap) _lastAssessMap = assessMap;
-  const aMap = _lastAssessMap;
-  const list = document.getElementById('player-list');
+// ── Render player list ──
+const GROUP_ORDER  = ['u8-u9', 'u10-u11', 'u12-u13', 'u14-u16'];
+const GROUP_LABELS = { 'u8-u9': 'U8/U9', 'u10-u11': 'U10/U11', 'u12-u13': 'U12/U13', 'u14-u16': 'U14/U16' };
+const AG_DISPLAY   = { 'u8-u9': 'U8/U9', 'u10-u11': 'U10/U11', 'u12-u13': 'U12/U13', 'u14-u16': 'U14/U16' };
+
+function renderPlayerList(players, searchQuery = '') {
+  const list    = document.getElementById('player-list');
   const countEl = document.getElementById('player-count');
-  if (countEl) countEl.textContent = `${players.length} player${players.length !== 1 ? 's' : ''}`;
 
   if (!players.length) {
-    list.innerHTML = '<p class="empty-list">No players found.</p>';
+    list.innerHTML = '<p style="padding:16px;color:var(--muted);font-size:13px;">No players found.</p>';
+    countEl.textContent = '';
     return;
   }
-  list.innerHTML = players.map(p => {
-    const enr       = p.enrollment || {};
-    const name      = `${enr.player_first_name||''} ${enr.player_last_name||''}`.trim();
-    const ag        = enr.age_group ? enr.age_group.toUpperCase().replace('-','/') : '—';
-    const posShort  = posLabel(p.profile?.position || p.position || 'midfielder');
-    const origIdx   = allPlayers.indexOf(p);
-    const profileId = String(p.profile?.id || p.id);
-    const assess    = aMap[profileId];
-    const isActive  = selectedIdx === origIdx;
 
-    let tierCls = 'tier-none', tierHtml = '', assessedHtml = '<span class="pi-date">Never assessed</span>';
-    if (assess) {
-      const ageKey = enr.age_group || 'u12-u13';
-      const posKey = p.profile?.position || p.position || 'midfielder';
-      const attrs  = {
-        pac: normalize(assess.pace_raw,      ageKey), sho: normalize(assess.shooting_raw,  ageKey),
-        pas: normalize(assess.passing_raw,   ageKey), dri: normalize(assess.dribbling_raw, ageKey),
-        def: normalize(assess.defending_raw, ageKey), phy: normalize(assess.physical_raw,  ageKey),
-      };
-      const ov   = calcOverall(attrs, posKey);
-      const tier = tierInfo(ov);
-      tierCls  = tier.cls;
-      tierHtml = `<span class="tier-chip ${tier.cls}">${tier.name.toUpperCase()} <strong>${ov}</strong></span>`;
-      const d  = new Date(assess.assessment_date).toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'numeric'});
-      assessedHtml = `<span class="pi-date">Last assessed: ${d}</span>`;
-    }
+  countEl.textContent = `${players.length} player${players.length !== 1 ? 's' : ''}`;
 
-    return `
-<button class="player-card ${isActive ? 'player-card--active' : ''} border-${tierCls}" data-idx="${origIdx}">
-  <div class="pc-main">
-    <div class="pc-name">${name}</div>
-    <div class="pc-meta">
-      <span class="pc-ag">${ag}</span>
-      <span class="pc-pos">${posShort}</span>
-      ${tierHtml}
-    </div>
-    ${assessedHtml}
-  </div>
-</button>`;
-  }).join('');
+  let html = '';
 
-  list.querySelectorAll('.player-card').forEach(btn => {
-    btn.addEventListener('click', () => selectPlayer(parseInt(btn.dataset.idx)));
-  });
-}
-
-// ── SEARCH ────────────────────────────────────────────────────
-document.getElementById('player-search').addEventListener('input', e => {
-  const q = e.target.value.toLowerCase();
-  const filtered = allPlayers.filter(p => {
-    const enr = p.enrollment || {};
-    return `${enr.player_first_name||''} ${enr.player_last_name||''}`.toLowerCase().includes(q);
-  });
-  renderPlayerList(filtered);
-});
-
-// ── SELECT PLAYER ─────────────────────────────────────────────
-async function selectPlayer(idx) {
-  selectedIdx = idx;
-  const { profile, enrollment } = allPlayers[idx];
-  renderPlayerList(allPlayers);
-
-  document.getElementById('no-player-selected').hidden = true;
-  document.getElementById('player-detail').hidden = false;
-  switchDetailTab('assess');
-
-  const name   = `${enrollment?.player_first_name||''} ${enrollment?.player_last_name||''}`.trim();
-  const ag     = enrollment?.age_group || 'u12-u13';
-  const agDisp = ag.toUpperCase().replace('-','/');
-  const pos    = posLabel(profile.position || 'midfielder');
-  const ageLabels = { 'u8-u11':'MiniRoos 8–11','u8-u9':'MiniRoos 5–9','u12-u13':'Youth U12–U13','u14-u16':'Youth U14–U16','u5-u7':'MiniRoos 5–7' };
-
-  document.getElementById('detail-player-info').innerHTML = `
-<div class="dh-name">${name}</div>
-<div class="dh-chips">
-  <span class="chip-ag">${agDisp}</span>
-  <span class="chip-pos">${pos}</span>
-  ${profile.jersey_number ? `<span class="chip-jersey">#${profile.jersey_number}</span>` : ''}
-</div>
-<a href="/coaching/sessions?age=${ag}" target="_blank" class="plans-link">View ${ageLabels[ag] || ag} Session Plans ↗</a>`;
-
-  document.getElementById('assess-player-id').value = profile.id;
-  document.getElementById('assess-age-group').value  = ag;
-  document.getElementById('assess-position').value   = profile.position || 'midfielder';
-
-  document.querySelectorAll('.attr-slider').forEach(s => { s.value = 5; });
-  document.getElementById('assess-notes').value = '';
-  updateAllPreviews(ag);
-  updateCardPreview();
-
-  const latestData = await capi(
-    `/items/academy_assessments?filter[player][_eq]=${profile.id}&filter[is_latest][_eq]=true&limit=1&fields=*`
-  );
-  const latest = Array.isArray(latestData) ? latestData[0] : null;
-  if (latest) {
-    ['pace','shooting','passing','dribbling','defending','physical'].forEach(attr => {
-      const sl = document.getElementById(`slider-${attr}`);
-      if (sl && latest[`${attr}_raw`]) sl.value = latest[`${attr}_raw`];
+  if (searchQuery) {
+    players.forEach((p, i) => { html += renderPlayerRow(p, i); });
+  } else {
+    const groups = {};
+    players.forEach((p, i) => {
+      const ag = p.enrollment?.age_group || 'unknown';
+      if (!groups[ag]) groups[ag] = [];
+      groups[ag].push({ p, i });
     });
-    document.getElementById('assess-notes').value = latest.notes || '';
-    updateAllPreviews(ag);
-    updateCardPreview();
+    GROUP_ORDER.forEach(ag => {
+      if (!groups[ag]?.length) return;
+      html += `<div class="group-header">${GROUP_LABELS[ag] || ag.toUpperCase()}</div>`;
+      groups[ag].forEach(({ p, i }) => { html += renderPlayerRow(p, i); });
+    });
+    if (groups['unknown']?.length) {
+      html += `<div class="group-header">Other</div>`;
+      groups['unknown'].forEach(({ p, i }) => { html += renderPlayerRow(p, i); });
+    }
   }
 
-  const histData = await capi(
-    `/items/academy_assessments?filter[player][_eq]=${profile.id}&sort[]=-assessment_date&limit=10&fields=*`
-  );
-  renderAssessHistory(Array.isArray(histData) ? histData : [], ag, profile.position);
+  list.innerHTML = html;
 
-  const msgData = await capi(
-    `/items/academy_messages?filter[player][_eq]=${profile.id}&sort[]=date_created&fields=*`
-  );
-  renderMessages(Array.isArray(msgData) ? msgData : []);
+  list.querySelectorAll('.player-row').forEach(el => {
+    el.addEventListener('click', () => selectPlayer(parseInt(el.dataset.idx)));
+  });
+
+  if (selectedIdx >= 0) {
+    list.querySelector(`.player-row[data-idx="${selectedIdx}"]`)?.classList.add('selected');
+  }
 }
 
-// ── SLIDER PREVIEWS ───────────────────────────────────────────
-function normChipClass(v) { return v >= 65 ? 'norm-green' : v >= 50 ? 'norm-amber' : 'norm-red'; }
+function renderPlayerRow(p, i) {
+  const enr  = p.enrollment || {};
+  const name = `${enr.player_first_name || ''} ${enr.player_last_name || ''}`.trim() || 'Unknown Player';
+  const ag   = enr.age_group || '';
+  const pos  = { goalkeeper: 'GK', defender: 'CB', midfielder: 'MID', forward: 'FWD' }[p.position] || p.position || '';
 
-function updateAllPreviews(ag) {
-  ['pace','shooting','passing','dribbling','defending','physical'].forEach(attr => {
-    const slider = document.getElementById(`slider-${attr}`);
-    const valEl  = document.getElementById(`sv-${attr}`);
-    const normEl = document.getElementById(`sn-${attr}`);
-    if (!slider) return;
-    const raw  = parseInt(slider.value);
-    const norm = normalize(raw, ag);
-    if (valEl)  valEl.textContent = raw;
-    if (normEl) { normEl.textContent = norm; normEl.className = `slider-norm ${normChipClass(norm)}`; }
+  const assess = assessMap[String(p.id)];
+  let tierHtml = `<span class="tier-chip tier-unrated">Unrated</span>`;
+  if (assess) {
+    const attrs = {
+      pac: normalize(assess.pace_raw,      ag), sho: normalize(assess.shooting_raw,  ag),
+      pas: normalize(assess.passing_raw,   ag), dri: normalize(assess.dribbling_raw, ag),
+      def: normalize(assess.defending_raw, ag), phy: normalize(assess.physical_raw,  ag),
+    };
+    const ov  = calcOverall(attrs, p.position || 'midfielder');
+    const t   = tierInfo(ov);
+    const cls = t.cls.replace('card-', 'tier-');
+    tierHtml = `<span class="tier-chip ${cls}">${t.name.toUpperCase()} ${ov}</span>`;
+  }
+
+  const hasUnread = unreadSet.has(String(p.id));
+  const lastDate  = assess
+    ? new Date(assess.assessment_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
+    : 'Never assessed';
+
+  return `<div class="player-row${selectedIdx === i ? ' selected' : ''}" data-idx="${i}">
+    <span class="pr-dot ${hasUnread ? 'pr-dot--unread' : 'pr-dot--empty'}"></span>
+    <div class="pr-info">
+      <div class="pr-name">${name}</div>
+      <div class="pr-meta">${pos ? pos + ' · ' : ''}${lastDate}</div>
+    </div>
+    ${tierHtml}
+  </div>`;
+}
+
+// ── Select player ──
+async function selectPlayer(idx) {
+  selectedIdx    = idx;
+  selectedPlayer = allPlayers[idx];
+  if (!selectedPlayer) return;
+
+  document.querySelectorAll('.player-row').forEach(el => {
+    el.classList.toggle('selected', parseInt(el.dataset.idx) === idx);
   });
+
+  const p   = selectedPlayer;
+  const enr = p.enrollment || {};
+  const ag  = enr.age_group || 'u12-u13';
+  const pos = p.position || 'midfielder';
+  const fn  = enr.player_first_name || '';
+  const ln  = enr.player_last_name  || '';
+
+  document.getElementById('detail-empty').hidden = true;
+  document.getElementById('detail-panel').hidden = false;
+
+  document.getElementById('detail-name').textContent = `${fn} ${ln}`.trim();
+  document.getElementById('detail-age-chip').textContent = AG_DISPLAY[ag] || ag.toUpperCase();
+  document.getElementById('detail-pos-chip').textContent = posLabel(pos);
+  const jerseyEl = document.getElementById('detail-jersey');
+  jerseyEl.textContent = p.jersey_number ? `#${p.jersey_number}` : '';
+  jerseyEl.hidden = !p.jersey_number;
+
+  const plansLink = document.getElementById('detail-plans-link');
+  plansLink.href = `/coaching/sessions?age=${ag}`;
+  plansLink.textContent = `View ${AG_DISPLAY[ag]||ag} Session Plans ↗`;
+
+  switchDetailTab('assessment');
+
+  const latestFromMap = assessMap[String(p.id)];
+  renderSliders(ag, latestFromMap);
+
+  const [latestAssess, historyRaw, messagesRaw] = await Promise.all([
+    capi(`/items/academy_assessments?filter[player][_eq]=${p.id}&filter[is_latest][_eq]=true&limit=1&fields=*`),
+    capi(`/items/academy_assessments?filter[player][_eq]=${p.id}&sort[]=-assessment_date&limit=10&fields=*`),
+    capi(`/items/academy_messages?filter[player][_eq]=${p.id}&sort[]=date_created&fields=*`),
+  ]);
+
+  const latest   = asArray(latestAssess)[0] || null;
+  const history  = asArray(historyRaw);
+  const messages = asArray(messagesRaw);
+  selectedPlayerMessages = messages;
+
+  if (latest) renderSliders(ag, latest);
+
+  document.getElementById('history-content').innerHTML = renderHistory(history, ag, pos);
+
+  renderMessages(messages);
+
+  const unreadCount = messages.filter(m => m.sender_role === 'parent' && !m.read_at).length;
+  const badge = document.getElementById('msg-badge');
+  badge.textContent = unreadCount;
+  badge.hidden = unreadCount === 0;
+}
+
+// ── Slider rendering ──
+const ATTR_LABELS = { pace: 'PAC', shooting: 'SHO', passing: 'PAS', dribbling: 'DRI', defending: 'DEF', physical: 'PHY' };
+const ATTRS = ['pace','shooting','passing','dribbling','defending','physical'];
+
+function normChipClass(v) { return v >= 65 ? 'chip-green' : v >= 50 ? 'chip-amber' : 'chip-red'; }
+
+function renderSliders(ag, assessment) {
+  const grid = document.getElementById('sliders-grid');
+  grid.innerHTML = ATTRS.map(attr => {
+    const rawVal  = assessment?.[`${attr}_raw`] ?? 5;
+    const normVal = normalize(rawVal, ag);
+    return `<div class="slider-field" data-attr="${attr}">
+      <div class="slider-label">
+        <span class="slider-label-text">${ATTR_LABELS[attr]}</span>
+        <span class="slider-val-chip ${normChipClass(normVal)}" id="chip-${attr}">${normVal}</span>
+      </div>
+      <input type="range" min="1" max="10" value="${rawVal}" id="slider-${attr}"
+        oninput="updateSlider('${attr}', '${ag}', this.value)">
+    </div>`;
+  }).join('');
+
+  const notesEl = document.getElementById('assess-notes');
+  if (notesEl) notesEl.value = assessment?.notes || '';
+}
+
+function updateSlider(attr, ag, rawVal) {
+  const norm = normalize(parseInt(rawVal), ag);
+  const chip = document.getElementById(`chip-${attr}`);
+  if (chip) { chip.textContent = norm; chip.className = `slider-val-chip ${normChipClass(norm)}`; }
+  updateCardPreview();
 }
 
 function updateCardPreview() {
-  const ag  = document.getElementById('assess-age-group').value || 'u12-u13';
-  const idx = selectedIdx;
-  if (idx < 0) return;
-  const { enrollment, profile } = allPlayers[idx];
-  const rawAttrs = {
-    pace:      parseInt(document.getElementById('slider-pace').value      || 5),
-    shooting:  parseInt(document.getElementById('slider-shooting').value  || 5),
-    passing:   parseInt(document.getElementById('slider-passing').value   || 5),
-    dribbling: parseInt(document.getElementById('slider-dribbling').value || 5),
-    defending: parseInt(document.getElementById('slider-defending').value || 5),
-    physical:  parseInt(document.getElementById('slider-physical').value  || 5),
-  };
-  document.getElementById('detail-card-preview').innerHTML = buildFIFACard(enrollment, profile, rawAttrs);
+  const p = selectedPlayer;
+  if (!p) return;
+  const ag  = p.enrollment?.age_group || 'u12-u13';
+  const raw = {};
+  ATTRS.forEach(attr => {
+    const el = document.getElementById(`slider-${attr}`);
+    raw[attr] = el ? parseInt(el.value) : 5;
+  });
+  document.getElementById('card-preview').innerHTML = buildFIFACard(p.enrollment, p, raw);
 }
 
-document.querySelectorAll('.attr-slider').forEach(slider => {
-  slider.addEventListener('input', () => {
-    const ag = document.getElementById('assess-age-group').value || 'u12-u13';
-    updateAllPreviews(ag);
-    updateCardPreview();
-  });
-});
-
-// ── RENDER HISTORY ────────────────────────────────────────────
-function renderAssessHistory(assessments, ag, position) {
-  const el = document.getElementById('assess-history');
-  if (!assessments.length) {
-    el.innerHTML = '<p class="empty-msg">No assessments recorded yet.</p>';
-    return;
-  }
-  el.innerHTML = assessments.map(a => {
+// ── History rendering ──
+function renderHistory(history, ag, position) {
+  if (!history.length) return `<p class="hist-empty">No previous assessments. Fill in the sliders above and save to create the first one.</p>`;
+  return history.map(a => {
     const attrs = {
       pac: normalize(a.pace_raw,ag),      sho: normalize(a.shooting_raw,ag),
       pas: normalize(a.passing_raw,ag),   dri: normalize(a.dribbling_raw,ag),
       def: normalize(a.defending_raw,ag), phy: normalize(a.physical_raw,ag),
     };
-    const ov   = calcOverall(attrs, position || 'midfielder');
-    const tier = tierInfo(ov);
-    const d    = new Date(a.assessment_date).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'});
-    return `
-<div class="hist-entry ${a.is_latest ? 'hist-entry--current' : ''}">
-  <div class="he-row">
-    <span class="he-date">${d}</span>
-    <span class="he-ov ${tier.cls}">${ov}</span>
-    <span class="he-tier">${tier.name}</span>
-    ${a.is_latest ? '<span class="he-latest">Current</span>' : ''}
-    <span class="he-coach">by ${a.assessed_by||'Coach'}</span>
-  </div>
-  <div class="he-bars">
-    ${[['PAC',attrs.pac],['SHO',attrs.sho],['PAS',attrs.pas],['DRI',attrs.dri],['DEF',attrs.def],['PHY',attrs.phy]].map(([l,v])=>`
-    <div class="he-bar-row">
-      <span class="he-lbl">${l}</span>
-      <div class="he-bar-bg"><div class="he-bar-fill" style="width:${Math.min(v,99)}%"></div></div>
-      <span class="he-bv">${v}</span>
-    </div>`).join('')}
-  </div>
-  ${a.notes ? `<p class="he-notes">${a.notes}</p>` : ''}
-</div>`;
+    const ov      = calcOverall(attrs, position);
+    const t       = tierInfo(ov);
+    const tierCls = t.cls.replace('card-','tier-');
+    const date    = new Date(a.assessment_date).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' });
+    const barEntries = [['PAC',attrs.pac],['SHO',attrs.sho],['PAS',attrs.pas],['DRI',attrs.dri],['DEF',attrs.def],['PHY',attrs.phy]];
+    return `<div class="hist-entry">
+      <div class="hist-header">
+        <span class="hist-date">${date}${a.assessed_by ? ` · ${a.assessed_by}` : ''}</span>
+        <span class="tier-chip ${tierCls}">${t.name.toUpperCase()} ${ov}</span>
+      </div>
+      <div class="hist-bars">
+        ${barEntries.map(([l,v])=>`<div class="hb-item">
+          <div class="hb-val">${v}</div>
+          <div class="hb-track"><div class="hb-fill" style="width:${v}%"></div></div>
+          <div class="hb-label">${l}</div>
+        </div>`).join('')}
+      </div>
+      ${a.notes ? `<div class="hist-notes">"${a.notes}"</div>` : ''}
+    </div>`;
   }).join('');
 }
 
-// ── RENDER MESSAGES ───────────────────────────────────────────
+// ── Messages rendering ──
 function renderMessages(messages) {
-  const el = document.getElementById('coach-message-thread');
+  const thread = document.getElementById('message-thread');
   if (!messages.length) {
-    el.innerHTML = '<p class="empty-msg">No messages yet.</p>';
-    return;
+    thread.innerHTML = `<p class="msg-empty">No messages yet. Send a message to the player's family below.</p>`;
+  } else {
+    thread.innerHTML = messages.map(m => {
+      const isCoach = m.sender_role === 'coach';
+      const date    = new Date(m.date_created).toLocaleDateString('en-AU', { day:'numeric', month:'short' });
+      return `<div class="msg-bubble msg--${isCoach ? 'coach' : 'parent'}">
+        <div class="msg-body">${m.body}</div>
+        <div class="msg-meta">${m.sender_name || (isCoach ? 'Coach' : 'Parent')} · ${date}</div>
+      </div>`;
+    }).join('');
+    setTimeout(() => { thread.scrollTop = thread.scrollHeight; }, 50);
   }
-  el.innerHTML = messages.map(m => `
-<div class="msg msg--${m.sender_role}">
-  <div class="msg-meta">
-    <span class="msg-author">${m.sender_name||(m.sender_role==='coach'?'You':'Parent')}</span>
-    <span class="msg-date">${new Date(m.date_created).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}</span>
-  </div>
-  <div class="msg-body">${m.body.replace(/\n/g,'<br>')}</div>
-</div>`).join('');
-  el.scrollTop = el.scrollHeight;
+
+  const form    = document.getElementById('msg-form');
+  const newForm = form.cloneNode(true);
+  form.parentNode.replaceChild(newForm, form);
+
+  newForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const ta    = newForm.querySelector('#msg-body');
+    const btn   = newForm.querySelector('#msg-send-btn');
+    const errEl = newForm.querySelector('#msg-send-error');
+    const body  = ta.value.trim();
+    if (!body) return;
+
+    btn.disabled = true; btn.textContent = 'Sending…';
+
+    const coach      = CLS.user;
+    const senderName = `${coach?.first_name||''} ${coach?.last_name||''}`.trim() || 'Coach';
+
+    const result = await capi('/items/academy_messages', {
+      method: 'POST',
+      body: JSON.stringify({ player: selectedPlayer.id, sender_role: 'coach', sender_name: senderName, body }),
+    });
+
+    if (result) {
+      ta.value = '';
+      const freshMsgs = await capi(`/items/academy_messages?filter[player][_eq]=${selectedPlayer.id}&sort[]=date_created&fields=*`);
+      selectedPlayerMessages = asArray(freshMsgs);
+      renderMessages(selectedPlayerMessages);
+      const badge = document.getElementById('msg-badge');
+      if (badge) badge.hidden = true;
+    } else {
+      errEl.hidden = false;
+      errEl.textContent = 'Failed to send. Please try again.';
+      setTimeout(() => { errEl.hidden = true; }, 4000);
+    }
+
+    btn.disabled = false; btn.textContent = 'Send Message →';
+  });
 }
 
-// ── SAVE ASSESSMENT ───────────────────────────────────────────
-document.getElementById('assessment-form').addEventListener('submit', async e => {
-  e.preventDefault();
-  const saveBtn  = document.getElementById('save-assess-btn');
-  const savedMsg = document.getElementById('assess-saved-msg');
-  const errMsg   = document.getElementById('assess-error-msg');
-  savedMsg.hidden = true; errMsg.hidden = true;
-  saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+// ── Tab switching ──
+function switchDetailTab(name) {
+  document.querySelectorAll('.dtab').forEach(b => b.classList.toggle('dtab--active', b.dataset.tab === name));
+  document.querySelectorAll('.dtab-panel').forEach(p => { p.hidden = p.id !== `dtab-${name}`; });
+  if (name === 'assessment') updateCardPreview();
+}
 
-  const playerId = document.getElementById('assess-player-id').value;
-  const ag       = document.getElementById('assess-age-group').value;
-  const coach    = CLS.user;
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('dtab')) switchDetailTab(e.target.dataset.tab);
+});
 
-  const existing = await capi(`/items/academy_assessments?filter[player][_eq]=${playerId}&filter[is_latest][_eq]=true&fields=id`);
-  if (Array.isArray(existing) && existing.length > 0) {
-    await Promise.all(existing.map(a =>
-      capi(`/items/academy_assessments/${a.id}`, { method:'PATCH', body:JSON.stringify({ is_latest:false }) })
-    ));
-  }
+// ── Save assessment ──
+document.getElementById('save-btn').addEventListener('click', async () => {
+  const p = selectedPlayer;
+  if (!p) return;
+
+  const btn   = document.getElementById('save-btn');
+  const errEl = document.getElementById('assess-error');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  errEl.hidden = true;
+
+  const ag    = p.enrollment?.age_group || 'u12-u13';
+  const coach = CLS.user;
 
   const payload = {
-    player:            playerId,
+    player:            p.id,
     assessed_by:       `${coach?.first_name||''} ${coach?.last_name||''}`.trim() || 'Coach',
     assessment_date:   new Date().toISOString().split('T')[0],
     age_group_at_time: ag,
-    pace_raw:          parseInt(document.getElementById('slider-pace').value),
-    shooting_raw:      parseInt(document.getElementById('slider-shooting').value),
-    passing_raw:       parseInt(document.getElementById('slider-passing').value),
-    dribbling_raw:     parseInt(document.getElementById('slider-dribbling').value),
-    defending_raw:     parseInt(document.getElementById('slider-defending').value),
-    physical_raw:      parseInt(document.getElementById('slider-physical').value),
-    notes:             document.getElementById('assess-notes').value.trim() || null,
-    is_latest:         true,
+    pace_raw:      parseInt(document.getElementById('slider-pace').value),
+    shooting_raw:  parseInt(document.getElementById('slider-shooting').value),
+    passing_raw:   parseInt(document.getElementById('slider-passing').value),
+    dribbling_raw: parseInt(document.getElementById('slider-dribbling').value),
+    defending_raw: parseInt(document.getElementById('slider-defending').value),
+    physical_raw:  parseInt(document.getElementById('slider-physical').value),
+    notes:         document.getElementById('assess-notes').value.trim() || null,
+    is_latest:     true,
   };
 
-  const result = await capi('/items/academy_assessments', { method:'POST', body:JSON.stringify(payload) });
+  // Mark existing latest as not-latest
+  const existing = await capi(`/items/academy_assessments?filter[player][_eq]=${p.id}&filter[is_latest][_eq]=true&fields=id`);
+  await Promise.all(asArray(existing).map(a =>
+    capi(`/items/academy_assessments/${a.id}`, { method: 'PATCH', body: JSON.stringify({ is_latest: false }) })
+  ));
+
+  const result = await capi('/items/academy_assessments', { method: 'POST', body: JSON.stringify(payload) });
+
   if (result) {
-    savedMsg.hidden = false;
-    setTimeout(() => { savedMsg.hidden = true; }, 3000);
-    const histData = await capi(`/items/academy_assessments?filter[player][_eq]=${playerId}&sort[]=-assessment_date&limit=10&fields=*`);
-    const pos = document.getElementById('assess-position').value;
-    renderAssessHistory(Array.isArray(histData) ? histData : [], ag, pos);
-    // Refresh player list badges
-    const allAssess = await capi('/items/academy_assessments?filter[is_latest][_eq]=true&limit=200&fields=player,pace_raw,shooting_raw,passing_raw,dribbling_raw,defending_raw,physical_raw,assessment_date');
-    if (Array.isArray(allAssess)) {
-      _lastAssessMap = {};
-      allAssess.forEach(a => { _lastAssessMap[String(a.player)] = a; });
-      renderPlayerList(allPlayers);
-    }
+    const banner = document.getElementById('save-banner');
+    banner.textContent = '✓ Assessment saved — card updated';
+    banner.classList.add('visible');
+    setTimeout(() => banner.classList.remove('visible'), 3000);
+
+    assessMap[String(p.id)] = {
+      player:           p.id,
+      pace_raw:         payload.pace_raw,
+      shooting_raw:     payload.shooting_raw,
+      passing_raw:      payload.passing_raw,
+      dribbling_raw:    payload.dribbling_raw,
+      defending_raw:    payload.defending_raw,
+      physical_raw:     payload.physical_raw,
+      assessment_date:  payload.assessment_date,
+    };
+    renderPlayerList(allPlayers, document.getElementById('player-search').value);
+
+    const freshHistory = await capi(`/items/academy_assessments?filter[player][_eq]=${p.id}&sort[]=-assessment_date&limit=10&fields=*`);
+    document.getElementById('history-content').innerHTML = renderHistory(asArray(freshHistory), ag, p.position || 'midfielder');
   } else {
-    errMsg.hidden = false;
+    errEl.hidden = false;
+    errEl.textContent = 'Failed to save. Please try again.';
+    setTimeout(() => { errEl.hidden = true; }, 5000);
   }
-  saveBtn.disabled = false; saveBtn.textContent = 'Save Assessment →';
+
+  btn.disabled = false; btn.textContent = 'Save Assessment →';
 });
 
-// ── SEND MESSAGE ──────────────────────────────────────────────
-document.getElementById('coach-msg-form').addEventListener('submit', async e => {
-  e.preventDefault();
-  const input   = document.getElementById('coach-msg-input');
-  const sendBtn = document.getElementById('coach-send-btn');
-  const body    = input.value.trim();
-  if (!body || selectedIdx < 0) return;
-
-  const { profile } = allPlayers[selectedIdx];
-  const coach = CLS.user;
-  sendBtn.disabled = true; sendBtn.textContent = 'Sending…';
-
-  const result = await capi('/items/academy_messages', { method:'POST', body:JSON.stringify({
-    player:      profile.id,
-    sender_role: 'coach',
-    sender_name: `${coach?.first_name||''} ${coach?.last_name||''}`.trim() || 'Coach',
-    body,
-  })});
-  if (result) {
-    input.value = '';
-    const msgData = await capi(`/items/academy_messages?filter[player][_eq]=${profile.id}&sort[]=date_created&fields=*`);
-    renderMessages(Array.isArray(msgData) ? msgData : []);
-  }
-  sendBtn.disabled = false; sendBtn.textContent = 'Send →';
+// ── Search ──
+document.getElementById('player-search').addEventListener('input', e => {
+  const q        = e.target.value.toLowerCase().trim();
+  const filtered = q
+    ? allPlayers.filter(p => {
+        const name = `${p.enrollment?.player_first_name||''} ${p.enrollment?.player_last_name||''}`.toLowerCase();
+        return name.includes(q);
+      })
+    : allPlayers;
+  renderPlayerList(filtered, q);
 });
 
-// ── LOGIN ─────────────────────────────────────────────────────
-document.getElementById('coach-login-form').addEventListener('submit', async e => {
-  e.preventDefault();
-  const errEl = document.getElementById('c-login-error');
-  const btn   = document.getElementById('c-login-btn');
-  errEl.hidden = true; btn.disabled = true; btn.textContent = 'Signing in…';
+// ── Login ──
+document.getElementById('login-btn').addEventListener('click', async () => {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl    = document.getElementById('login-error');
+  const btn      = document.getElementById('login-btn');
+  if (!email || !password) return;
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  errEl.hidden = true;
+
   try {
-    const res  = await fetch(`${DURL}/auth/login`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ email: document.getElementById('c-email').value.trim(), password: document.getElementById('c-password').value }),
+    const res = await fetch(`${DURL}/auth/login`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json?.errors?.[0]?.message || 'Login failed');
-    CLS.token   = json.data.access_token;
-    CLS.refresh = json.data.refresh_token;
-    const user = await capi('/users/me?fields=id,email,first_name,last_name,role.name');
-    if (!user) throw new Error('Could not load profile');
-    CLS.user = user;
+    if (!res.ok) throw new Error('Invalid credentials');
+    const { data } = await res.json();
+    CLS.token = data.access_token; CLS.refresh = data.refresh_token;
+
+    const userRes = await fetch(`${DURL}/users/me?fields=id,email,first_name,last_name,role.name`, {
+      headers: { Authorization: `Bearer ${CLS.token}` },
+    });
+    if (!userRes.ok) throw new Error('Could not load user');
+    const { data: user } = await userRes.json();
+
     const role = (user?.role?.name||'').toLowerCase();
-    if (!['coach','administrator','admin','technical_director','technical director','director'].some(r => role.includes(r))) {
+    if (!['coach','administrator','admin','technical director','director'].some(r => role.includes(r))) {
       CLS.clear();
-      document.getElementById('c-access-denied').hidden = false;
-      document.getElementById('c-loading').hidden = true;
-      document.getElementById('view-login').hidden = true;
-      document.getElementById('view-dashboard').hidden = false;
-      btn.disabled = false; btn.textContent = 'Sign In →';
-      return;
+      throw new Error('Your account does not have coach access. Please contact the club administrator.');
     }
-    showCoachDashboard(user);
-    loadAllPlayers();
-  } catch (err) {
-    errEl.textContent = err.message.includes('Invalid') ? 'Invalid email or password.' : err.message;
-    errEl.hidden = false; btn.disabled = false; btn.textContent = 'Sign In →';
+
+    CLS.user = user;
+    showDashboard();
+
+    const badge = document.getElementById('coach-badge');
+    const fn = user.first_name || '';
+    const li = user.last_name?.[0] || '';
+    badge.textContent = `${fn}${li ? ' ' + li + '.' : ''}`;
+
+    await loadAllPlayers();
+  } catch(err) {
+    errEl.textContent = err.message || 'Sign in failed. Please try again.';
+    errEl.hidden = false;
   }
+
+  btn.disabled = false; btn.textContent = 'Sign In →';
 });
 
-document.getElementById('c-logout-btn').addEventListener('click', () => {
-  if (CLS.token) fetch(`${DURL}/auth/logout`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({refresh_token:CLS.refresh})}).catch(()=>{});
-  showCoachLogin();
+// ── Logout ──
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  if (CLS.refresh) {
+    await fetch(`${DURL}/auth/logout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${CLS.token}` },
+      body: JSON.stringify({ refresh_token: CLS.refresh }),
+    }).catch(() => {});
+  }
+  showLogin();
 });
-document.getElementById('c-back-login')?.addEventListener('click', showCoachLogin);
 
-// ── INIT ──────────────────────────────────────────────────────
-(async function init() {
-  if (!CLS.token) { showCoachLogin(); return; }
-  const user = await capi('/users/me?fields=id,email,first_name,last_name,role.name');
-  if (!user) { showCoachLogin(); return; }
-  CLS.user = user;
+// ── Init ──
+async function init() {
+  if (!CLS.token) { showLogin(); return; }
+
+  const userRes = await fetch(`${DURL}/users/me?fields=id,email,first_name,last_name,role.name`, {
+    headers: { Authorization: `Bearer ${CLS.token}` },
+  });
+
+  if (!userRes.ok) {
+    const ok = await tryRefresh();
+    if (!ok) { showLogin(); return; }
+    return init();
+  }
+
+  const { data: user } = await userRes.json();
   const role = (user?.role?.name||'').toLowerCase();
-  if (!['coach','administrator','admin','technical_director','technical director','director'].some(r => role.includes(r))) {
-    CLS.clear(); showCoachLogin(); return;
+  if (!['coach','administrator','admin','technical director','director'].some(r => role.includes(r))) {
+    showLogin(); return;
   }
-  showCoachDashboard(user);
-  loadAllPlayers();
-})();
+
+  CLS.user = user;
+  showDashboard();
+
+  const badge = document.getElementById('coach-badge');
+  const fn = user.first_name || '';
+  const li = user.last_name?.[0] || '';
+  badge.textContent = `${fn}${li ? ' ' + li + '.' : ''}`;
+
+  await loadAllPlayers();
+}
+
+document.addEventListener('DOMContentLoaded', init);
 </script>
 
-<style>
-/* ── BASE ── */
-.coach-view { min-height: 100vh; }
-
-/* ── LOGIN ── */
-.login-hero { background: linear-gradient(135deg, var(--green-dark), var(--off-black)); padding: 64px 48px 48px; border-bottom: 1px solid var(--border); }
-.login-hero-inner { max-width: 560px; margin: 0 auto; }
-.login-hero h1 { font-size: clamp(48px, 6vw, 72px); margin: 10px 0 8px; }
-.login-hero p  { color: var(--muted); font-size: 16px; }
-.login-wrap    { display: flex; justify-content: center; padding: 56px 20px; }
-.login-box     { width: 100%; max-width: 440px; padding: 40px; }
-.login-box h2  { font-size: 36px; margin-bottom: 24px; }
-.field         { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
-.field label   { font-family: var(--font-cond); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
-.field input[type="email"], .field input[type="password"] {
-  background: var(--black); border: 1px solid var(--border); border-radius: var(--radius);
-  color: var(--white); font-family: var(--font-body); font-size: 15px; padding: 11px 14px; width: 100%;
-}
-.field input:focus { outline: none; border-color: var(--green); }
-.btn-full      { width: 100%; justify-content: center; margin-top: 8px; }
-.form-error    { background: rgba(217,48,37,0.1); border: 1px solid rgba(217,48,37,0.3); border-radius: var(--radius); padding: 12px 14px; font-size: 14px; color: #ff6b6b; margin-bottom: 12px; }
-.login-help    { font-size: 13px; color: var(--muted); margin-top: 20px; }
-
-/* ── TOPBAR ── */
-.topbar        { background: var(--off-black); border-bottom: 1px solid var(--border); padding: 0 32px; position: sticky; top: 0; z-index: 50; }
-.topbar-inner  { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; gap: 16px; flex-wrap: wrap; }
-.topbar-brand  { display: flex; flex-direction: column; gap: 2px; }
-.topbar-title  { font-size: clamp(18px, 2.5vw, 26px); margin: 0; line-height: 1.1; }
-.topbar-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.coach-badge   { font-family: var(--font-cond); font-size: 13px; font-weight: 700; color: var(--green-bright); padding: 5px 12px; background: rgba(37,160,76,0.1); border: 1px solid rgba(37,160,76,0.25); border-radius: 20px; }
-.btn-sm        { padding: 8px 16px; font-size: 13px; }
-
-/* ── STATES ── */
-.state-msg { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; gap: 12px; color: var(--muted); text-align: center; padding: 40px; }
-.spinner   { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ── TWO-PANE BODY ── */
-.coach-body { display: grid; grid-template-columns: 300px 1fr; height: calc(100vh - 70px); overflow: hidden; }
-
-/* ── PLAYER LIST ── */
-.player-col        { border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; background: var(--off-black); }
-.player-col-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
-.search-input      { width: 100%; background: var(--black); border: 1px solid var(--border); border-radius: var(--radius); color: var(--white); font-size: 14px; padding: 9px 14px; font-family: inherit; }
-.search-input:focus { outline: none; border-color: var(--green); }
-.player-count      { font-size: 11px; color: var(--muted); font-family: var(--font-cond); font-weight: 700; letter-spacing: 1px; }
-.player-list       { flex: 1; overflow-y: auto; }
-.empty-list        { padding: 24px 16px; font-size: 13px; color: var(--muted); text-align: center; }
-
-/* Player cards */
-.player-card {
-  width: 100%; background: none; border: none; border-bottom: 1px solid var(--border);
-  border-left: 3px solid transparent;
-  padding: 14px 16px; text-align: left; cursor: pointer; transition: background 0.1s, border-color 0.1s;
-  display: block;
-}
-.player-card:hover      { background: rgba(255,255,255,0.03); }
-.player-card--active    { background: rgba(37,160,76,0.07) !important; }
-
-/* tier border colours */
-.border-card-bronze     { border-left-color: #cd7f32; }
-.border-card-silver     { border-left-color: #a0a0b0; }
-.border-card-gold       { border-left-color: #d4a017; }
-.border-card-elite      { border-left-color: #00c853; }
-.border-tier-none       { border-left-color: var(--border); }
-
-.pc-name  { font-family: var(--font-cond); font-size: 16px; font-weight: 800; color: var(--white); margin-bottom: 5px; }
-.pc-meta  { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
-.pc-ag    { font-family: var(--font-cond); font-size: 11px; font-weight: 700; background: rgba(37,160,76,0.12); color: var(--green-bright); padding: 2px 7px; border-radius: 3px; letter-spacing: .5px; }
-.pc-pos   { font-family: var(--font-cond); font-size: 11px; font-weight: 700; background: rgba(100,149,237,0.12); color: #6495ed; padding: 2px 7px; border-radius: 3px; }
-.pi-date  { font-size: 11px; color: var(--muted); }
-
-/* tier chips */
-.tier-chip { font-family: var(--font-cond); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; }
-.tier-chip strong { font-size: 12px; }
-.card-bronze.tier-chip { background: rgba(205,127,50,0.15); color: #cd7f32; }
-.card-silver.tier-chip { background: rgba(160,160,176,0.15); color: #a0a0b0; }
-.card-gold.tier-chip   { background: rgba(212,160,23,0.18); color: #d4a017; }
-.card-elite.tier-chip  { background: rgba(0,200,83,0.12); color: #00c853; }
-
-/* ── DETAIL COLUMN ── */
-.detail-col   { overflow-y: auto; display: flex; flex-direction: column; }
-.no-selection { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 16px; text-align: center; color: var(--muted); padding: 40px; }
-.no-selection p { max-width: 280px; font-size: 14px; line-height: 1.6; }
-
-/* ── PLAYER DETAIL ── */
-.detail-header { padding: 28px 36px 20px; border-bottom: 1px solid var(--border); background: var(--off-black); }
-.dh-name       { font-size: clamp(26px, 3.5vw, 42px); font-weight: 800; margin-bottom: 10px; line-height: 1.1; }
-.dh-chips      { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
-.chip-ag       { font-family: var(--font-cond); font-size: 12px; font-weight: 700; background: rgba(37,160,76,0.12); color: var(--green-bright); padding: 4px 10px; border-radius: 4px; letter-spacing: 1px; }
-.chip-pos      { font-family: var(--font-cond); font-size: 12px; font-weight: 700; background: rgba(100,149,237,0.12); color: #6495ed; padding: 4px 10px; border-radius: 4px; }
-.chip-jersey   { font-family: var(--font-cond); font-size: 12px; font-weight: 700; background: var(--surface-2); color: var(--muted); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border); }
-.plans-link    { font-family: var(--font-cond); font-size: 12px; font-weight: 700; color: var(--green-bright); text-decoration: none; letter-spacing: .5px; display: inline-flex; align-items: center; gap: 4px; }
-.plans-link:hover { text-decoration: underline; }
-
-/* ── TABS ── */
-.detail-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--off-black); padding: 0 36px; gap: 0; position: sticky; top: 70px; z-index: 10; }
-.dtab { background: none; border: none; border-bottom: 3px solid transparent; color: var(--muted); font-family: var(--font-cond); font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 14px 20px; cursor: pointer; transition: all 0.15s; }
-.dtab:hover { color: var(--white); }
-.dtab--active { color: var(--green-bright); border-bottom-color: var(--green-bright); }
-.dtab-panel { padding: 32px 36px 60px; }
-
-/* ── ASSESSMENT LAYOUT ── */
-.assess-layout { display: grid; grid-template-columns: 180px 1fr; gap: 36px; align-items: start; }
-.card-preview-col { position: sticky; top: 140px; }
-.preview-label { font-family: var(--font-cond); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--green-bright); margin-bottom: 12px; }
-
-/* FIFA card */
-.fifa-card    { width: 160px; border-radius: 12px; overflow: hidden; padding: 14px 12px 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); }
-.card-bronze  { background: linear-gradient(160deg, #cd7f32, #8b4513); }
-.card-silver  { background: linear-gradient(160deg, #d0d0d0, #7a8a90); }
-.card-gold    { background: linear-gradient(160deg, #d4a017, #8b6400); }
-.card-elite   { background: linear-gradient(160deg, #00c853, #1d7a3a); }
-.fc-header    { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
-.fc-left      { display: flex; flex-direction: column; }
-.fc-overall   { font-size: 38px; font-weight: 900; line-height: 1; color: #fff; font-family: var(--font-cond); }
-.fc-pos       { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.85); font-family: var(--font-cond); }
-.fc-tier      { font-size: 10px; color: rgba(255,255,255,0.6); font-family: var(--font-cond); }
-.fc-photo     { display: flex; justify-content: center; margin: 4px 0; }
-.fc-name      { font-family: var(--font-cond); font-weight: 800; font-size: 13px; color: #fff; text-align: center; letter-spacing: .05em; }
-.fc-club      { font-size: 10px; color: rgba(255,255,255,0.6); text-align: center; margin-bottom: 8px; }
-.fc-stats     { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px; }
-.fc-stat      { display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.2); border-radius: 3px; padding: 3px 2px; }
-.fc-sv        { font-size: 14px; font-weight: 800; color: #fff; font-family: var(--font-cond); line-height: 1; }
-.fc-sl        { font-size: 8px; color: rgba(255,255,255,0.7); font-weight: 700; }
-.fc-badge     { }
-
-/* Sliders */
-.sliders-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-.slider-field { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
-.slider-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.slider-header label { font-family: var(--font-cond); font-size: 13px; font-weight: 700; color: var(--muted); }
-.slider-vals  { display: flex; align-items: center; gap: 6px; }
-.sv           { font-family: var(--font-cond); font-size: 22px; font-weight: 900; color: var(--white); line-height: 1; min-width: 20px; text-align: right; }
-.slider-norm  { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; font-family: var(--font-cond); }
-.norm-green   { background: rgba(37,160,76,0.15); color: var(--green-bright); }
-.norm-amber   { background: rgba(255,180,0,0.15); color: #ffb400; }
-.norm-red     { background: rgba(220,50,50,0.15); color: #e05050; }
-.attr-slider  { width: 100%; accent-color: var(--green); cursor: pointer; height: 4px; }
-
-.notes-field  { margin-top: 4px; }
-.notes-field label { font-family: var(--font-cond); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 8px; display: block; }
-.field-hint   { font-weight: 400; font-size: 11px; color: var(--muted); text-transform: none; letter-spacing: 0; }
-textarea      { background: var(--black); border: 1px solid var(--border); border-radius: var(--radius); color: var(--white); font-family: var(--font-body); font-size: 14px; padding: 12px 14px; resize: vertical; width: 100%; }
-textarea:focus { outline: none; border-color: var(--green); }
-.form-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
-.save-ok      { font-family: var(--font-cond); font-size: 13px; font-weight: 700; color: var(--green-bright); }
-.save-err     { font-family: var(--font-cond); font-size: 13px; font-weight: 700; color: #e05050; }
-
-/* ── HISTORY ── */
-.history-list      { display: flex; flex-direction: column; gap: 12px; }
-.hist-entry        { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
-.hist-entry--current { border-color: var(--green); }
-.he-row            { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-.he-date           { font-family: var(--font-cond); font-size: 12px; color: var(--muted); flex: 1; }
-.he-ov             { font-family: var(--font-cond); font-size: 15px; font-weight: 900; color: #fff; padding: 3px 10px; border-radius: 4px; }
-.card-bronze.he-ov { background: #8b4513; }
-.card-silver.he-ov { background: #7a8a90; }
-.card-gold.he-ov   { background: #8b6400; }
-.card-elite.he-ov  { background: #1d7a3a; }
-.he-tier           { font-family: var(--font-cond); font-size: 11px; font-weight: 700; color: var(--muted); }
-.he-latest         { font-family: var(--font-cond); font-size: 10px; font-weight: 700; color: var(--green-bright); background: rgba(37,160,76,0.12); padding: 2px 7px; border-radius: 3px; letter-spacing: .5px; }
-.he-coach          { font-size: 11px; color: var(--muted); }
-.he-bars           { display: grid; grid-template-columns: repeat(6,1fr); gap: 6px; margin-bottom: 8px; }
-.he-bar-row        { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-.he-lbl            { font-family: var(--font-cond); font-size: 9px; font-weight: 700; color: var(--muted); letter-spacing: .5px; }
-.he-bar-bg         { width: 100%; height: 3px; background: var(--border); border-radius: 2px; }
-.he-bar-fill       { height: 100%; background: var(--green-bright); border-radius: 2px; }
-.he-bv             { font-family: var(--font-cond); font-size: 11px; font-weight: 700; color: var(--white); }
-.he-notes          { font-size: 13px; color: var(--muted); line-height: 1.6; border-top: 1px solid var(--border); padding-top: 10px; margin: 0; }
-
-/* ── MESSAGES ── */
-.message-thread    { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; padding-bottom: 4px; }
-.msg               { max-width: 82%; }
-.msg--parent       { align-self: flex-start; }
-.msg--coach        { align-self: flex-end; }
-.msg-meta          { display: flex; gap: 10px; align-items: center; margin-bottom: 5px; }
-.msg-author        { font-family: var(--font-cond); font-size: 12px; font-weight: 700; color: var(--white); }
-.msg-date          { font-size: 11px; color: var(--muted); }
-.msg--parent .msg-body { background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 0 10px 10px 10px; padding: 10px 14px; font-size: 14px; line-height: 1.5; color: var(--text); }
-.msg--coach  .msg-body { background: rgba(37,160,76,0.12); border: 1px solid rgba(37,160,76,0.2); border-radius: 10px 0 10px 10px; padding: 10px 14px; font-size: 14px; line-height: 1.5; color: var(--text); }
-.compose-form      { }
-.compose-form textarea { margin-bottom: 10px; }
-.empty-msg         { font-size: 14px; color: var(--muted); font-style: italic; padding: 8px 0; }
-
-/* ── RESPONSIVE ── */
-@media (max-width: 1024px) {
-  .assess-layout { grid-template-columns: 1fr; }
-  .card-preview-col { position: static; display: flex; align-items: center; gap: 20px; }
-}
-@media (max-width: 900px) {
-  .coach-body { grid-template-columns: 1fr; height: auto; overflow: visible; }
-  .player-col { height: auto; max-height: 280px; border-right: none; border-bottom: 1px solid var(--border); }
-  .detail-col { min-height: 0; }
-  .detail-tabs { top: 60px; padding: 0 20px; }
-  .dtab-panel { padding: 24px 20px 40px; }
-  .sliders-grid { grid-template-columns: 1fr; }
-  .topbar { padding: 0 16px; }
-  .he-bars { grid-template-columns: repeat(3,1fr); }
-  .detail-header { padding: 20px; }
-}
-</style>
+</Base>

@@ -1,6 +1,6 @@
 ---
 // src/pages/academy/admin.astro
-// Technical Director admin panel — split-pane layout, no modals
+// Technical Director admin portal — full rewrite
 import Base from '../../layouts/Base.astro';
 ---
 <Base
@@ -8,1050 +8,1311 @@ import Base from '../../layouts/Base.astro';
   description="Warriors FC Academy administration panel."
 >
 
-  <!-- Login -->
-  <div id="view-login" class="admin-view">
-    <div class="portal-hero">
-      <div class="portal-hero-inner">
-        <div class="label">Academy</div>
-        <h1>Technical Director</h1>
-        <p>Manage enrollments, player profiles, assessments and parent messages.</p>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@400;600;700;800;900&display=swap');
+
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --card: #f8f9fa;
+  --border: #e1e4e8;
+  --text: #1c2128;
+  --muted: #656d76;
+  --green: #1d7a3a;
+  --green-light: #e6f4ea;
+  --green-accent: #2da44e;
+  --amber: #9a6700;
+  --amber-light: #fff8c5;
+  --red: #cf222e;
+  --red-light: #ffebe9;
+  --blue: #0969da;
+  --blue-light: #ddf4ff;
+  --font-body: 'Barlow', sans-serif;
+  --font-cond: 'Barlow Condensed', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 14px; }
+
+/* Login */
+.login-hero { background: linear-gradient(135deg, #1c2128 0%, #0d1117 100%); padding: 60px 24px; text-align: center; }
+.login-label { font-family: var(--font-cond); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #8b949e; }
+.login-title { font-family: var(--font-cond); font-size: 36px; font-weight: 800; color: #fff; margin-top: 8px; }
+.login-sub { color: #6e7681; font-size: 14px; margin-top: 8px; }
+.login-outer { display: flex; justify-content: center; padding: 32px 24px 48px; }
+.login-card { width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+.field-group { display: flex; flex-direction: column; gap: 5px; }
+.field-group label { font-size: 13px; font-weight: 600; }
+.field-group input { padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background: var(--card); }
+.field-group input:focus { outline: none; border-color: var(--green-accent); }
+.error-text { font-size: 13px; color: var(--red); }
+
+/* Topbar */
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.topbar-row1 { max-width: 1400px; margin: 0 auto; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; }
+.topbar-label { font-family: var(--font-cond); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: block; }
+.topbar-title { font-family: var(--font-cond); font-size: 20px; font-weight: 800; color: var(--text); }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-row2 { max-width: 1400px; margin: 0 auto; padding: 0 24px; display: flex; gap: 2px; border-top: 1px solid var(--border); }
+.tab-nav { padding: 10px 16px; font-family: var(--font-cond); font-size: 13px; font-weight: 700; letter-spacing: 0.05em; background: none; border: none; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+.tab-nav:hover { color: var(--text); }
+.tab-nav--active { color: var(--green-accent); border-bottom-color: var(--green-accent); }
+.tab-badge { background: var(--red); color: #fff; border-radius: 10px; padding: 1px 6px; font-size: 11px; }
+
+/* Stats chips */
+.stats-bar { display: flex; gap: 8px; align-items: center; }
+.stat-chip { font-family: var(--font-cond); font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 12px; }
+.stat-chip--amber { background: var(--amber-light); color: var(--amber); }
+.stat-chip--green { background: var(--green-light); color: var(--green); }
+.stat-chip--red   { background: var(--red-light); color: var(--red); }
+
+/* Split pane layout */
+.split-pane { display: grid; grid-template-columns: 280px 1fr; height: calc(100vh - 113px); }
+.split-list { border-right: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; overflow: hidden; }
+.split-detail { overflow-y: auto; background: var(--bg); }
+
+/* Filter bar */
+.filter-bar { padding: 10px 12px; border-bottom: 1px solid var(--border); display: flex; gap: 4px; flex-wrap: wrap; }
+.filter-btn { padding: 4px 10px; border: 1px solid var(--border); border-radius: 16px; font-family: var(--font-cond); font-size: 12px; font-weight: 700; cursor: pointer; background: none; color: var(--muted); display: flex; align-items: center; gap: 4px; transition: all 0.15s; }
+.filter-btn:hover { border-color: var(--green-accent); color: var(--green-accent); }
+.filter-btn--active { background: var(--green-light); border-color: var(--green-accent); color: var(--green-accent); }
+.filter-btn:disabled { opacity: 0.4; pointer-events: none; }
+.filter-count { font-size: 11px; background: rgba(0,0,0,0.06); padding: 0 4px; border-radius: 8px; }
+
+/* Item lists */
+.list-header { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.list-heading { font-family: var(--font-cond); font-size: 14px; font-weight: 700; color: var(--text); }
+.item-list { flex: 1; overflow-y: auto; }
+.search-input { width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; }
+.search-input:focus { outline: none; border-color: var(--green-accent); }
+
+/* Enrollment list items */
+.enr-item { padding: 11px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+.enr-item:hover { background: var(--card); }
+.enr-item.selected { background: var(--green-light); }
+.enr-name { font-weight: 600; font-size: 14px; }
+.enr-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.status-badge { display: inline-block; font-family: var(--font-cond); font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; letter-spacing: 0.04em; float: right; }
+.status-pending  { background: var(--amber-light); color: var(--amber); }
+.status-accepted { background: var(--blue-light); color: var(--blue); }
+.status-enrolled { background: var(--green-light); color: var(--green); }
+.status-inactive { background: var(--card); color: var(--muted); }
+
+/* Player list items */
+.player-item { padding: 10px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+.player-item:hover { background: var(--card); }
+.player-item.selected { background: var(--green-light); }
+.pi-name { font-weight: 600; font-size: 14px; }
+.pi-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.tier-chip { font-family: var(--font-cond); font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; letter-spacing: 0.04em; float: right; }
+.tier-bronze  { background: rgba(160,80,20,0.1); color: #9a4a0e; }
+.tier-silver  { background: rgba(80,100,150,0.1); color: #506090; }
+.tier-gold    { background: rgba(150,110,0,0.1); color: #8a6400; }
+.tier-elite   { background: rgba(0,80,160,0.1); color: #0050a0; }
+.tier-unrated { background: var(--card); color: var(--muted); }
+
+/* Detail pane common */
+.detail-empty { padding: 40px 24px; color: var(--muted); font-style: italic; }
+.detail-section { padding: 24px; border-bottom: 1px solid var(--border); }
+.detail-title { font-family: var(--font-cond); font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+.detail-meta-grid { display: grid; grid-template-columns: 120px 1fr; gap: 6px 16px; margin-bottom: 16px; }
+.meta-label { font-size: 12px; color: var(--muted); font-family: var(--font-cond); letter-spacing: 0.04em; text-transform: uppercase; padding-top: 1px; }
+.meta-value { font-size: 14px; font-weight: 500; }
+.medical-alert { background: var(--red-light); border: 1px solid #ffcdd2; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: var(--red); margin-bottom: 16px; }
+.action-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* Create profile form */
+.create-profile-form { display: flex; flex-direction: column; gap: 14px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-field { display: flex; flex-direction: column; gap: 4px; }
+.form-field label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-family: var(--font-cond); }
+.form-field select,
+.form-field input { padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background: var(--surface); }
+
+/* Player detail - two column */
+.player-detail-grid { display: grid; grid-template-columns: 200px 1fr; gap: 24px; align-items: start; }
+.player-card-col { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+/* Assessment sliders */
+.sliders-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; margin-bottom: 14px; }
+.slider-field { display: flex; flex-direction: column; gap: 4px; }
+.slider-row { display: flex; justify-content: space-between; align-items: center; }
+.slider-name { font-family: var(--font-cond); font-size: 13px; font-weight: 700; letter-spacing: 0.05em; }
+.norm-chip { font-family: var(--font-cond); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+.nc-green { background: #dcfce7; color: #166534; }
+.nc-amber { background: var(--amber-light); color: #78350f; }
+.nc-red   { background: var(--red-light); color: #7f1d1d; }
+input[type=range] { width: 100%; accent-color: var(--green-accent); }
+
+/* FIFA card */
+.fifa-card { width: 190px; border-radius: 14px; padding: 16px 14px 14px; position: relative; filter: drop-shadow(0 10px 28px rgba(0,0,0,0.25)); }
+.card-bronze { background: linear-gradient(145deg, #3d2008 0%, #7c4010 40%, #b86020 100%); }
+.card-silver { background: linear-gradient(145deg, #1a1f2e 0%, #3a4060 40%, #6070a0 100%); }
+.card-gold   { background: linear-gradient(145deg, #2a1f00 0%, #7a5800 40%, #c09020 100%); }
+.card-elite  { background: linear-gradient(145deg, #001a2e 0%, #003060 40%, #0060b0 100%); }
+.fc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.fc-overall { font-size: 36px; font-weight: 900; color: #fff; line-height: 1; font-family: var(--font-cond); }
+.fc-pos   { font-size: 11px; color: rgba(255,255,255,0.7); font-family: var(--font-cond); font-weight: 700; }
+.fc-tier  { font-size: 9px; color: rgba(255,255,255,0.5); font-family: var(--font-cond); text-transform: uppercase; }
+.fc-photo { display: flex; justify-content: center; margin: 8px 0; }
+.fc-photo-img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.3); }
+.fc-name  { text-align: center; font-size: 12px; font-weight: 800; color: #fff; font-family: var(--font-cond); letter-spacing: 0.07em; margin: 4px 0 2px; }
+.fc-age   { text-align: center; font-size: 9px; color: rgba(255,255,255,0.5); font-family: var(--font-cond); margin-bottom: 10px; }
+.fc-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px 8px; }
+.fc-stat  { display: flex; flex-direction: column; align-items: center; }
+.fc-sv    { font-size: 14px; font-weight: 800; color: #fff; font-family: var(--font-cond); line-height: 1; }
+.fc-sl    { font-size: 8px; color: rgba(255,255,255,0.6); font-family: var(--font-cond); }
+.fc-no-assess { text-align: center; color: rgba(255,255,255,0.4); font-size: 12px; padding: 12px 0; }
+
+/* Save banner */
+.save-banner { display: none; background: var(--green-accent); color: #fff; border-radius: 6px; padding: 10px 14px; font-family: var(--font-cond); font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+.save-banner.visible { display: flex; align-items: center; gap: 6px; }
+
+/* Messages */
+.message-thread { max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 12px; background: var(--card); border-radius: 8px; margin-bottom: 12px; }
+.msg-bubble { max-width: 80%; }
+.msg--parent { align-self: flex-start; }
+.msg--coach  { align-self: flex-end; }
+.msg-body { padding: 9px 13px; border-radius: 10px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
+.msg--parent .msg-body { background: var(--surface); border: 1px solid var(--border); }
+.msg--coach  .msg-body { background: var(--green-light); border: 1px solid #a7f3d0; }
+.msg-meta { font-size: 11px; color: var(--muted); font-family: var(--font-cond); margin-top: 3px; }
+.msg--coach .msg-meta { text-align: right; }
+.msg-empty { color: var(--muted); font-style: italic; text-align: center; padding: 20px; font-size: 13px; }
+.reply-form { display: flex; flex-direction: column; gap: 8px; }
+.reply-textarea { width: 100%; padding: 9px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-family: var(--font-body); resize: vertical; min-height: 72px; }
+.reply-textarea:focus { outline: none; border-color: var(--green-accent); }
+.reply-footer { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+
+/* Thread list */
+.thread-item { padding: 12px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+.thread-item:hover { background: var(--card); }
+.thread-item.selected { background: var(--green-light); }
+.thread-item.unread .thread-name::before { content: '●'; color: var(--red); font-size: 8px; margin-right: 6px; vertical-align: middle; }
+.thread-name { font-weight: 600; font-size: 14px; }
+.thread-preview { font-size: 12px; color: var(--muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.thread-date { font-size: 11px; color: var(--muted); float: right; font-family: var(--font-cond); }
+
+/* Buttons */
+.btn-primary { width: 100%; padding: 11px; background: var(--green-accent); color: #fff; border: none; border-radius: 7px; font-family: var(--font-cond); font-size: 15px; font-weight: 800; letter-spacing: 0.04em; cursor: pointer; }
+.btn-primary:hover { background: var(--green); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-green { background: var(--green-accent); color: #fff; border: none; border-radius: 7px; padding: 9px 18px; font-family: var(--font-cond); font-size: 13px; font-weight: 800; cursor: pointer; }
+.btn-green:hover { background: var(--green); }
+.btn-green:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-outline { background: none; border: 1px solid var(--border); border-radius: 7px; padding: 8px 16px; font-family: var(--font-cond); font-size: 13px; font-weight: 700; cursor: pointer; color: var(--text); }
+.btn-outline:hover { border-color: var(--text); }
+.btn-danger { background: none; border: 1px solid var(--red); color: var(--red); border-radius: 7px; padding: 8px 16px; font-family: var(--font-cond); font-size: 13px; font-weight: 700; cursor: pointer; }
+.btn-danger:hover { background: var(--red-light); }
+.btn-ghost { background: none; border: none; color: var(--muted); cursor: pointer; font-family: var(--font-cond); font-size: 13px; font-weight: 700; padding: 6px 10px; }
+.btn-ghost:hover { color: var(--text); }
+
+/* Misc */
+.full-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; gap: 16px; color: var(--muted); }
+.spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--green-accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.tab-panel { display: none; }
+.tab-panel.active { display: grid; }
+.section-heading { font-family: var(--font-cond); font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+.notes-textarea { width: 100%; padding: 9px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-family: var(--font-body); resize: vertical; }
+.notes-textarea:focus { outline: none; border-color: var(--green-accent); }
+
+.view { display: block; }
+
+@media (max-width: 900px) {
+  .split-pane { grid-template-columns: 1fr; height: auto; }
+  .split-list { max-height: 250px; border-right: none; border-bottom: 1px solid var(--border); }
+  .player-detail-grid { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .sliders-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<!-- View: Login -->
+<div id="view-login" class="view">
+  <div class="login-hero">
+    <span class="login-label">Warriors Academy</span>
+    <h1 class="login-title">Technical Director Portal</h1>
+    <p class="login-sub">Manage enrollments, players, and communications</p>
+  </div>
+  <div class="login-outer">
+    <div class="login-card">
+      <div class="field-group">
+        <label>Email</label>
+        <input id="login-email" type="email" autocomplete="email">
+      </div>
+      <div class="field-group">
+        <label>Password</label>
+        <input id="login-password" type="password" autocomplete="current-password">
+      </div>
+      <button id="login-btn" class="btn-primary">Sign In &rarr;</button>
+      <p id="login-error" class="error-text" hidden></p>
+    </div>
+  </div>
+</div>
+
+<!-- View: Dashboard -->
+<div id="view-dashboard" class="view" hidden>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-row1">
+      <div class="topbar-left">
+        <span class="topbar-label">Warriors Academy</span>
+        <h1 class="topbar-title">Technical Director</h1>
+      </div>
+      <div class="topbar-right">
+        <div id="stats-bar" class="stats-bar">
+          <span id="stat-pending"  class="stat-chip stat-chip--amber" hidden></span>
+          <span id="stat-active"   class="stat-chip stat-chip--green" hidden></span>
+          <span id="stat-unread"   class="stat-chip stat-chip--red"   hidden></span>
+        </div>
+        <button id="logout-btn" class="btn-ghost">Sign Out</button>
       </div>
     </div>
-    <div class="login-outer">
-      <div class="login-card card">
-        <h2>Sign In</h2>
-        <form id="admin-login-form" novalidate>
-          <div class="field">
-            <label for="a-email">Email</label>
-            <input type="email" id="a-email" autocomplete="email" required>
-          </div>
-          <div class="field">
-            <label for="a-password">Password</label>
-            <input type="password" id="a-password" autocomplete="current-password" required>
-          </div>
-          <div id="a-login-error" class="form-error" hidden></div>
-          <button type="submit" class="btn btn-primary btn-full" id="a-login-btn">Sign In →</button>
-        </form>
-      </div>
+    <div class="topbar-row2">
+      <button class="tab-nav tab-nav--active" data-tab="registrations">Registrations</button>
+      <button class="tab-nav" data-tab="players">Players</button>
+      <button class="tab-nav" data-tab="messages">
+        Messages <span id="msg-tab-badge" class="tab-badge" hidden></span>
+      </button>
     </div>
   </div>
 
-  <!-- Dashboard -->
-  <div id="view-dashboard" class="admin-view" hidden>
-
-    <div class="topbar">
-      <div class="topbar-inner">
-        <div class="topbar-title">
-          <div class="label">Academy</div>
-          <h1>Technical Director</h1>
-        </div>
-        <div class="topbar-right">
-          <div class="stats-bar" id="stats-bar"></div>
-          <button class="btn btn-secondary btn-sm" id="a-logout-btn">Sign Out</button>
-        </div>
-      </div>
-      <div class="tab-nav">
-        <button class="tab-btn tab-btn--active" data-tab="enrollments">Enrollments</button>
-        <button class="tab-btn" data-tab="players">Players</button>
-        <button class="tab-btn" data-tab="messages">Messages</button>
-      </div>
-    </div>
-
-    <div class="admin-body">
-      <div id="admin-loading" class="center-msg" hidden><div class="spinner"></div><p>Loading…</p></div>
-
-      <!-- ── ENROLLMENTS TAB ─────────────────────── -->
-      <div id="tab-enrollments" class="tab-panel">
-        <div class="split-pane">
-          <div class="split-list" id="enr-list-col">
-            <div class="list-header">
-              <div class="filter-row">
-                <button class="filter-btn filter-btn--active" data-status="pending">Pending</button>
-                <button class="filter-btn" data-status="accepted">Accepted</button>
-                <button class="filter-btn" data-status="enrolled">Enrolled</button>
-                <button class="filter-btn" data-status="all">All</button>
-              </div>
-            </div>
-            <div id="enrollments-list"></div>
-          </div>
-          <div class="split-detail" id="enr-detail">
-            <div class="detail-placeholder">
-              <p>Select an enrollment to view details</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── PLAYERS TAB ─────────────────────────── -->
-      <div id="tab-players" class="tab-panel" hidden>
-        <div class="split-pane">
-          <div class="split-list" id="player-list-col">
-            <div class="list-header">
-              <input type="text" id="player-search" placeholder="Search by name…" class="search-input">
-            </div>
-            <div id="players-list"></div>
-          </div>
-          <div class="split-detail" id="player-detail">
-            <div class="detail-placeholder">
-              <p>Select a player to view their card and messages</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── MESSAGES TAB ────────────────────────── -->
-      <div id="tab-messages" class="tab-panel" hidden>
-        <div class="split-pane">
-          <div class="split-list" id="thread-list"></div>
-          <div class="split-detail" id="thread-detail">
-            <div class="detail-placeholder"><p>Select a conversation</p></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
+  <!-- Loading -->
+  <div id="admin-loading" class="full-loading">
+    <div class="spinner"></div>
+    <p>Loading academy data&hellip;</p>
   </div>
 
-</Base>
+  <!-- Tab: Registrations -->
+  <div id="tab-registrations" class="tab-panel split-pane" hidden>
+    <div class="split-list">
+      <div class="filter-bar">
+        <button class="filter-btn filter-btn--active" data-filter="pending">Pending <span class="filter-count" id="fc-pending">0</span></button>
+        <button class="filter-btn" data-filter="accepted">Accepted <span class="filter-count" id="fc-accepted">0</span></button>
+        <button class="filter-btn" data-filter="enrolled">Enrolled <span class="filter-count" id="fc-enrolled">0</span></button>
+        <button class="filter-btn" data-filter="all">All</button>
+      </div>
+      <div id="enrollment-list" class="item-list"></div>
+    </div>
+    <div id="enrollment-detail" class="split-detail">
+      <div class="detail-empty">Select an application to review it.</div>
+    </div>
+  </div>
+
+  <!-- Tab: Players -->
+  <div id="tab-players" class="tab-panel split-pane" hidden>
+    <div class="split-list">
+      <div class="list-header">
+        <input id="player-search" type="search" placeholder="Search players&hellip;" class="search-input">
+      </div>
+      <div id="admin-player-list" class="item-list"></div>
+    </div>
+    <div id="player-detail" class="split-detail">
+      <div class="detail-empty">Select a player to view their profile and send messages.</div>
+    </div>
+  </div>
+
+  <!-- Tab: Messages -->
+  <div id="tab-messages" class="tab-panel split-pane" hidden>
+    <div class="split-list">
+      <div class="list-header">
+        <h3 class="list-heading">Conversations</h3>
+      </div>
+      <div id="thread-list" class="item-list"></div>
+    </div>
+    <div id="thread-detail" class="split-detail">
+      <div class="detail-empty">Select a conversation to read and reply.</div>
+    </div>
+  </div>
+
+</div><!-- /view-dashboard -->
 
 <script>
-const DURL = import.meta.env.PUBLIC_DIRECTUS_URL || '';
+const DURL = import.meta.env.PUBLIC_DIRECTUS_URL || 'https://directus-production-ebbb.up.railway.app';
 
-// ── AUTH ──────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function asArray(v) { return Array.isArray(v) ? v : []; }
+
 const ALS = {
   get token()   { return sessionStorage.getItem('warriors_admin_token'); },
   get refresh() { return sessionStorage.getItem('warriors_admin_refresh'); },
-  get user()    { try { return JSON.parse(sessionStorage.getItem('warriors_admin_user') || 'null'); } catch { return null; } },
+  get user()    { try { return JSON.parse(sessionStorage.getItem('warriors_admin_user')||'null'); } catch { return null; } },
   set token(v)  { sessionStorage.setItem('warriors_admin_token', v); },
   set refresh(v){ sessionStorage.setItem('warriors_admin_refresh', v); },
   set user(v)   { sessionStorage.setItem('warriors_admin_user', JSON.stringify(v)); },
   clear()       { ['warriors_admin_token','warriors_admin_refresh','warriors_admin_user'].forEach(k => sessionStorage.removeItem(k)); },
 };
 
+// ── FIFA card system ──────────────────────────────────────────────────────────
+
+const AGE_SCALE = {
+  'u8-u9':   { min: 30, max: 72 },
+  'u10-u11': { min: 35, max: 78 },
+  'u12-u13': { min: 40, max: 83 },
+  'u14-u16': { min: 45, max: 90 },
+};
+
+function norm(raw, ag) {
+  const s = AGE_SCALE[ag] || AGE_SCALE['u12-u13'];
+  return Math.round(s.min + (raw - 1) * (s.max - s.min) / 9);
+}
+
+function calcOverall(a, ag, pos) {
+  const attrs = {
+    pac: norm(a.pace_raw, ag),
+    sho: norm(a.shooting_raw, ag),
+    pas: norm(a.passing_raw, ag),
+    dri: norm(a.dribbling_raw, ag),
+    def: norm(a.defending_raw, ag),
+    phy: norm(a.physical_raw, ag),
+  };
+  const isAtk = ['forward', 'midfielder'].includes(pos);
+  const ov = isAtk
+    ? Math.round((attrs.dri * 2 + attrs.sho * 2 + attrs.pac + attrs.pas + attrs.phy) / 7)
+    : Math.round((attrs.def * 2 + attrs.phy * 2 + attrs.pac + attrs.pas + attrs.dri) / 7);
+  return { ov, attrs };
+}
+
+function tierClass(ov)    { return ov >= 90 ? 'card-elite' : ov >= 75 ? 'card-gold' : ov >= 60 ? 'card-silver' : 'card-bronze'; }
+function tierName(ov)     { return ov >= 90 ? 'Elite' : ov >= 75 ? 'Gold' : ov >= 60 ? 'Silver' : 'Bronze'; }
+function tierRowClass(ov) { return ov >= 90 ? 'tier-elite' : ov >= 75 ? 'tier-gold' : ov >= 60 ? 'tier-silver' : 'tier-bronze'; }
+function posLabel(p)      { return { goalkeeper: 'GK', defender: 'CB', midfielder: 'MID', forward: 'FWD' }[p] || 'MID'; }
+
+function buildFIFACard(profile, assessment) {
+  const ag  = profile.enrollment?.age_group || 'u12-u13';
+  const pos = profile.position || 'midfielder';
+  const enr = profile.enrollment || {};
+  const name = `${enr.player_first_name || ''} ${((enr.player_last_name || '')[0] || '')}.`.trim();
+  const agLabel = { 'u8-u9': 'U9', 'u10-u11': 'U11', 'u12-u13': 'U13', 'u14-u16': 'U16' }[ag] || ag.toUpperCase();
+  const photoSrc = profile.photo
+    ? `${DURL}/assets/${profile.photo}?width=190&height=190&format=webp&fit=cover`
+    : null;
+  const photoHtml = photoSrc
+    ? `<img src="${photoSrc}" class="fc-photo-img" alt="${name}">`
+    : `<svg viewBox="0 0 80 100" width="70" height="88" fill="none"><circle cx="40" cy="26" r="18" fill="rgba(255,255,255,0.2)"/><path d="M8 95 C8 65 20 54 40 52 C60 54 72 65 72 95" fill="rgba(255,255,255,0.2)"/></svg>`;
+
+  if (!assessment) {
+    return `<div class="fifa-card card-bronze">
+      <div class="fc-header"><div><div class="fc-overall">&mdash;</div><div class="fc-pos">${posLabel(pos)}</div><div class="fc-tier">Unrated</div></div></div>
+      <div class="fc-photo">${photoHtml}</div>
+      <div class="fc-name">${name.toUpperCase()}</div>
+      <div class="fc-age">${agLabel} &middot; Warriors FC</div>
+      <div class="fc-no-assess">Not yet assessed</div>
+    </div>`;
+  }
+
+  const { ov, attrs } = calcOverall(assessment, ag, pos);
+  const tc = tierClass(ov);
+  return `<div class="fifa-card ${tc}">
+    <div class="fc-header">
+      <div><div class="fc-overall">${ov}</div><div class="fc-pos">${posLabel(pos)}</div><div class="fc-tier">${tierName(ov)}</div></div>
+      <svg viewBox="0 0 40 40" width="28" height="28" fill="none"><polygon points="20,3 37,12 37,28 20,37 3,28 3,12" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/><text x="20" y="26" text-anchor="middle" font-size="13" font-weight="bold" fill="rgba(255,255,255,0.7)" font-family="Arial">W</text></svg>
+    </div>
+    <div class="fc-photo">${photoHtml}</div>
+    <div class="fc-name">${name.toUpperCase()}</div>
+    <div class="fc-age">${agLabel} &middot; Warriors FC</div>
+    <div class="fc-stats">
+      ${[['PAC', attrs.pac], ['SHO', attrs.sho], ['PAS', attrs.pas], ['DRI', attrs.dri], ['DEF', attrs.def], ['PHY', attrs.phy]]
+        .map(([l, v]) => `<div class="fc-stat"><span class="fc-sv">${v}</span><span class="fc-sl">${l}</span></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+
+let allEnrollments        = [];
+let allPlayers            = [];
+let allMessages           = [];
+let playerAssessMap       = {};
+let activeEnrollmentFilter = 'pending';
+let selectedEnrollmentId  = null;
+let selectedPlayerId      = null;
+let selectedThreadPlayerId = null;
+let messagesLoaded        = false;
+
+// ── API helper ────────────────────────────────────────────────────────────────
+
 async function aapi(path, opts = {}) {
   try {
-    const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ALS.token}` };
-    const res = await fetch(`${DURL}${path}`, { ...opts, headers: { ...headers, ...(opts.headers||{}) } });
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${ALS.token}`,
+    };
+    const res = await fetch(`${DURL}${path}`, {
+      ...opts,
+      headers: { ...headers, ...(opts.headers || {}) },
+    });
     if (res.status === 401) {
-      const refreshed = await tryRefresh();
-      if (refreshed) return aapi(path, opts);
+      const ok = await tryRefresh();
+      if (ok) return aapi(path, opts);
       showLogin(); return null;
     }
     if (res.status === 204) return { ok: true };
-    if (!res.ok) return null;
+    if (!res.ok) { console.warn('API error', res.status, path); return null; }
     const json = await res.json();
     return json.data ?? json;
-  } catch(e) { console.error('API error', path, e); return null; }
+  } catch (e) {
+    console.error('aapi error', path, e);
+    return null;
+  }
 }
+
+// ── Load all data ─────────────────────────────────────────────────────────────
+
+async function loadAll() {
+  const [enrollRaw, playersRaw, unreadRaw] = await Promise.all([
+    aapi('/items/academy_enrollments?sort[]=-date_created&limit=200&fields=id,status,date_created,parent_first_name,parent_last_name,parent_email,parent_phone,player_first_name,player_last_name,player_dob,age_group,previous_experience,medical_notes,directus_user_id,program'),
+    aapi('/items/academy_player_profiles?limit=200&fields=id,position,photo,jersey_number,enrollment.id,enrollment.age_group,enrollment.player_first_name,enrollment.player_last_name,enrollment.status'),
+    aapi('/items/academy_messages?filter[sender_role][_eq]=parent&filter[read_at][_null]=true&limit=200&fields=player,id'),
+  ]);
+
+  allEnrollments = asArray(enrollRaw);
+  allPlayers     = asArray(playersRaw);
+
+  // Fetch latest assessments for all players
+  const assessRaw = await aapi('/items/academy_assessments?filter[is_latest][_eq]=true&limit=200&fields=player,pace_raw,shooting_raw,passing_raw,dribbling_raw,defending_raw,physical_raw,assessment_date');
+  playerAssessMap = {};
+  asArray(assessRaw).forEach(a => { playerAssessMap[String(a.player)] = a; });
+
+  // Unread count
+  const unreadIds   = new Set(asArray(unreadRaw).map(m => String(m.player)));
+  const unreadCount = unreadIds.size;
+
+  document.getElementById('admin-loading').hidden = true;
+
+  // Stats bar
+  const pendingCount = allEnrollments.filter(e => e.status === 'pending').length;
+  const activeCount  = allPlayers.length;
+
+  const pendingChip = document.getElementById('stat-pending');
+  const activeChip  = document.getElementById('stat-active');
+  const unreadChip  = document.getElementById('stat-unread');
+  const msgTabBadge = document.getElementById('msg-tab-badge');
+
+  if (pendingCount > 0) { pendingChip.textContent = `${pendingCount} Pending`; pendingChip.hidden = false; }
+  if (activeCount  > 0) { activeChip.textContent  = `${activeCount} Players`;  activeChip.hidden  = false; }
+  if (unreadCount  > 0) {
+    unreadChip.textContent  = `${unreadCount} Unread`;
+    unreadChip.hidden       = false;
+    msgTabBadge.textContent = unreadCount;
+    msgTabBadge.hidden      = false;
+  }
+
+  switchTab('registrations');
+  renderEnrollmentList();
+  renderAdminPlayerList();
+  updateFilterCounts();
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-nav').forEach(b =>
+    b.classList.toggle('tab-nav--active', b.dataset.tab === name)
+  );
+  document.querySelectorAll('.tab-panel').forEach(p => {
+    const active = p.id === `tab-${name}`;
+    p.classList.toggle('active', active);
+    p.hidden = false;
+    p.style.display = active ? 'grid' : 'none';
+  });
+  if (name === 'messages' && !messagesLoaded) loadAllMessages();
+}
+
+document.querySelectorAll('.tab-nav').forEach(b =>
+  b.addEventListener('click', () => switchTab(b.dataset.tab))
+);
+
+// ── Enrollments tab ───────────────────────────────────────────────────────────
+
+function updateFilterCounts() {
+  document.getElementById('fc-pending').textContent  = allEnrollments.filter(e => e.status === 'pending').length;
+  document.getElementById('fc-accepted').textContent = allEnrollments.filter(e => e.status === 'accepted').length;
+  document.getElementById('fc-enrolled').textContent = allEnrollments.filter(e => e.status === 'enrolled').length;
+
+  document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
+    const f = btn.dataset.filter;
+    if (f === 'all') { btn.disabled = false; return; }
+    const count = allEnrollments.filter(e => e.status === f).length;
+    btn.disabled = count === 0;
+  });
+}
+
+function renderEnrollmentList() {
+  const list = document.getElementById('enrollment-list');
+  const filtered = activeEnrollmentFilter === 'all'
+    ? allEnrollments
+    : allEnrollments.filter(e => e.status === activeEnrollmentFilter);
+
+  if (!filtered.length) {
+    list.innerHTML = `<p style="padding:16px;color:var(--muted);font-size:13px;">No ${activeEnrollmentFilter === 'all' ? '' : activeEnrollmentFilter} applications.</p>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(e => {
+    const name       = `${e.player_first_name || ''} ${e.player_last_name || ''}`.trim() || 'Unknown Player';
+    const parentName = `${e.parent_first_name || ''} ${e.parent_last_name || ''}`.trim() || e.parent_email || '';
+    const agLabel    = { 'u8-u9': 'U8/U9', 'u10-u11': 'U10/U11', 'u12-u13': 'U12/U13', 'u14-u16': 'U14/U16' }[e.age_group] || e.age_group || '';
+    const date       = e.date_created ? new Date(e.date_created).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }) : '';
+    return `<div class="enr-item${selectedEnrollmentId === e.id ? ' selected' : ''}" data-id="${e.id}">
+      <span class="status-badge status-${e.status}">${e.status}</span>
+      <div class="enr-name">${name}</div>
+      <div class="enr-meta">${parentName}${agLabel ? ' &middot; ' + agLabel : ''}${date ? ' &middot; ' + date : ''}</div>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('.enr-item').forEach(el => {
+    el.addEventListener('click', () => {
+      selectedEnrollmentId = el.dataset.id;
+      list.querySelectorAll('.enr-item').forEach(i => i.classList.remove('selected'));
+      el.classList.add('selected');
+      openEnrollmentDetail(allEnrollments.find(e => String(e.id) === String(el.dataset.id)));
+    });
+  });
+}
+
+document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeEnrollmentFilter = btn.dataset.filter;
+    document.querySelectorAll('.filter-btn[data-filter]').forEach(b => b.classList.remove('filter-btn--active'));
+    btn.classList.add('filter-btn--active');
+    renderEnrollmentList();
+  });
+});
+
+function openEnrollmentDetail(enr) {
+  if (!enr) return;
+  const detail     = document.getElementById('enrollment-detail');
+  const ag         = enr.age_group || '';
+  const agLabel    = { 'u8-u9': 'U8/U9', 'u10-u11': 'U10/U11', 'u12-u13': 'U12/U13', 'u14-u16': 'U14/U16' }[ag] || ag;
+  const playerName = `${enr.player_first_name || ''} ${enr.player_last_name || ''}`.trim();
+  const parentName = `${enr.parent_first_name || ''} ${enr.parent_last_name || ''}`.trim() || 'N/A';
+  const dob        = enr.player_dob ? new Date(enr.player_dob).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
+  const submitted  = enr.date_created ? new Date(enr.date_created).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+
+  let actionHtml = '';
+
+  if (enr.status === 'pending') {
+    actionHtml = `<div class="action-row">
+      <button class="btn-green" id="btn-accept">Accept Application &rarr;</button>
+      <button class="btn-danger" id="btn-reject">Reject &times;</button>
+    </div>`;
+  } else if (enr.status === 'accepted') {
+    const existingProfile = allPlayers.find(p => String(p.enrollment?.id) === String(enr.id));
+    if (existingProfile) {
+      actionHtml = `<div class="action-row">
+        <button class="btn-green" id="btn-mark-enrolled">Mark as Enrolled &rarr;</button>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px;">Player profile created. Once enrolled, the family can access the portal.</p>`;
+    } else {
+      actionHtml = `<div style="margin-top:8px;">
+        <p class="section-heading" style="margin-bottom:12px;">Create Player Profile</p>
+        <form class="create-profile-form" id="create-profile-form">
+          <div class="form-row">
+            <div class="form-field">
+              <label>Position</label>
+              <select id="cp-position">
+                <option value="goalkeeper">Goalkeeper</option>
+                <option value="defender">Defender</option>
+                <option value="midfielder" selected>Midfielder</option>
+                <option value="forward">Forward</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Jersey Number</label>
+              <input type="number" id="cp-jersey" min="1" max="99" placeholder="Optional">
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Notes (optional)</label>
+            <textarea id="cp-notes" class="notes-textarea" rows="2" placeholder="Any notes about this player&hellip;"></textarea>
+          </div>
+          <button type="submit" class="btn-green" id="btn-create-profile">Create Player Profile &rarr;</button>
+          <p id="cp-error" class="error-text" hidden></p>
+        </form>
+      </div>`;
+    }
+  } else if (enr.status === 'enrolled') {
+    actionHtml = `<p style="color:var(--green);font-weight:600;font-size:14px;">&#10003; Enrolled &mdash; Portal access active</p>`;
+  }
+
+  detail.innerHTML = `<div class="detail-section">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+      <h2 class="detail-title">${playerName}</h2>
+      <span class="status-badge status-${enr.status}" style="position:static;float:none;">${enr.status}</span>
+    </div>
+    <div class="detail-meta-grid">
+      <span class="meta-label">Age Group</span><span class="meta-value">${agLabel}</span>
+      <span class="meta-label">Date of Birth</span><span class="meta-value">${dob}</span>
+      <span class="meta-label">Parent</span><span class="meta-value">${parentName}</span>
+      <span class="meta-label">Email</span><span class="meta-value">${enr.parent_email || 'N/A'}</span>
+      <span class="meta-label">Phone</span><span class="meta-value">${enr.parent_phone || 'N/A'}</span>
+      ${submitted ? `<span class="meta-label">Submitted</span><span class="meta-value">${submitted}</span>` : ''}
+      ${enr.previous_experience ? `<span class="meta-label">Experience</span><span class="meta-value" style="white-space:pre-wrap;">${enr.previous_experience}</span>` : ''}
+    </div>
+    ${enr.medical_notes ? `<div class="medical-alert">&#9877; Medical: ${enr.medical_notes}</div>` : ''}
+    ${actionHtml}
+  </div>`;
+
+  // Wire buttons
+  const acceptBtn = detail.querySelector('#btn-accept');
+  const rejectBtn = detail.querySelector('#btn-reject');
+  const markBtn   = detail.querySelector('#btn-mark-enrolled');
+  const cpForm    = detail.querySelector('#create-profile-form');
+
+  if (acceptBtn) {
+    acceptBtn.addEventListener('click', async () => {
+      acceptBtn.disabled = true; acceptBtn.textContent = 'Accepting\u2026';
+      const result = await aapi(`/items/academy_enrollments/${enr.id}`, {
+        method: 'PATCH', body: JSON.stringify({ status: 'accepted' }),
+      });
+      if (result) {
+        enr.status = 'accepted';
+        updateFilterCounts();
+        renderEnrollmentList();
+        openEnrollmentDetail(enr);
+        updateStatsBar();
+      } else {
+        acceptBtn.disabled = false; acceptBtn.textContent = 'Accept Application \u2192';
+      }
+    });
+  }
+
+  if (rejectBtn) {
+    rejectBtn.addEventListener('click', async () => {
+      if (!confirm(`Reject ${playerName}'s application?`)) return;
+      rejectBtn.disabled = true; rejectBtn.textContent = 'Rejecting\u2026';
+      const result = await aapi(`/items/academy_enrollments/${enr.id}`, {
+        method: 'PATCH', body: JSON.stringify({ status: 'inactive' }),
+      });
+      if (result) {
+        enr.status = 'inactive';
+        updateFilterCounts();
+        renderEnrollmentList();
+        document.getElementById('enrollment-detail').innerHTML = '<div class="detail-empty">Application rejected.</div>';
+        updateStatsBar();
+      } else {
+        rejectBtn.disabled = false; rejectBtn.textContent = 'Reject \u00d7';
+      }
+    });
+  }
+
+  if (markBtn) {
+    markBtn.addEventListener('click', async () => {
+      markBtn.disabled = true; markBtn.textContent = 'Saving\u2026';
+      const result = await aapi(`/items/academy_enrollments/${enr.id}`, {
+        method: 'PATCH', body: JSON.stringify({ status: 'enrolled' }),
+      });
+      if (result) {
+        enr.status = 'enrolled';
+        updateFilterCounts();
+        renderEnrollmentList();
+        openEnrollmentDetail(enr);
+        updateStatsBar();
+      } else {
+        markBtn.disabled = false; markBtn.textContent = 'Mark as Enrolled \u2192';
+      }
+    });
+  }
+
+  if (cpForm) {
+    cpForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn   = cpForm.querySelector('#btn-create-profile');
+      const errEl = cpForm.querySelector('#cp-error');
+      btn.disabled = true; btn.textContent = 'Creating\u2026';
+      errEl.hidden = true;
+
+      const payload = {
+        enrollment:    parseInt(enr.id) || enr.id,
+        position:      document.getElementById('cp-position').value,
+        jersey_number: parseInt(document.getElementById('cp-jersey').value) || null,
+        notes:         document.getElementById('cp-notes').value.trim() || null,
+      };
+
+      const result = await aapi('/items/academy_player_profiles', {
+        method: 'POST', body: JSON.stringify(payload),
+      });
+      if (result) {
+        allPlayers.push({
+          ...result,
+          enrollment: {
+            id: enr.id,
+            age_group: enr.age_group,
+            player_first_name: enr.player_first_name,
+            player_last_name:  enr.player_last_name,
+            status: enr.status,
+          },
+        });
+        renderAdminPlayerList();
+        openEnrollmentDetail(enr);
+        updateStatsBar();
+      } else {
+        errEl.textContent = 'Failed to create profile. Please try again.';
+        errEl.hidden = false;
+        btn.disabled = false; btn.textContent = 'Create Player Profile \u2192';
+      }
+    });
+  }
+}
+
+function updateStatsBar() {
+  const pendingCount = allEnrollments.filter(e => e.status === 'pending').length;
+  const pendingChip  = document.getElementById('stat-pending');
+  if (pendingCount > 0) { pendingChip.textContent = `${pendingCount} Pending`; pendingChip.hidden = false; }
+  else { pendingChip.hidden = true; }
+}
+
+// ── Players tab ───────────────────────────────────────────────────────────────
+
+function renderAdminPlayerList(query = '') {
+  const list    = document.getElementById('admin-player-list');
+  let   players = allPlayers;
+  if (query) {
+    const q = query.toLowerCase();
+    players = allPlayers.filter(p => {
+      const name = `${p.enrollment?.player_first_name || ''} ${p.enrollment?.player_last_name || ''}`.toLowerCase();
+      return name.includes(q);
+    });
+  }
+
+  if (!players.length) {
+    list.innerHTML = `<p style="padding:16px;color:var(--muted);font-size:13px;">No players found.</p>`;
+    return;
+  }
+
+  const GROUP_ORDER  = ['u8-u9', 'u10-u11', 'u12-u13', 'u14-u16'];
+  const GROUP_LABELS = { 'u8-u9': 'U8/U9', 'u10-u11': 'U10/U11', 'u12-u13': 'U12/U13', 'u14-u16': 'U14/U16' };
+  const groups = {};
+  players.forEach(p => {
+    const ag = p.enrollment?.age_group || 'other';
+    if (!groups[ag]) groups[ag] = [];
+    groups[ag].push(p);
+  });
+
+  let html = '';
+  if (query) {
+    players.forEach(p => { html += renderPlayerListItem(p); });
+  } else {
+    GROUP_ORDER.forEach(ag => {
+      if (!groups[ag]?.length) return;
+      html += `<div style="padding:6px 12px 3px;font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);background:var(--card);border-bottom:1px solid var(--border);">${GROUP_LABELS[ag] || ag}</div>`;
+      groups[ag].forEach(p => { html += renderPlayerListItem(p); });
+    });
+    if (groups['other']?.length) {
+      groups['other'].forEach(p => { html += renderPlayerListItem(p); });
+    }
+  }
+
+  list.innerHTML = html;
+  list.querySelectorAll('.player-item').forEach(el => {
+    el.addEventListener('click', () => {
+      selectedPlayerId = el.dataset.id;
+      list.querySelectorAll('.player-item').forEach(i => i.classList.remove('selected'));
+      el.classList.add('selected');
+      openPlayerDetail(allPlayers.find(p => String(p.id) === String(el.dataset.id)));
+    });
+  });
+}
+
+function renderPlayerListItem(p) {
+  const enr    = p.enrollment || {};
+  const name   = `${enr.player_first_name || ''} ${enr.player_last_name || ''}`.trim() || 'Unknown';
+  const pos    = posLabel(p.position || 'midfielder');
+  const assess = playerAssessMap[String(p.id)];
+  let tierHtml = `<span class="tier-chip tier-unrated">Unrated</span>`;
+  if (assess) {
+    const ag     = enr.age_group || 'u12-u13';
+    const { ov } = calcOverall(assess, ag, p.position || 'midfielder');
+    tierHtml = `<span class="tier-chip ${tierRowClass(ov)}">${tierName(ov)} ${ov}</span>`;
+  }
+  return `<div class="player-item${selectedPlayerId === String(p.id) ? ' selected' : ''}" data-id="${p.id}">
+    ${tierHtml}
+    <div class="pi-name">${name}</div>
+    <div class="pi-meta">${pos}</div>
+  </div>`;
+}
+
+document.getElementById('player-search').addEventListener('input', e => renderAdminPlayerList(e.target.value));
+
+async function openPlayerDetail(player) {
+  if (!player) return;
+  const detail = document.getElementById('player-detail');
+  const enr    = player.enrollment || {};
+  const ag     = enr.age_group || 'u12-u13';
+  const pos    = player.position || 'midfielder';
+  const name   = `${enr.player_first_name || ''} ${enr.player_last_name || ''}`.trim();
+
+  detail.innerHTML = `<div class="detail-section"><div class="full-loading" style="height:200px;"><div class="spinner"></div></div></div>`;
+
+  const [assessRaw, messagesRaw] = await Promise.all([
+    aapi(`/items/academy_assessments?filter[player][_eq]=${player.id}&filter[is_latest][_eq]=true&limit=1&fields=*`),
+    aapi(`/items/academy_messages?filter[player][_eq]=${player.id}&sort[]=date_created&fields=*`),
+  ]);
+
+  const latestAssess = asArray(assessRaw)[0] || null;
+  const messages     = asArray(messagesRaw);
+  const agLabel      = { 'u8-u9': 'U8/U9', 'u10-u11': 'U10/U11', 'u12-u13': 'U12/U13', 'u14-u16': 'U14/U16' }[ag] || ag;
+
+  const ATTRS      = ['pace', 'shooting', 'passing', 'dribbling', 'defending', 'physical'];
+  const ATTR_LABELS = { pace: 'PAC', shooting: 'SHO', passing: 'PAS', dribbling: 'DRI', defending: 'DEF', physical: 'PHY' };
+
+  function normChipCls(v) { return v >= 65 ? 'nc-green' : v >= 50 ? 'nc-amber' : 'nc-red'; }
+
+  const slidersHtml = ATTRS.map(attr => {
+    const raw = latestAssess?.[`${attr}_raw`] ?? 5;
+    const nv  = norm(raw, ag);
+    return `<div class="slider-field">
+      <div class="slider-row">
+        <span class="slider-name">${ATTR_LABELS[attr]}</span>
+        <span class="norm-chip ${normChipCls(nv)}" id="adm-chip-${attr}">${nv}</span>
+      </div>
+      <input type="range" min="1" max="10" value="${raw}" id="adm-slider-${attr}"
+        data-attr="${attr}" data-ag="${ag}" data-playerid="${player.id}">
+    </div>`;
+  }).join('');
+
+  const messagesHtml = messages.length
+    ? messages.map(m => {
+        const isCoach = m.sender_role === 'coach';
+        const date    = new Date(m.date_created).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+        return `<div class="msg-bubble msg--${isCoach ? 'coach' : 'parent'}">
+          <div class="msg-body">${m.body}</div>
+          <div class="msg-meta">${m.sender_name || (isCoach ? 'Coach' : 'Parent')} &middot; ${date}</div>
+        </div>`;
+      }).join('')
+    : `<p class="msg-empty">No messages yet. Send one below.</p>`;
+
+  detail.innerHTML = `<div class="detail-section">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+      <h2 class="detail-title">${name}</h2>
+      <span style="font-family:var(--font-cond);font-size:12px;color:var(--muted);">${agLabel} &middot; ${posLabel(pos)}${player.jersey_number ? ' &middot; #' + player.jersey_number : ''}</span>
+    </div>
+
+    <div class="player-detail-grid">
+      <div class="player-card-col">
+        <div id="adm-card-preview">${buildFIFACard(player, latestAssess)}</div>
+      </div>
+      <div class="player-assess-col">
+        <p class="section-heading">Assessment</p>
+        <div id="adm-save-banner" class="save-banner"></div>
+        <div class="sliders-grid">${slidersHtml}</div>
+        <div style="margin-bottom:12px;">
+          <label class="section-heading" style="display:block;margin-bottom:4px;">Coach Notes</label>
+          <textarea id="adm-assess-notes" class="notes-textarea" rows="2" placeholder="Optional notes&hellip;">${latestAssess?.notes || ''}</textarea>
+        </div>
+        <button id="adm-save-btn" class="btn-green" style="width:100%;">Save Assessment &rarr;</button>
+        <p id="adm-assess-error" class="error-text" hidden style="margin-top:6px;"></p>
+      </div>
+    </div>
+
+    <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">
+      <p class="section-heading">Messages</p>
+      <div class="message-thread" id="adm-msg-thread">${messagesHtml}</div>
+      <form class="reply-form" id="adm-reply-form">
+        <textarea class="reply-textarea" id="adm-reply-body" placeholder="Send a message to the player's family&hellip;"></textarea>
+        <div class="reply-footer">
+          <span id="adm-reply-error" class="error-text" hidden></span>
+          <button type="submit" class="btn-green">Send Message &rarr;</button>
+        </div>
+      </form>
+    </div>
+  </div>`;
+
+  // Scroll messages
+  const thread = detail.querySelector('#adm-msg-thread');
+  if (thread) setTimeout(() => { thread.scrollTop = thread.scrollHeight; }, 50);
+
+  // Slider live update (using event delegation on the detail pane)
+  detail.querySelectorAll('input[type=range]').forEach(slider => {
+    slider.addEventListener('input', () => {
+      const attr     = slider.dataset.attr;
+      const sliderAg = slider.dataset.ag;
+      const nv       = norm(parseInt(slider.value), sliderAg);
+      const chip     = detail.querySelector(`#adm-chip-${attr}`);
+      if (chip) {
+        chip.textContent = nv;
+        chip.className   = `norm-chip ${normChipCls(nv)}`;
+      }
+      // Rebuild card preview from all current slider values
+      const ATTRS_ALL = ['pace', 'shooting', 'passing', 'dribbling', 'defending', 'physical'];
+      const rawAttrs  = {};
+      ATTRS_ALL.forEach(a => {
+        const el = detail.querySelector(`#adm-slider-${a}`);
+        rawAttrs[`${a}_raw`] = el ? parseInt(el.value) : 5;
+      });
+      const preview = detail.querySelector('#adm-card-preview');
+      if (preview) preview.innerHTML = buildFIFACard(player, rawAttrs);
+    });
+  });
+
+  // Save assessment
+  const saveBtn = detail.querySelector('#adm-save-btn');
+  saveBtn.addEventListener('click', async () => {
+    saveBtn.disabled = true; saveBtn.textContent = 'Saving\u2026';
+    const errEl = detail.querySelector('#adm-assess-error');
+    errEl.hidden = true;
+
+    const user = ALS.user;
+    const payload = {
+      player:            player.id,
+      assessed_by:       `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Technical Director',
+      assessment_date:   new Date().toISOString().split('T')[0],
+      age_group_at_time: ag,
+      pace_raw:          parseInt(detail.querySelector('#adm-slider-pace').value),
+      shooting_raw:      parseInt(detail.querySelector('#adm-slider-shooting').value),
+      passing_raw:       parseInt(detail.querySelector('#adm-slider-passing').value),
+      dribbling_raw:     parseInt(detail.querySelector('#adm-slider-dribbling').value),
+      defending_raw:     parseInt(detail.querySelector('#adm-slider-defending').value),
+      physical_raw:      parseInt(detail.querySelector('#adm-slider-physical').value),
+      notes:             detail.querySelector('#adm-assess-notes').value.trim() || null,
+      is_latest:         true,
+    };
+
+    // Mark any existing "latest" assessments as not-latest
+    const existing = await aapi(`/items/academy_assessments?filter[player][_eq]=${player.id}&filter[is_latest][_eq]=true&fields=id`);
+    await Promise.all(asArray(existing).map(a =>
+      aapi(`/items/academy_assessments/${a.id}`, { method: 'PATCH', body: JSON.stringify({ is_latest: false }) })
+    ));
+
+    const result = await aapi('/items/academy_assessments', { method: 'POST', body: JSON.stringify(payload) });
+    if (result) {
+      playerAssessMap[String(player.id)] = payload;
+      const banner = detail.querySelector('#adm-save-banner');
+      banner.textContent = '\u2713 Assessment saved';
+      banner.classList.add('visible');
+      setTimeout(() => banner.classList.remove('visible'), 3000);
+      detail.querySelector('#adm-card-preview').innerHTML = buildFIFACard(player, payload);
+      renderAdminPlayerList(document.getElementById('player-search').value);
+    } else {
+      errEl.textContent = 'Failed to save. Please try again.';
+      errEl.hidden = false;
+    }
+    saveBtn.disabled = false; saveBtn.textContent = 'Save Assessment \u2192';
+  });
+
+  // Message form
+  const replyForm = detail.querySelector('#adm-reply-form');
+  replyForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const ta    = replyForm.querySelector('#adm-reply-body');
+    const btn   = replyForm.querySelector('button[type=submit]');
+    const errEl = replyForm.querySelector('#adm-reply-error');
+    const body  = ta.value.trim();
+    if (!body) return;
+
+    btn.disabled = true; btn.textContent = 'Sending\u2026';
+    const user       = ALS.user;
+    const senderName = `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Technical Director';
+
+    const result = await aapi('/items/academy_messages', {
+      method: 'POST',
+      body: JSON.stringify({ player: player.id, sender_role: 'coach', sender_name: senderName, body }),
+    });
+
+    if (result) {
+      ta.value = '';
+      const freshMsgs = await aapi(`/items/academy_messages?filter[player][_eq]=${player.id}&sort[]=date_created&fields=*`);
+      const newMsgs   = asArray(freshMsgs);
+      const newHtml   = newMsgs.map(m => {
+        const isCoach = m.sender_role === 'coach';
+        const date    = new Date(m.date_created).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+        return `<div class="msg-bubble msg--${isCoach ? 'coach' : 'parent'}">
+          <div class="msg-body">${m.body}</div>
+          <div class="msg-meta">${m.sender_name || (isCoach ? 'Coach' : 'Parent')} &middot; ${date}</div>
+        </div>`;
+      }).join('');
+      const msgThread = detail.querySelector('#adm-msg-thread');
+      if (msgThread) {
+        msgThread.innerHTML = newHtml || `<p class="msg-empty">No messages yet.</p>`;
+        setTimeout(() => { msgThread.scrollTop = msgThread.scrollHeight; }, 50);
+      }
+      if (messagesLoaded) {
+        allMessages = allMessages.filter(m => String(m.player) !== String(player.id));
+        allMessages.push(...newMsgs);
+      }
+    } else {
+      errEl.hidden = false; errEl.textContent = 'Failed to send.';
+      setTimeout(() => { errEl.hidden = true; }, 4000);
+    }
+    btn.disabled = false; btn.textContent = 'Send Message \u2192';
+  });
+}
+
+// ── Messages tab ──────────────────────────────────────────────────────────────
+
+async function loadAllMessages() {
+  messagesLoaded = true;
+  const msgs = await aapi('/items/academy_messages?sort[]=-date_created&limit=500&fields=id,player,sender_role,sender_name,body,date_created,read_at');
+  allMessages = asArray(msgs);
+  renderThreadList();
+}
+
+function renderThreadList(activePlayerId = selectedThreadPlayerId) {
+  const list = document.getElementById('thread-list');
+
+  // Group by player
+  const threads = {};
+  allMessages.forEach(m => {
+    const pid = String(m.player);
+    if (!threads[pid]) threads[pid] = { messages: [], hasUnread: false };
+    threads[pid].messages.push(m);
+    if (m.sender_role === 'parent' && !m.read_at) threads[pid].hasUnread = true;
+  });
+
+  const threadList = Object.entries(threads).map(([pid, t]) => {
+    const player = allPlayers.find(p => String(p.id) === pid);
+    const enr    = player?.enrollment || {};
+    const name   = `${enr.player_first_name || ''} ${enr.player_last_name || ''}`.trim() || `Player #${pid}`;
+    t.messages.sort((a, b) => new Date(a.date_created) - new Date(b.date_created));
+    const latest = t.messages[t.messages.length - 1];
+    return { pid, name, latest, hasUnread: t.hasUnread };
+  });
+
+  // Sort: unread first, then most recent
+  threadList.sort((a, b) => {
+    if (a.hasUnread && !b.hasUnread) return -1;
+    if (!a.hasUnread && b.hasUnread) return 1;
+    return new Date(b.latest.date_created) - new Date(a.latest.date_created);
+  });
+
+  if (!threadList.length) {
+    list.innerHTML = `<p style="padding:16px;color:var(--muted);font-size:13px;">No messages yet.</p>`;
+    return;
+  }
+
+  list.innerHTML = threadList.map(t => {
+    const date    = new Date(t.latest.date_created).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+    const preview = t.latest.sender_role === 'coach' ? `You: ${t.latest.body}` : t.latest.body;
+    return `<div class="thread-item${t.hasUnread ? ' unread' : ''}${activePlayerId === t.pid ? ' selected' : ''}" data-pid="${t.pid}">
+      <span class="thread-date">${date}</span>
+      <div class="thread-name">${t.name}</div>
+      <div class="thread-preview">${preview.slice(0, 80)}${preview.length > 80 ? '\u2026' : ''}</div>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('.thread-item').forEach(el => {
+    el.addEventListener('click', () => openThread(el.dataset.pid));
+  });
+}
+
+async function openThread(playerId) {
+  selectedThreadPlayerId = playerId;
+  const pid    = String(playerId);
+  const player = allPlayers.find(p => String(p.id) === pid);
+  const enr    = player?.enrollment || {};
+  const name   = `${enr.player_first_name || ''} ${enr.player_last_name || ''}`.trim() || `Player #${pid}`;
+  const msgs   = allMessages.filter(m => String(m.player) === pid);
+  msgs.sort((a, b) => new Date(a.date_created) - new Date(b.date_created));
+
+  // Mark parent messages as read
+  const unread = msgs.filter(m => m.sender_role === 'parent' && !m.read_at);
+  if (unread.length) {
+    await Promise.all(unread.map(m =>
+      aapi(`/items/academy_messages/${m.id}`, { method: 'PATCH', body: JSON.stringify({ read_at: new Date().toISOString() }) })
+    ));
+    unread.forEach(m => { m.read_at = new Date().toISOString(); });
+    const badge     = document.getElementById('msg-tab-badge');
+    const remaining = allMessages.filter(m => m.sender_role === 'parent' && !m.read_at).length;
+    if (remaining === 0) {
+      badge.hidden = true;
+      document.getElementById('stat-unread').hidden = true;
+    } else {
+      badge.textContent = remaining;
+    }
+    renderThreadList(pid);
+  }
+
+  document.querySelectorAll('.thread-item').forEach(el => el.classList.toggle('selected', el.dataset.pid === pid));
+
+  const threadDetail = document.getElementById('thread-detail');
+
+  const msgsHtml = msgs.length
+    ? msgs.map(m => {
+        const isCoach = m.sender_role === 'coach';
+        const date    = new Date(m.date_created).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+        return `<div class="msg-bubble msg--${isCoach ? 'coach' : 'parent'}">
+          <div class="msg-body">${m.body}</div>
+          <div class="msg-meta">${m.sender_name || (isCoach ? 'Staff' : 'Parent')} &middot; ${date}</div>
+        </div>`;
+      }).join('')
+    : `<p class="msg-empty">No messages.</p>`;
+
+  threadDetail.innerHTML = `<div class="detail-section">
+    <h3 style="font-family:var(--font-cond);font-size:18px;font-weight:800;margin-bottom:16px;">${name}</h3>
+    <div class="message-thread" id="thread-msgs">${msgsHtml}</div>
+    <form class="reply-form" id="thread-reply-form">
+      <textarea class="reply-textarea" id="thread-reply-body" placeholder="Reply to ${name}'s family&hellip;"></textarea>
+      <div class="reply-footer">
+        <span id="thread-reply-error" class="error-text" hidden></span>
+        <button type="submit" class="btn-green">Send as Technical Director &rarr;</button>
+      </div>
+    </form>
+  </div>`;
+
+  setTimeout(() => {
+    const t = document.getElementById('thread-msgs');
+    if (t) t.scrollTop = t.scrollHeight;
+  }, 50);
+
+  document.getElementById('thread-reply-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const ta    = document.getElementById('thread-reply-body');
+    const btn   = e.target.querySelector('button[type=submit]');
+    const errEl = document.getElementById('thread-reply-error');
+    const body  = ta.value.trim();
+    if (!body) return;
+
+    btn.disabled = true; btn.textContent = 'Sending\u2026';
+    const user       = ALS.user;
+    const senderName = `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Technical Director';
+
+    const result = await aapi('/items/academy_messages', {
+      method: 'POST',
+      body: JSON.stringify({ player: parseInt(pid) || pid, sender_role: 'coach', sender_name: senderName, body }),
+    });
+
+    if (result) {
+      ta.value = '';
+      allMessages.push({
+        ...result,
+        player:      pid,
+        sender_role: 'coach',
+        sender_name: senderName,
+        body,
+        date_created: new Date().toISOString(),
+        read_at:      new Date().toISOString(),
+      });
+      renderThreadList(pid);
+      openThread(pid);
+    } else {
+      errEl.hidden = false; errEl.textContent = 'Failed to send.';
+      setTimeout(() => { errEl.hidden = true; }, 4000);
+    }
+    btn.disabled = false; btn.textContent = 'Send as Technical Director \u2192';
+  });
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
 
 async function tryRefresh() {
   if (!ALS.refresh) return false;
   try {
     const res = await fetch(`${DURL}/auth/refresh`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: ALS.refresh, mode: 'json' }),
     });
     if (!res.ok) return false;
     const { data } = await res.json();
-    ALS.token = data.access_token;
-    ALS.refresh = data.refresh_token;
+    ALS.token = data.access_token; ALS.refresh = data.refresh_token;
     return true;
   } catch { return false; }
 }
 
-// ── FIFA CARD UTILS ───────────────────────────────────────────
-const AGE_SCALE = { 'u8-u9':{min:30,max:72},'u10-u11':{min:35,max:78},'u12-u13':{min:40,max:83},'u14-u16':{min:45,max:90} };
-function norm(raw, ag) { const s=AGE_SCALE[ag]||AGE_SCALE['u12-u13']; return Math.round(s.min+(raw-1)*(s.max-s.min)/9); }
-function calcOverall(a, ag, pos) {
-  const attrs = { pac:norm(a.pace_raw,ag),sho:norm(a.shooting_raw,ag),pas:norm(a.passing_raw,ag),dri:norm(a.dribbling_raw,ag),def:norm(a.defending_raw,ag),phy:norm(a.physical_raw,ag) };
-  const isAtk = ['forward','midfielder'].includes(pos);
-  const ov = isAtk ? Math.round((attrs.dri*2+attrs.sho*2+attrs.pac+attrs.pas+attrs.phy)/7)
-                   : Math.round((attrs.def*2+attrs.phy*2+attrs.pac+attrs.pas+attrs.dri)/7);
-  return { ov, attrs };
-}
-function tierClass(ov) { return ov>=90?'card-elite':ov>=75?'card-gold':ov>=60?'card-silver':'card-bronze'; }
-function tierName(ov)  { return ov>=90?'Elite':ov>=75?'Gold':ov>=60?'Silver':'Bronze'; }
-function posLabel(p)   { return {goalkeeper:'GK',defender:'CB',midfielder:'MID',forward:'FWD'}[p]||'MID'; }
-
-function buildFIFACard(profile, assessment) {
-  const ag  = (profile.enrollment?.age_group || 'u12-u13');
-  const pos = profile.position || 'midfielder';
-  const enr = profile.enrollment || {};
-  const name = `${enr.player_first_name||''} ${(enr.player_last_name||'')[0]||''}.`.trim();
-  const agLabel = {'u8-u9':'U9','u10-u11':'U11','u12-u13':'U13','u14-u16':'U16'}[ag]||ag.toUpperCase();
-
-  if (!assessment) {
-    return `<div class="fifa-card card-bronze unrated">
-      <div class="fc-header"><div class="fc-left"><div class="fc-overall">—</div><div class="fc-pos">${posLabel(pos)}</div><div class="fc-tier">Unrated</div></div></div>
-      <div class="fc-name">${name.toUpperCase()}</div>
-      <div class="fc-age">${agLabel} · Warriors FC</div>
-      <div class="fc-no-assess">Not yet assessed</div>
-    </div>`;
-  }
-  const { ov, attrs } = calcOverall(assessment, ag, pos);
-  const tc = tierClass(ov);
-  return `<div class="fifa-card ${tc}">
-    <div class="fc-header">
-      <div class="fc-left"><div class="fc-overall">${ov}</div><div class="fc-pos">${posLabel(pos)}</div><div class="fc-tier">${tierName(ov)}</div></div>
-      <div class="fc-badge"><svg viewBox="0 0 40 40" width="32" height="32" fill="none"><polygon points="20,3 37,12 37,28 20,37 3,28 3,12" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/><text x="20" y="26" text-anchor="middle" font-size="13" font-weight="bold" fill="rgba(255,255,255,0.7)" font-family="Arial">W</text></svg></div>
-    </div>
-    <div class="fc-photo"><svg viewBox="0 0 80 100" fill="none" width="70" height="88"><circle cx="40" cy="26" r="18" fill="rgba(255,255,255,0.2)"/><path d="M8 95 C8 65 20 54 40 52 C60 54 72 65 72 95" fill="rgba(255,255,255,0.2)"/></svg></div>
-    <div class="fc-name">${name.toUpperCase()}</div>
-    <div class="fc-age">${agLabel} · Warriors FC</div>
-    <div class="fc-stats">
-      ${[['PAC',attrs.pac],['SHO',attrs.sho],['PAS',attrs.pas],['DRI',attrs.dri],['DEF',attrs.def],['PHY',attrs.phy]].map(([l,v])=>`<div class="fc-stat"><span class="fc-sv">${v}</span><span class="fc-sl">${l}</span></div>`).join('')}
-    </div>
-  </div>`;
+function showLogin() {
+  ALS.clear();
+  document.getElementById('view-login').hidden    = false;
+  document.getElementById('view-dashboard').hidden = true;
 }
 
-// ── STATE ─────────────────────────────────────────────────────
-let allEnrollments = [];
-let allPlayers     = [];
-let allMessages    = [];
-let currentFilter  = 'pending';
-let activeTab      = 'enrollments';
-let selectedEnrId  = null;
-let selectedPlayerId = null;
+function showDashboard() {
+  document.getElementById('view-login').hidden    = true;
+  document.getElementById('view-dashboard').hidden = false;
+}
 
-// ── VIEWS ─────────────────────────────────────────────────────
-function showLogin() { ALS.clear(); document.getElementById('view-login').hidden=false; document.getElementById('view-dashboard').hidden=true; }
-function showDashboard() { document.getElementById('view-login').hidden=true; document.getElementById('view-dashboard').hidden=false; }
+// ── Login button ──────────────────────────────────────────────────────────────
 
-// ── TABS ──────────────────────────────────────────────────────
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-btn--active'));
-    btn.classList.add('tab-btn--active');
-    activeTab = btn.dataset.tab;
-    document.querySelectorAll('.tab-panel').forEach(p => p.hidden = true);
-    document.getElementById(`tab-${activeTab}`).hidden = false;
-    if (activeTab === 'messages') ensureMessagesLoaded();
-  });
-});
+document.getElementById('login-btn').addEventListener('click', async () => {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl    = document.getElementById('login-error');
+  const btn      = document.getElementById('login-btn');
+  if (!email || !password) return;
 
-// ── ENROLLMENT FILTERS ────────────────────────────────────────
-document.querySelectorAll('.filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('filter-btn--active'));
-    btn.classList.add('filter-btn--active');
-    currentFilter = btn.dataset.status;
-    selectedEnrId = null;
-    document.getElementById('enr-detail').innerHTML = '<div class="detail-placeholder"><p>Select an enrollment to view details</p></div>';
-    renderEnrollments();
-  });
-});
+  btn.disabled = true; btn.textContent = 'Signing in\u2026';
+  errEl.hidden = true;
 
-// ── LOAD DATA ─────────────────────────────────────────────────
-async function loadAll() {
-  const loadEl = document.getElementById('admin-loading');
-  loadEl.hidden = false;
   try {
-    const [enrollments, players] = await Promise.all([
-      aapi('/items/academy_enrollments?sort[]=-date_created&limit=200&fields=id,status,date_created,parent_first_name,parent_last_name,parent_email,parent_phone,player_first_name,player_last_name,player_dob,age_group,previous_experience,medical_notes,directus_user_id,program'),
-      aapi('/items/academy_player_profiles?limit=200&fields=id,position,photo,jersey_number,notes,enrollment.id,enrollment.age_group,enrollment.player_first_name,enrollment.player_last_name,enrollment.status'),
-    ]);
-    allEnrollments = enrollments || [];
-    allPlayers     = players     || [];
-    renderStats();
-    renderEnrollments();
-    renderPlayerList();
-  } catch(err) {
-    console.error('loadAll error:', err);
-    document.getElementById('enrollments-list').innerHTML =
-      '<p style="padding:32px;color:var(--muted);text-align:center">Error loading data — please refresh or sign out and back in.</p>';
-  } finally {
-    loadEl.hidden = true;
-  }
-}
-
-// ── STATS BAR ─────────────────────────────────────────────────
-function renderStats() {
-  const pending  = allEnrollments.filter(e => e.status === 'pending').length;
-  const active   = allEnrollments.filter(e => e.status === 'enrolled' || e.status === 'accepted').length;
-  document.getElementById('stats-bar').innerHTML = `
-    <span class="stat-chip stat-chip--warn">${pending} pending</span>
-    <span class="stat-chip stat-chip--ok">${active} active</span>
-    <span class="stat-chip">${allPlayers.length} profiles</span>`;
-}
-
-// ── ENROLLMENTS LIST ──────────────────────────────────────────
-function renderEnrollments() {
-  const list = document.getElementById('enrollments-list');
-  const filtered = currentFilter === 'all' ? allEnrollments : allEnrollments.filter(e => e.status === currentFilter);
-  if (!filtered.length) {
-    list.innerHTML = `<p class="empty-msg">No ${currentFilter === 'all' ? '' : currentFilter + ' '}enrollments.</p>`;
-    return;
-  }
-  list.innerHTML = filtered.map(e => {
-    const statusClass = { pending:'status-pending', accepted:'status-accepted', enrolled:'status-enrolled', inactive:'status-inactive' }[e.status] || '';
-    const active = String(e.id) === String(selectedEnrId) ? 'list-item--active' : '';
-    return `<div class="list-item ${active}" data-id="${e.id}">
-      <div class="li-name">${e.player_first_name} ${e.player_last_name} <span class="status-badge ${statusClass}">${e.status}</span></div>
-      <div class="li-sub">${e.parent_first_name} ${e.parent_last_name} · <span class="age-chip">${(e.age_group||'').toUpperCase().replace('-','/')}</span></div>
-    </div>`;
-  }).join('');
-  list.querySelectorAll('.list-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const enr = allEnrollments.find(e => String(e.id) === String(item.dataset.id));
-      if (enr) openEnrollmentDetail(enr);
+    const res = await fetch(`${DURL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
     });
-  });
-}
+    if (!res.ok) throw new Error('Invalid email or password.');
+    const { data } = await res.json();
+    ALS.token = data.access_token; ALS.refresh = data.refresh_token;
 
-function openEnrollmentDetail(enr) {
-  selectedEnrId = enr.id;
-  renderEnrollments(); // refresh active state
-  const hasProfile = allPlayers.some(p => String(p.enrollment?.id || p.enrollment) === String(enr.id));
-  const dob = enr.player_dob ? new Date(enr.player_dob).toLocaleDateString('en-AU') : '—';
-  const d   = enr.date_created ? new Date(enr.date_created).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : '—';
-  const statusClass = { pending:'status-pending', accepted:'status-accepted', enrolled:'status-enrolled' }[enr.status] || '';
-
-  document.getElementById('enr-detail').innerHTML = `
-<div class="detail-section">
-  <div class="detail-title-row">
-    <h2>${enr.player_first_name} ${enr.player_last_name}</h2>
-    <span class="status-badge ${statusClass}">${enr.status}</span>
-  </div>
-  <div class="detail-grid">
-    <div class="detail-row"><span>Age Group</span><strong>${(enr.age_group||'—').toUpperCase().replace('-','/')}</strong></div>
-    <div class="detail-row"><span>Date of Birth</span><strong>${dob}</strong></div>
-    <div class="detail-row"><span>Parent</span><strong>${enr.parent_first_name} ${enr.parent_last_name}</strong></div>
-    <div class="detail-row"><span>Email</span><strong><a href="mailto:${enr.parent_email}" style="color:var(--green-bright)">${enr.parent_email}</a></strong></div>
-    <div class="detail-row"><span>Phone</span><strong>${enr.parent_phone||'—'}</strong></div>
-    <div class="detail-row"><span>Submitted</span><strong>${d}</strong></div>
-    ${enr.previous_experience ? `<div class="detail-row detail-row--full"><span>Experience</span><p>${enr.previous_experience}</p></div>` : ''}
-    ${enr.medical_notes       ? `<div class="detail-row detail-row--full medical-row"><span>⚠ Medical</span><p>${enr.medical_notes}</p></div>` : ''}
-  </div>
-</div>
-
-${enr.status === 'pending' ? `
-<div class="detail-section detail-actions-section">
-  <button class="btn btn-primary" id="btn-accept-${enr.id}">Accept Application →</button>
-  <button class="btn btn-secondary" id="btn-reject-${enr.id}">Reject</button>
-  <span id="action-msg-${enr.id}" class="action-msg" hidden></span>
-</div>` : ''}
-
-${enr.status === 'accepted' && !hasProfile ? `
-<div class="detail-section">
-  <div class="label" style="margin-bottom:16px">Create Player Profile</div>
-  <form id="profile-form-${enr.id}" class="profile-form">
-    <div class="form-row">
-      <div class="field">
-        <label>Position</label>
-        <select id="ip-position-${enr.id}">
-          <option value="midfielder">Midfielder</option>
-          <option value="forward">Forward</option>
-          <option value="defender">Defender</option>
-          <option value="goalkeeper">Goalkeeper</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Jersey # (optional)</label>
-        <input type="number" id="ip-jersey-${enr.id}" min="1" max="99" placeholder="e.g. 10">
-      </div>
-    </div>
-    <div class="field">
-      <label>Internal Notes</label>
-      <textarea id="ip-notes-${enr.id}" rows="2" placeholder="Coach notes (not visible to parents)…"></textarea>
-    </div>
-    <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
-      <button type="submit" class="btn btn-primary">Create Profile →</button>
-      <span id="profile-msg-${enr.id}" class="action-msg" hidden></span>
-    </div>
-  </form>
-</div>
-<div class="detail-section invite-section">
-  <div class="label" style="margin-bottom:10px">Then — Invite Parent to Portal</div>
-  <ol class="invite-steps">
-    <li>Go to <a href="${DURL}/admin/users" target="_blank" rel="noopener" style="color:var(--green-bright)">Directus → Users ↗</a></li>
-    <li>Click <strong>Invite Users</strong></li>
-    <li>Enter <strong>${enr.parent_email}</strong></li>
-    <li>Set role to <strong>parent</strong></li>
-    <li>Send — parent receives login email</li>
-  </ol>
-</div>` : ''}
-
-${enr.status === 'accepted' && hasProfile ? `
-<div class="detail-section">
-  <p style="color:var(--green-bright);font-family:var(--font-cond);font-weight:700;margin-bottom:12px">✓ Player profile created</p>
-  <button class="btn btn-primary" id="btn-enroll-${enr.id}">Mark as Enrolled →</button>
-  <span id="action-msg-${enr.id}" class="action-msg" hidden></span>
-  <div class="invite-section" style="margin-top:20px">
-    <div class="label" style="margin-bottom:10px">Invite Parent (if not done)</div>
-    <ol class="invite-steps">
-      <li>Go to <a href="${DURL}/admin/users" target="_blank" rel="noopener" style="color:var(--green-bright)">Directus → Users ↗</a></li>
-      <li>Click <strong>Invite Users</strong> → <strong>${enr.parent_email}</strong> → role: <strong>parent</strong></li>
-    </ol>
-  </div>
-</div>` : ''}
-
-${enr.status === 'enrolled' ? `
-<div class="detail-section">
-  <p style="color:var(--green-bright);font-family:var(--font-cond);font-weight:700">✓ Enrolled</p>
-</div>` : ''}`;
-
-  // Bind accept/reject
-  document.getElementById(`btn-accept-${enr.id}`)?.addEventListener('click', async () => {
-    const msg = document.getElementById(`action-msg-${enr.id}`);
-    const btn = document.getElementById(`btn-accept-${enr.id}`);
-    btn.disabled = true; btn.textContent = 'Accepting…';
-    const result = await aapi(`/items/academy_enrollments/${enr.id}`, { method:'PATCH', body:JSON.stringify({status:'accepted'}) });
-    if (result) {
-      enr.status = 'accepted';
-      const idx = allEnrollments.findIndex(e => String(e.id) === String(enr.id));
-      if (idx > -1) allEnrollments[idx].status = 'accepted';
-      renderStats(); renderEnrollments();
-      openEnrollmentDetail(enr);
-    } else { btn.disabled=false; btn.textContent='Accept Application →'; msg.textContent='Failed. Try again.'; msg.hidden=false; }
-  });
-
-  document.getElementById(`btn-reject-${enr.id}`)?.addEventListener('click', async () => {
-    if (!confirm(`Reject ${enr.player_first_name}'s application?`)) return;
-    await aapi(`/items/academy_enrollments/${enr.id}`, { method:'PATCH', body:JSON.stringify({status:'inactive'}) });
-    enr.status = 'inactive';
-    const idx = allEnrollments.findIndex(e => String(e.id) === String(enr.id));
-    if (idx > -1) allEnrollments[idx].status = 'inactive';
-    renderStats(); renderEnrollments();
-    selectedEnrId = null;
-    document.getElementById('enr-detail').innerHTML = '<div class="detail-placeholder"><p>Application rejected.</p></div>';
-  });
-
-  document.getElementById(`btn-enroll-${enr.id}`)?.addEventListener('click', async () => {
-    const msg = document.getElementById(`action-msg-${enr.id}`);
-    await aapi(`/items/academy_enrollments/${enr.id}`, { method:'PATCH', body:JSON.stringify({status:'enrolled'}) });
-    enr.status = 'enrolled';
-    const idx = allEnrollments.findIndex(e => String(e.id) === String(enr.id));
-    if (idx > -1) allEnrollments[idx].status = 'enrolled';
-    renderStats(); renderEnrollments();
-    openEnrollmentDetail(enr);
-  });
-
-  const profileForm = document.getElementById(`profile-form-${enr.id}`);
-  profileForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const msg = document.getElementById(`profile-msg-${enr.id}`);
-    const btn = profileForm.querySelector('button[type="submit"]');
-    btn.disabled=true; btn.textContent='Creating…';
-    const payload = {
-      enrollment: parseInt(enr.id) || enr.id,
-      position: document.getElementById(`ip-position-${enr.id}`).value,
-      jersey_number: document.getElementById(`ip-jersey-${enr.id}`).value || null,
-      notes: document.getElementById(`ip-notes-${enr.id}`).value || null,
-    };
-    const result = await aapi('/items/academy_player_profiles', { method:'POST', body:JSON.stringify(payload) });
-    if (result) {
-      allPlayers.push({ id: result.id, position: payload.position, enrollment: { id: enr.id, age_group: enr.age_group, player_first_name: enr.player_first_name, player_last_name: enr.player_last_name, status: enr.status } });
-      renderStats(); renderPlayerList();
-      openEnrollmentDetail(enr);
-    } else { btn.disabled=false; btn.textContent='Create Profile →'; msg.textContent='Failed. Try again.'; msg.hidden=false; }
-  });
-}
-
-// ── PLAYERS LIST ──────────────────────────────────────────────
-function renderPlayerList() {
-  const list   = document.getElementById('players-list');
-  const search = document.getElementById('player-search')?.value?.toLowerCase() || '';
-  const players = search
-    ? allPlayers.filter(p => `${p.enrollment?.player_first_name||''} ${p.enrollment?.player_last_name||''}`.toLowerCase().includes(search))
-    : allPlayers;
-
-  if (!players.length) {
-    list.innerHTML = '<p class="empty-msg">No player profiles yet.</p>';
-    return;
-  }
-  list.innerHTML = players.map(p => {
-    const enr  = p.enrollment || {};
-    const name = `${enr.player_first_name||''} ${enr.player_last_name||''}`.trim();
-    const active = String(p.id) === String(selectedPlayerId) ? 'list-item--active' : '';
-    return `<div class="list-item ${active}" data-id="${p.id}">
-      <div class="li-name">${name}</div>
-      <div class="li-sub"><span class="age-chip">${(enr.age_group||'').toUpperCase().replace('-','/')}</span> <span class="pos-chip">${posLabel(p.position||'midfielder')}</span></div>
-    </div>`;
-  }).join('');
-  list.querySelectorAll('.list-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const player = allPlayers.find(p => String(p.id) === String(item.dataset.id));
-      if (player) openPlayerDetail(player);
+    const userRes = await fetch(`${DURL}/users/me?fields=id,email,first_name,last_name,role.name`, {
+      headers: { Authorization: `Bearer ${ALS.token}` },
     });
-  });
-}
+    if (!userRes.ok) throw new Error('Could not verify user.');
+    const { data: user } = await userRes.json();
 
-document.getElementById('player-search').addEventListener('input', renderPlayerList);
-
-async function openPlayerDetail(player) {
-  selectedPlayerId = player.id;
-  renderPlayerList();
-  const detail = document.getElementById('player-detail');
-  const enr = player.enrollment || {};
-  const name = `${enr.player_first_name||''} ${enr.player_last_name||''}`.trim();
-
-  detail.innerHTML = `<div class="center-msg" style="height:120px"><div class="spinner"></div><p>Loading…</p></div>`;
-
-  // Fetch assessment + messages in parallel
-  const pid = String(player.id);
-  const [assessData, msgData] = await Promise.all([
-    aapi(`/items/academy_assessments?filter[player][_eq]=${pid}&filter[is_latest][_eq]=true&limit=1&fields=*`),
-    aapi(`/items/academy_messages?filter[player][_eq]=${pid}&sort[]=date_created&fields=*`),
-  ]);
-  const assessment = Array.isArray(assessData) ? assessData[0] : null;
-  const messages   = Array.isArray(msgData) ? msgData : (msgData ? [msgData] : []);
-
-  const assessDate = assessment ? new Date(assessment.assessment_date).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : 'Never';
-
-  // Pre-fill slider values from latest assessment
-  const prefill = assessment ? {
-    pace:      assessment.pace_raw      || 5,
-    shooting:  assessment.shooting_raw  || 5,
-    passing:   assessment.passing_raw   || 5,
-    dribbling: assessment.dribbling_raw || 5,
-    defending: assessment.defending_raw || 5,
-    physical:  assessment.physical_raw  || 5,
-  } : { pace:5, shooting:5, passing:5, dribbling:5, defending:5, physical:5 };
-  const prefillNotes = assessment?.notes || '';
-  const adminAg  = enr.age_group || 'u12-u13';
-  const adminPos = player.position || 'midfielder';
-
-  function adminNorm(raw, ag) {
-    const AGS = { 'u8-u9':{min:30,max:72},'u10-u11':{min:35,max:78},'u12-u13':{min:40,max:83},'u14-u16':{min:45,max:90} };
-    const s = AGS[ag] || AGS['u12-u13'];
-    return Math.round(s.min + (raw - 1) * (s.max - s.min) / 9);
-  }
-  function adminNormChipClass(v) { return v >= 65 ? 'norm-green' : v >= 50 ? 'norm-amber' : 'norm-red'; }
-
-  function adminSliderField(attr, label, rawVal, ag) {
-    const normVal = adminNorm(rawVal, ag);
-    const chipCls = adminNormChipClass(normVal);
-    return `<div class="slider-field" data-attr="${attr}">
-      <div class="slider-header">
-        <label>${label}</label>
-        <span class="slider-val" id="asv-${attr}">${rawVal}</span>
-        <span class="slider-norm ${chipCls}" id="asn-${attr}">${normVal}</span>
-      </div>
-      <input type="range" min="1" max="10" value="${rawVal}" id="aslider-${attr}" class="admin-attr-slider" data-attr="${attr}">
-    </div>`;
-  }
-
-  detail.innerHTML = `
-<div class="player-detail-inner">
-  <div class="pd-header">
-    <div>
-      <h2>${name}</h2>
-      <div class="pd-meta">
-        <span class="age-chip">${(enr.age_group||'').toUpperCase().replace('-','/')}</span>
-        <span class="pos-chip">${posLabel(player.position||'midfielder')}</span>
-        <span style="font-size:12px;color:var(--muted)">Last assessed: ${assessDate}</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="pd-body">
-    <div class="pd-card-col">
-      <div class="section-label">Player Card</div>
-      <div id="admin-card-preview">${buildFIFACard(player, assessment)}</div>
-      ${assessment?.notes ? `<div class="coach-note-box card" style="margin-top:16px"><div class="label" style="margin-bottom:6px">Coach Notes</div><p>${assessment.notes}</p><div style="font-size:11px;color:var(--muted);margin-top:6px">${assessDate}</div></div>` : ''}
-    </div>
-    <div class="pd-assess-msg-col">
-
-      <div class="detail-section" style="padding:24px 28px; border-bottom:1px solid var(--border)">
-        <div class="section-label" style="margin-bottom:16px">Assessment</div>
-        <input type="hidden" id="admin-assess-player-id" value="${pid}">
-        <input type="hidden" id="admin-assess-age-group" value="${adminAg}">
-        <input type="hidden" id="admin-assess-position" value="${adminPos}">
-        <div class="sliders-grid">
-          ${adminSliderField('pace',      'PAC — Pace',      prefill.pace,      adminAg)}
-          ${adminSliderField('shooting',  'SHO — Shooting',  prefill.shooting,  adminAg)}
-          ${adminSliderField('passing',   'PAS — Passing',   prefill.passing,   adminAg)}
-          ${adminSliderField('dribbling', 'DRI — Dribbling', prefill.dribbling, adminAg)}
-          ${adminSliderField('defending', 'DEF — Defending', prefill.defending, adminAg)}
-          ${adminSliderField('physical',  'PHY — Physical',  prefill.physical,  adminAg)}
-        </div>
-        <div class="field" style="margin-top:16px">
-          <label>Coach Notes (visible to parents)</label>
-          <textarea id="admin-assess-notes" rows="4" placeholder="Write feedback for the parent and player...">${prefillNotes}</textarea>
-        </div>
-        <div class="form-actions" style="margin-top:12px">
-          <button id="admin-save-assess-btn" class="btn btn-primary">Save Assessment →</button>
-          <span id="admin-assess-saved" hidden style="color:var(--green-bright);margin-left:12px;font-family:var(--font-cond);font-weight:700">Saved!</span>
-          <span id="admin-assess-error" hidden style="color:#e05050;margin-left:12px;font-family:var(--font-cond);font-weight:700">Failed to save.</span>
-        </div>
-      </div>
-
-      <div style="padding:28px">
-        <div class="section-label">Messages</div>
-        <div class="thread-msgs" id="pd-msgs-${pid}">
-          ${messages.length === 0
-            ? '<p class="empty-msg">No messages yet.</p>'
-            : messages.map(m => `<div class="msg msg--${m.sender_role}">
-                <div class="msg-meta"><span class="msg-author">${m.sender_name||(m.sender_role==='coach'?'You':'Parent')}</span><span class="msg-date">${new Date(m.date_created).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</span></div>
-                <div class="msg-body">${m.body.replace(/\n/g,'<br>')}</div>
-              </div>`).join('')}
-        </div>
-        <form class="pd-reply-form" data-player="${pid}">
-          <textarea class="reply-input" rows="3" placeholder="Write a message to ${name}'s family…"></textarea>
-          <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
-            <button type="submit" class="btn btn-primary btn-sm">Send →</button>
-            <span class="reply-status" hidden style="font-size:12px;color:red"></span>
-          </div>
-        </form>
-      </div>
-
-    </div><!-- end pd-assess-msg-col -->
-  </div><!-- end pd-body -->
-</div>`;
-
-  // Scroll messages
-  const msgsEl = document.getElementById(`pd-msgs-${pid}`);
-  if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
-
-  // Mark parent messages as read
-  messages.filter(m => m.sender_role === 'parent' && !m.read_at).forEach(m => {
-    aapi(`/items/academy_messages/${m.id}`, { method:'PATCH', body:JSON.stringify({read_at: new Date().toISOString()}) });
-  });
-
-  // Reply handler
-  document.querySelector(`.pd-reply-form[data-player="${pid}"]`).addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const textarea = e.target.querySelector('.reply-input');
-    const status   = e.target.querySelector('.reply-status');
-    const btn      = e.target.querySelector('button[type="submit"]');
-    const body     = textarea.value.trim();
-    if (!body) return;
-    btn.disabled=true; btn.textContent='Sending…';
-    const user = ALS.user;
-    const result = await aapi('/items/academy_messages', { method:'POST', body: JSON.stringify({
-      player: parseInt(pid)||pid,
-      sender_role: 'coach',
-      sender_name: `${user?.first_name||''} ${user?.last_name||''}`.trim() || 'Technical Director',
-      body,
-    })});
-    if (result) {
-      textarea.value = '';
-      btn.disabled=false; btn.textContent='Send →';
-      // Reload messages
-      const fresh = await aapi(`/items/academy_messages?filter[player][_eq]=${pid}&sort[]=date_created&fields=*`);
-      const freshMsgs = Array.isArray(fresh) ? fresh : [];
-      if (msgsEl) {
-        msgsEl.innerHTML = freshMsgs.map(m => `<div class="msg msg--${m.sender_role}">
-          <div class="msg-meta"><span class="msg-author">${m.sender_name||(m.sender_role==='coach'?'You':'Parent')}</span><span class="msg-date">${new Date(m.date_created).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</span></div>
-          <div class="msg-body">${m.body.replace(/\n/g,'<br>')}</div>
-        </div>`).join('');
-        msgsEl.scrollTop = msgsEl.scrollHeight;
-      }
-      // Update allMessages for the Messages tab
-      allMessages = allMessages.filter(m => String(m.player) !== pid).concat(freshMsgs);
-    } else {
-      status.textContent='Failed. Try again.'; status.hidden=false;
-      btn.disabled=false; btn.textContent='Send →';
-    }
-  });
-
-  // ── ADMIN ASSESSMENT SLIDERS ──────────────────────────────────
-  function adminUpdatePreviews() {
-    const ag = document.getElementById('admin-assess-age-group')?.value || 'u12-u13';
-    ['pace','shooting','passing','dribbling','defending','physical'].forEach(attr => {
-      const slider  = document.getElementById(`aslider-${attr}`);
-      const valEl   = document.getElementById(`asv-${attr}`);
-      const normEl  = document.getElementById(`asn-${attr}`);
-      if (!slider) return;
-      const raw = parseInt(slider.value);
-      const AGS = { 'u8-u9':{min:30,max:72},'u10-u11':{min:35,max:78},'u12-u13':{min:40,max:83},'u14-u16':{min:45,max:90} };
-      const s = AGS[ag] || AGS['u12-u13'];
-      const normVal = Math.round(s.min + (raw - 1) * (s.max - s.min) / 9);
-      if (valEl) valEl.textContent = raw;
-      if (normEl) {
-        normEl.textContent = normVal;
-        normEl.className = `slider-norm ${normVal >= 65 ? 'norm-green' : normVal >= 50 ? 'norm-amber' : 'norm-red'}`;
-      }
-    });
-    // Update card preview
-    const ag2   = ag;
-    const pos2  = document.getElementById('admin-assess-position')?.value || 'midfielder';
-    const rawAttrs = {
-      pace:      parseInt(document.getElementById('aslider-pace')?.value      || 5),
-      shooting:  parseInt(document.getElementById('aslider-shooting')?.value  || 5),
-      passing:   parseInt(document.getElementById('aslider-passing')?.value   || 5),
-      dribbling: parseInt(document.getElementById('aslider-dribbling')?.value || 5),
-      defending: parseInt(document.getElementById('aslider-defending')?.value || 5),
-      physical:  parseInt(document.getElementById('aslider-physical')?.value  || 5),
-    };
-    const cardPreview = document.getElementById('admin-card-preview');
-    if (cardPreview) {
-      cardPreview.innerHTML = buildFIFACard(player, {
-        pace_raw:      rawAttrs.pace,
-        shooting_raw:  rawAttrs.shooting,
-        passing_raw:   rawAttrs.passing,
-        dribbling_raw: rawAttrs.dribbling,
-        defending_raw: rawAttrs.defending,
-        physical_raw:  rawAttrs.physical,
-      });
-    }
-  }
-
-  document.querySelectorAll('.admin-attr-slider').forEach(slider => {
-    slider.addEventListener('input', adminUpdatePreviews);
-  });
-
-  // ── ADMIN SAVE ASSESSMENT ─────────────────────────────────────
-  document.getElementById('admin-save-assess-btn')?.addEventListener('click', async () => {
-    const saveBtn  = document.getElementById('admin-save-assess-btn');
-    const savedEl  = document.getElementById('admin-assess-saved');
-    const errorEl  = document.getElementById('admin-assess-error');
-    savedEl.hidden = true; errorEl.hidden = true;
-    saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
-
-    const playerId = document.getElementById('admin-assess-player-id').value;
-    const ag       = document.getElementById('admin-assess-age-group').value;
-    const pos      = document.getElementById('admin-assess-position').value;
-    const user     = ALS.user;
-
-    // Mark existing latest assessments as not-latest
-    const existing = await aapi(`/items/academy_assessments?filter[player][_eq]=${playerId}&filter[is_latest][_eq]=true&fields=id`);
-    if (existing && existing.length > 0) {
-      await Promise.all(existing.map(a =>
-        aapi(`/items/academy_assessments/${a.id}`, { method:'PATCH', body:JSON.stringify({ is_latest: false }) })
-      ));
-    }
-
-    const payload = {
-      player:            parseInt(playerId) || playerId,
-      assessed_by:       `${user?.first_name||''} ${user?.last_name||''}`.trim() || 'Technical Director',
-      assessment_date:   new Date().toISOString().split('T')[0],
-      age_group_at_time: ag,
-      pace_raw:          parseInt(document.getElementById('aslider-pace').value),
-      shooting_raw:      parseInt(document.getElementById('aslider-shooting').value),
-      passing_raw:       parseInt(document.getElementById('aslider-passing').value),
-      dribbling_raw:     parseInt(document.getElementById('aslider-dribbling').value),
-      defending_raw:     parseInt(document.getElementById('aslider-defending').value),
-      physical_raw:      parseInt(document.getElementById('aslider-physical').value),
-      notes:             document.getElementById('admin-assess-notes').value.trim() || null,
-      is_latest:         true,
-    };
-
-    const result = await aapi('/items/academy_assessments', { method:'POST', body:JSON.stringify(payload) });
-    if (result) {
-      savedEl.hidden = false;
-      setTimeout(() => { savedEl.hidden = true; }, 3000);
-    } else {
-      errorEl.hidden = false;
-    }
-    saveBtn.disabled = false; saveBtn.textContent = 'Save Assessment →';
-  });
-}
-
-// ── MESSAGES TAB ──────────────────────────────────────────────
-async function ensureMessagesLoaded() {
-  if (allPlayers.length === 0) {
-    const players = await aapi('/items/academy_player_profiles?limit=200&fields=id,position,enrollment.id,enrollment.player_first_name,enrollment.player_last_name');
-    allPlayers = players || [];
-  }
-  if (allMessages.length === 0) {
-    const messages = await aapi('/items/academy_messages?sort[]=-date_created&limit=500&fields=id,player,sender_role,sender_name,body,date_created,read_at');
-    allMessages = messages || [];
-  }
-  renderThreadList();
-}
-
-function renderThreadList(activeId) {
-  const list = document.getElementById('thread-list');
-  const playerMap = {};
-  allPlayers.forEach(p => {
-    playerMap[String(p.id)] = `${p.enrollment?.player_first_name||''} ${p.enrollment?.player_last_name||''}`.trim();
-  });
-
-  const entries = allPlayers.map(p => {
-    const pid   = String(p.id);
-    const msgs  = allMessages.filter(m => String(m.player) === pid);
-    const unread = msgs.filter(m => m.sender_role === 'parent' && !m.read_at).length;
-    const latest = msgs.sort((a,b)=>new Date(b.date_created)-new Date(a.date_created))[0];
-    const preview = latest ? (latest.body.length>50?latest.body.slice(0,50)+'…':latest.body) : 'No messages yet';
-    return { pid, name: playerMap[pid]||'Player', unread, preview };
-  });
-
-  list.innerHTML = '<div class="list-header"><strong>All Conversations</strong></div>' + entries.map(({ pid, name, unread, preview }) => `
-<div class="list-item ${String(activeId)===pid?'list-item--active':''}" data-player-id="${pid}">
-  <div class="li-name">${name}${unread?` <span class="unread-badge">${unread}</span>`:''}</div>
-  <div class="li-sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${preview}</div>
-</div>`).join('');
-
-  list.querySelectorAll('[data-player-id]').forEach(item => {
-    item.addEventListener('click', () => openThread(item.dataset.playerId));
-  });
-}
-
-function openThread(playerId) {
-  const pid = String(playerId);
-  const msgs = allMessages.filter(m => String(m.player) === pid);
-  const playerMap = {};
-  allPlayers.forEach(p => { playerMap[String(p.id)] = `${p.enrollment?.player_first_name||''} ${p.enrollment?.player_last_name||''}`.trim(); });
-  const name = playerMap[pid] || 'Player';
-
-  msgs.filter(m => m.sender_role === 'parent' && !m.read_at).forEach(m => {
-    aapi(`/items/academy_messages/${m.id}`, { method:'PATCH', body:JSON.stringify({read_at:new Date().toISOString()}) });
-    m.read_at = new Date().toISOString();
-  });
-
-  const detail = document.getElementById('thread-detail');
-  detail.innerHTML = `
-<div class="thread-header"><strong>${name}</strong></div>
-<div class="thread-msgs" id="tmsg-${pid}">
-  ${msgs.length===0
-    ? '<p class="empty-msg">No messages yet. Send the first message below.</p>'
-    : msgs.sort((a,b)=>new Date(a.date_created)-new Date(b.date_created)).map(m=>`
-  <div class="msg msg--${m.sender_role}">
-    <div class="msg-meta"><span class="msg-author">${m.sender_name||(m.sender_role==='coach'?'You':'Parent')}</span><span class="msg-date">${new Date(m.date_created).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}</span></div>
-    <div class="msg-body">${m.body.replace(/\n/g,'<br>')}</div>
-  </div>`).join('')}
-</div>
-<form class="reply-form" data-player="${pid}">
-  <textarea class="reply-input" rows="3" placeholder="Write a message to ${name}'s family…"></textarea>
-  <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
-    <button type="submit" class="btn btn-primary btn-sm">Send →</button>
-    <span class="reply-status" hidden style="font-size:12px;color:red"></span>
-  </div>
-</form>`;
-
-  const msgsEl = document.getElementById(`tmsg-${pid}`);
-  if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
-
-  document.querySelector(`.reply-form[data-player="${pid}"]`).addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const textarea = e.target.querySelector('.reply-input');
-    const status   = e.target.querySelector('.reply-status');
-    const btn      = e.target.querySelector('button[type="submit"]');
-    const body     = textarea.value.trim();
-    if (!body) return;
-    btn.disabled=true; btn.textContent='Sending…';
-    const user = ALS.user;
-    const result = await aapi('/items/academy_messages', { method:'POST', body:JSON.stringify({
-      player: parseInt(pid)||pid,
-      sender_role: 'coach',
-      sender_name: `${user?.first_name||''} ${user?.last_name||''}`.trim() || 'Technical Director',
-      body,
-    })});
-    if (result) {
-      allMessages.push({ player: pid, sender_role:'coach', sender_name: ALS.user?.first_name||'Coach', body, id:result.id, date_created:new Date().toISOString(), read_at:null });
-      textarea.value = '';
-      btn.disabled=false; btn.textContent='Send →';
-      openThread(pid);
-      renderThreadList(pid);
-    } else {
-      status.textContent='Failed.'; status.hidden=false;
-      btn.disabled=false; btn.textContent='Send →';
-    }
-  });
-
-  renderThreadList(pid);
-}
-
-// ── LOGIN ─────────────────────────────────────────────────────
-document.getElementById('admin-login-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const errEl = document.getElementById('a-login-error');
-  const btn   = document.getElementById('a-login-btn');
-  errEl.hidden = true; btn.disabled = true; btn.textContent = 'Signing in…';
-  try {
-    const res  = await fetch(`${DURL}/auth/login`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ email: document.getElementById('a-email').value.trim(), password: document.getElementById('a-password').value }),
-    });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json?.errors?.[0]?.message || 'Login failed');
-    ALS.token   = json.data.access_token;
-    ALS.refresh = json.data.refresh_token;
-    const user = await aapi('/users/me?fields=id,email,first_name,last_name,role.name');
-    if (!user) throw new Error('Could not load user');
-    ALS.user = user;
-    const role = (user?.role?.name||'').toLowerCase();
-    if (!['administrator','admin','technical_director','technical director','director','coach'].some(r => role.includes(r))) {
+    const role = (user?.role?.name || '').toLowerCase();
+    if (!['administrator', 'admin', 'technical director', 'director', 'coach'].some(r => role.includes(r))) {
       ALS.clear();
-      throw new Error('Your account does not have admin access.');
+      throw new Error('Access denied. You need Technical Director access.');
     }
+
+    ALS.user = user;
     showDashboard();
-    loadAll();
+    await loadAll();
   } catch (err) {
-    errEl.textContent = err.message.includes('Invalid') ? 'Invalid email or password.' : err.message;
+    errEl.textContent = err.message || 'Sign in failed.';
     errEl.hidden = false;
-    btn.disabled = false; btn.textContent = 'Sign In →';
   }
+
+  btn.disabled = false; btn.textContent = 'Sign In \u2192';
 });
 
-document.getElementById('a-logout-btn').addEventListener('click', () => {
-  if (ALS.token) fetch(`${DURL}/auth/logout`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({refresh_token:ALS.refresh})}).catch(()=>{});
+// Allow Enter key in password field
+document.getElementById('login-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('login-btn').click();
+});
+
+// ── Logout ────────────────────────────────────────────────────────────────────
+
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  if (ALS.refresh) {
+    await fetch(`${DURL}/auth/logout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ALS.token}` },
+      body: JSON.stringify({ refresh_token: ALS.refresh }),
+    }).catch(() => {});
+  }
   showLogin();
 });
 
-// ── INIT ──────────────────────────────────────────────────────
-(async function init() {
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+async function init() {
   if (!ALS.token) { showLogin(); return; }
-  const user = await aapi('/users/me?fields=id,email,first_name,last_name,role.name');
-  if (!user) { showLogin(); return; }
+
+  const userRes = await fetch(`${DURL}/users/me?fields=id,email,first_name,last_name,role.name`, {
+    headers: { Authorization: `Bearer ${ALS.token}` },
+  });
+
+  if (!userRes.ok) {
+    const ok = await tryRefresh();
+    if (!ok) { showLogin(); return; }
+    return init();
+  }
+
+  const { data: user } = await userRes.json();
+  const role = (user?.role?.name || '').toLowerCase();
+  if (!['administrator', 'admin', 'technical director', 'director', 'coach'].some(r => role.includes(r))) {
+    showLogin(); return;
+  }
+
   ALS.user = user;
   showDashboard();
-  loadAll();
-})();
+  await loadAll();
+}
+
+document.addEventListener('DOMContentLoaded', init);
 </script>
 
-<style>
-.admin-view { min-height:100vh; }
-
-/* ── HERO / LOGIN ── */
-.portal-hero { background:linear-gradient(135deg,var(--green-dark),var(--off-black)); padding:60px 48px 40px; border-bottom:1px solid var(--border); }
-.portal-hero-inner { max-width:600px; margin:0 auto; }
-.portal-hero h1 { font-size:clamp(48px,6vw,72px); margin:10px 0 8px; }
-.portal-hero p  { color:var(--muted); }
-.login-outer { display:flex; justify-content:center; padding:56px 20px; }
-.login-card  { width:100%; max-width:440px; padding:40px; }
-.login-card h2 { font-size:36px; margin-bottom:20px; }
-.field { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
-.field label { font-family:var(--font-cond); font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
-.field input, .field select, .field textarea { background:var(--off-black); border:1px solid var(--border); color:var(--white); padding:10px 14px; border-radius:4px; font-size:15px; font-family:inherit; width:100%; }
-.field input:focus, .field select:focus, .field textarea:focus { outline:none; border-color:var(--green-bright); }
-.form-error { color:#ff6b6b; font-size:13px; margin-bottom:12px; }
-.btn-full { width:100%; justify-content:center; }
-
-/* ── TOPBAR ── */
-.topbar { background:var(--off-black); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50; }
-.topbar-inner { display:flex; justify-content:space-between; align-items:center; padding:16px 32px; gap:16px; }
-.topbar-title .label { font-size:11px; }
-.topbar-title h1 { font-size:clamp(20px,3vw,28px); margin:0; }
-.topbar-right { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
-.stats-bar { display:flex; gap:8px; align-items:center; }
-.stat-chip { font-family:var(--font-cond); font-size:13px; font-weight:700; padding:4px 10px; border-radius:20px; background:rgba(255,255,255,0.06); border:1px solid var(--border); }
-.stat-chip--warn { background:rgba(255,180,0,0.12); border-color:rgba(255,180,0,0.3); color:#ffd700; }
-.stat-chip--ok   { background:rgba(37,160,76,0.12); border-color:rgba(37,160,76,0.3); color:var(--green-bright); }
-.tab-nav { display:flex; gap:0; padding:0 32px; border-top:1px solid var(--border); }
-.tab-btn { background:none; border:none; color:var(--muted); font-family:var(--font-cond); font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; padding:14px 20px; cursor:pointer; border-bottom:2px solid transparent; transition:color 0.15s,border-color 0.15s; }
-.tab-btn:hover { color:var(--white); }
-.tab-btn--active { color:var(--green-bright); border-bottom-color:var(--green-bright); }
-
-/* ── ADMIN BODY ── */
-.admin-body { }
-.center-msg { display:flex; flex-direction:column; align-items:center; justify-content:center; height:160px; gap:12px; color:var(--muted); }
-.tab-panel { }
-
-/* ── SPLIT PANE ── */
-.split-pane { display:grid; grid-template-columns:320px 1fr; min-height:calc(100vh - 130px); }
-.split-list { border-right:1px solid var(--border); overflow-y:auto; }
-.split-detail { overflow-y:auto; }
-.list-header { padding:16px 20px; border-bottom:1px solid var(--border); background:rgba(255,255,255,0.02); font-size:13px; font-weight:700; }
-.list-item { padding:14px 20px; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.1s; }
-.list-item:hover { background:rgba(255,255,255,0.03); }
-.list-item--active { background:rgba(37,160,76,0.07) !important; border-left:3px solid var(--green-bright); }
-.li-name { font-family:var(--font-cond); font-weight:700; font-size:15px; margin-bottom:4px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-.li-sub  { font-size:12px; color:var(--muted); display:flex; gap:6px; align-items:center; }
-.empty-msg { padding:32px; color:var(--muted); text-align:center; font-size:14px; }
-.detail-placeholder { display:flex; align-items:center; justify-content:center; height:300px; color:var(--muted); font-size:14px; }
-.search-input { background:var(--off-black); border:none; border-bottom:1px solid var(--border); color:var(--white); padding:14px 20px; font-size:14px; font-family:inherit; width:100%; outline:none; }
-.search-input:focus { border-bottom-color:var(--green-bright); }
-
-/* ── FILTER ROW ── */
-.filter-row { display:flex; gap:6px; flex-wrap:wrap; }
-.filter-btn { background:none; border:1px solid var(--border); color:var(--muted); font-family:var(--font-cond); font-size:12px; font-weight:700; text-transform:uppercase; padding:5px 12px; border-radius:20px; cursor:pointer; transition:all 0.15s; }
-.filter-btn:hover { color:var(--white); border-color:var(--white); }
-.filter-btn--active { background:var(--green-bright); border-color:var(--green-bright); color:var(--off-black); }
-
-/* ── STATUS BADGES ── */
-.status-badge { font-family:var(--font-cond); font-size:11px; font-weight:800; text-transform:uppercase; padding:3px 8px; border-radius:3px; }
-.status-pending  { background:rgba(255,180,0,0.15); color:#ffd700; border:1px solid rgba(255,180,0,0.3); }
-.status-accepted { background:rgba(100,149,237,0.15); color:#6495ed; border:1px solid rgba(100,149,237,0.3); }
-.status-enrolled { background:rgba(37,160,76,0.15); color:var(--green-bright); border:1px solid rgba(37,160,76,0.3); }
-.status-inactive { background:rgba(255,255,255,0.05); color:var(--muted); border:1px solid var(--border); }
-.age-chip  { font-family:var(--font-cond); font-size:11px; font-weight:700; background:rgba(255,255,255,0.06); border:1px solid var(--border); padding:2px 7px; border-radius:3px; }
-.pos-chip  { font-family:var(--font-cond); font-size:11px; font-weight:700; background:rgba(37,160,76,0.1); border:1px solid rgba(37,160,76,0.2); color:var(--green-bright); padding:2px 7px; border-radius:3px; }
-.unread-badge { background:var(--green-bright); color:var(--off-black); font-size:10px; font-weight:800; padding:1px 6px; border-radius:10px; }
-
-/* ── ENROLLMENT DETAIL ── */
-.detail-section { padding:28px 36px; border-bottom:1px solid var(--border); }
-.detail-section:last-child { border-bottom:none; }
-.detail-title-row { display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
-.detail-title-row h2 { font-size:32px; margin:0; }
-.detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px 24px; }
-.detail-row { display:flex; flex-direction:column; gap:3px; }
-.detail-row span { font-size:11px; color:var(--muted); font-family:var(--font-cond); text-transform:uppercase; font-weight:700; letter-spacing:.05em; }
-.detail-row strong { font-size:15px; }
-.detail-row p { font-size:14px; color:var(--muted); margin:4px 0 0; line-height:1.5; }
-.detail-row--full { grid-column:1/-1; }
-.medical-row strong, .medical-row p { color:#ff6b6b; }
-.detail-actions-section { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-.action-msg { font-size:12px; color:var(--green-bright); font-family:var(--font-cond); font-weight:700; }
-.profile-form .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:12px; }
-.invite-section { }
-.invite-steps { color:var(--muted); font-size:14px; padding-left:20px; line-height:1.8; }
-
-/* ── PLAYER DETAIL ── */
-.player-detail-inner { padding:0; }
-.pd-header { display:flex; justify-content:space-between; align-items:flex-start; padding:28px 36px 20px; border-bottom:1px solid var(--border); gap:16px; flex-wrap:wrap; }
-.pd-header h2 { font-size:32px; margin:0 0 8px; }
-.pd-meta { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-.pd-body { display:grid; grid-template-columns:auto 1fr; gap:0; }
-.pd-card-col { padding:28px 28px; border-right:1px solid var(--border); min-width:220px; }
-.pd-msg-col  { padding:28px 36px; }
-.pd-assess-msg-col { overflow-y:auto; }
-.coach-note-box { padding:16px; }
-
-/* ── ASSESSMENT SLIDERS (admin) ── */
-.sliders-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-.slider-field { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:4px; padding:14px 16px; }
-.slider-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
-.slider-header label { font-family:var(--font-cond); font-size:13px; font-weight:700; flex:1; }
-.slider-val { font-family:var(--font-cond); font-size:22px; font-weight:900; color:var(--white); line-height:1; }
-.slider-norm { padding:2px 8px; border-radius:10px; font-size:12px; font-weight:700; font-family:var(--font-cond); }
-.norm-green  { background:rgba(37,160,76,0.15); color:var(--green-bright); }
-.norm-amber  { background:rgba(255,180,0,0.15); color:#ffb400; }
-.norm-red    { background:rgba(220,50,50,0.15); color:#e05050; }
-.admin-attr-slider { width:100%; accent-color:var(--green-bright); cursor:pointer; }
-.form-actions { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-
-/* ── FIFA CARD ── */
-.fifa-card { width:160px; border-radius:10px; overflow:hidden; padding:12px 10px 10px; box-shadow:0 4px 20px rgba(0,0,0,0.5); }
-.card-bronze { background:linear-gradient(160deg,#cd7f32,#8b4513); }
-.card-silver { background:linear-gradient(160deg,#d0d0d0,#7a8a90); }
-.card-gold   { background:linear-gradient(160deg,#d4a017,#8b6400); }
-.card-elite  { background:linear-gradient(160deg,#00c853,#1d7a3a); }
-.fc-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
-.fc-left { display:flex; flex-direction:column; }
-.fc-overall { font-size:36px; font-weight:900; line-height:1; color:#fff; font-family:var(--font-cond); }
-.fc-pos  { font-size:12px; font-weight:700; color:rgba(255,255,255,0.85); font-family:var(--font-cond); }
-.fc-tier { font-size:10px; color:rgba(255,255,255,0.6); font-family:var(--font-cond); }
-.fc-photo { display:flex; justify-content:center; margin:4px 0; }
-.fc-name { font-family:var(--font-cond); font-weight:800; font-size:13px; color:#fff; text-align:center; letter-spacing:.05em; }
-.fc-age  { font-size:10px; color:rgba(255,255,255,0.6); text-align:center; margin-bottom:8px; }
-.fc-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; }
-.fc-stat { display:flex; flex-direction:column; align-items:center; background:rgba(0,0,0,0.2); border-radius:3px; padding:3px 2px; }
-.fc-sv { font-size:14px; font-weight:800; color:#fff; font-family:var(--font-cond); line-height:1; }
-.fc-sl { font-size:8px; color:rgba(255,255,255,0.7); font-weight:700; }
-.fc-no-assess { font-size:11px; color:rgba(255,255,255,0.6); text-align:center; padding:8px 0; }
-.unrated { opacity:0.7; }
-
-/* ── MESSAGES ── */
-.thread-header { padding:16px 20px; border-bottom:1px solid var(--border); font-family:var(--font-cond); font-weight:800; font-size:18px; }
-.thread-msgs { max-height:400px; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:12px; }
-.pd-msgs { max-height:360px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; margin-bottom:16px; }
-.msg { max-width:85%; }
-.msg--parent { align-self:flex-start; }
-.msg--coach  { align-self:flex-end; }
-.msg-meta { display:flex; gap:8px; margin-bottom:4px; font-size:11px; color:var(--muted); }
-.msg-author { font-weight:700; color:var(--white); }
-.msg--parent .msg-body { background:rgba(255,255,255,0.06); border-radius:0 10px 10px 10px; padding:10px 14px; font-size:14px; line-height:1.5; }
-.msg--coach  .msg-body { background:rgba(37,160,76,0.15); border:1px solid rgba(37,160,76,0.2); border-radius:10px 0 10px 10px; padding:10px 14px; font-size:14px; line-height:1.5; }
-.reply-form { padding:16px 20px; border-top:1px solid var(--border); }
-.reply-input { width:100%; background:var(--off-black); border:1px solid var(--border); color:var(--white); padding:10px 14px; border-radius:4px; font-size:14px; font-family:inherit; resize:none; }
-.reply-input:focus { outline:none; border-color:var(--green-bright); }
-
-/* ── SPINNER ── */
-.spinner { width:28px; height:28px; border:3px solid rgba(255,255,255,0.1); border-top-color:var(--green-bright); border-radius:50%; animation:spin 0.7s linear infinite; }
-@keyframes spin { to { transform:rotate(360deg); } }
-
-/* ── RESPONSIVE ── */
-@media (max-width:900px) {
-  .split-pane { grid-template-columns:1fr; }
-  .split-list { max-height:300px; border-right:none; border-bottom:1px solid var(--border); }
-  .pd-body { grid-template-columns:1fr; }
-  .sliders-grid { grid-template-columns:1fr; }
-  .pd-card-col { border-right:none; border-bottom:1px solid var(--border); display:flex; flex-direction:column; align-items:center; }
-  .topbar-inner { padding:12px 16px; }
-  .tab-nav { padding:0 16px; }
-  .detail-section { padding:20px; }
-  .detail-grid { grid-template-columns:1fr; }
-}
-</style>
+</Base>

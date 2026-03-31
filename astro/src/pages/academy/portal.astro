@@ -4,123 +4,98 @@
 import Base from '../../layouts/Base.astro';
 ---
 <Base
-  title="Academy — Parent Portal"
+  title="Academy — Player Portal"
   description="South Wagga Warriors FC Academy parent and player portal. View your child's Player Card, progress, and messages."
 >
 
-  <!-- Login View -->
-  <div id="view-login" class="portal-view">
-    <div class="portal-hero">
-      <div class="portal-hero-inner">
-        <div class="label">Warriors Academy</div>
-        <h1>Parent Portal</h1>
-        <p>Track your child's progress, view their Player Card, and message the Technical Director.</p>
-      </div>
+<!-- Quote band — always visible, above everything -->
+<div id="quote-band" class="quote-band"></div>
+
+<!-- Login view -->
+<div id="view-login" class="portal-view">
+  <div class="login-hero">
+    <div class="login-hero-inner">
+      <span class="login-label">Warriors Academy</span>
+      <h1 class="login-h1">Player Portal</h1>
+      <p class="login-sub">Sign in to view your player card and stats</p>
     </div>
-    <div class="login-outer">
-      <div class="login-card card">
-        <h2>Sign In</h2>
-        <p class="login-sub">Use the email and password from your Academy welcome email.</p>
-        <form id="login-form" novalidate>
-          <div class="field">
-            <label for="login-email">Email</label>
-            <input type="email" id="login-email" autocomplete="email" required>
-          </div>
-          <div class="field">
-            <label for="login-password">Password</label>
-            <input type="password" id="login-password" autocomplete="current-password" required>
-          </div>
-          <div id="login-error" class="form-msg form-msg--error" hidden></div>
-          <button type="submit" class="btn btn-primary btn-full" id="login-btn">Sign In →</button>
-        </form>
-        <div class="login-footer">
-          <p>Not enrolled yet? <a href="/academy/register">Register Interest →</a></p>
-          <p>Need help? <a href="/about#contact">Contact us</a></p>
-        </div>
+  </div>
+  <div class="login-outer">
+    <div class="login-card">
+      <div id="session-expired-msg" hidden style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:12px 14px;font-size:14px;color:#f59e0b;margin-bottom:16px;">Your session expired. Please sign in again.</div>
+      <div class="login-field-group">
+        <label for="login-email">Email</label>
+        <input id="login-email" type="email" autocomplete="email" placeholder="your@email.com">
+      </div>
+      <div class="login-field-group">
+        <label for="login-password">Password</label>
+        <input id="login-password" type="password" autocomplete="current-password" placeholder="••••••••">
+      </div>
+      <button id="login-btn" class="btn-primary">Sign In →</button>
+      <div id="login-error" class="form-msg form-msg--error" hidden></div>
+      <div class="login-footer">
+        <p>Not enrolled yet? <a href="/academy/register">Register Interest →</a></p>
+        <p>Need help? <a href="/contact">Contact us</a></p>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Dashboard View (shown after login) -->
-  <div id="view-dashboard" class="portal-view" hidden>
-
-    <div class="dash-header">
-      <div class="dash-header-inner">
-        <div>
-          <div class="label">Warriors Academy</div>
-          <h1 id="dash-welcome">Welcome back</h1>
-        </div>
-        <button class="btn btn-secondary btn-sm" id="logout-btn">Sign Out</button>
+<!-- Dashboard view -->
+<div id="view-dashboard" class="portal-view" hidden>
+  <div class="dash-header">
+    <div class="dash-header-inner">
+      <div>
+        <span class="dash-label">Warriors Academy</span>
+        <h1 id="dash-title" class="dash-h1">Player Portal</h1>
       </div>
-    </div>
-
-    <!-- Player tabs (if multiple players) -->
-    <div id="player-tabs" class="player-tabs" hidden>
-      <div class="tabs-inner" id="tabs-inner"></div>
-    </div>
-
-    <div class="dash-body">
-
-      <!-- Loading state -->
-      <div id="dash-loading" class="dash-loading">
-        <div class="spinner"></div>
-        <p>Loading player data…</p>
-      </div>
-
-      <!-- Error state -->
-      <div id="dash-error" class="dash-error" hidden>
-        <p>Couldn't load player data. Please <button id="retry-btn" class="link-btn">try again</button> or <a href="/about#contact">contact us</a>.</p>
-      </div>
-
-      <!-- Player content -->
-      <div id="player-content" hidden>
-
-        <!-- Hero: FIFA card left, stats right -->
-        <div class="player-hero">
-          <div class="player-hero-card">
-            <div id="fifa-card-wrap">
-              <!-- FIFA card rendered by JS -->
-            </div>
-            <button id="download-card-btn" class="btn btn-outline-green btn-full" style="margin-top:4px">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download Card
-            </button>
-          </div>
-          <div class="player-hero-stats" id="stats-panel">
-            <!-- Stats panel rendered by JS -->
-          </div>
-        </div>
-
-        <!-- Tab bar -->
-        <div class="portal-tabs">
-          <button class="portal-tab portal-tab--active" data-tab="feedback">Latest Feedback</button>
-          <button class="portal-tab" data-tab="messages">Messages</button>
-          <button class="portal-tab" data-tab="train">Train at Home</button>
-        </div>
-
-        <!-- Tab panels -->
-        <div id="tab-feedback" class="tab-panel">
-          <!-- Rendered by JS -->
-        </div>
-
-        <div id="tab-messages" class="tab-panel" hidden>
-          <div id="message-thread" class="message-thread">
-            <p class="empty-msg">No messages yet. Use the form below to get in touch.</p>
-          </div>
-          <form id="message-form" class="message-compose">
-            <textarea id="message-input" rows="3" placeholder="Write a message to the Technical Director…"></textarea>
-            <button type="submit" class="btn btn-primary btn-sm" id="send-msg-btn">Send Message →</button>
-          </form>
-        </div>
-
-        <div id="tab-train" class="tab-panel" hidden>
-          <!-- Rendered by JS -->
-        </div>
-
-      </div>
-
+      <button id="logout-btn" class="btn-secondary">Sign Out</button>
     </div>
   </div>
+
+  <!-- Player tabs (only if multiple children) -->
+  <div id="player-tabs" class="player-tabs" hidden></div>
+
+  <!-- Loading / error / content states -->
+  <div id="dash-loading" class="dash-loading">
+    <div class="spinner"></div>
+    <p>Loading player data…</p>
+  </div>
+  <div id="dash-error" class="dash-error" hidden>
+    <p>Couldn't load player data. Please try again or <a href="/contact">contact us</a>.</p>
+    <button id="retry-btn" class="btn-secondary" style="margin-top:16px">Try Again</button>
+  </div>
+  <div id="dash-pending" hidden></div>
+
+  <div id="dash-content" hidden>
+    <!-- Hero: card + stats -->
+    <div class="player-hero">
+      <div class="hero-card-col">
+        <div id="fifa-card-wrap"></div>
+        <button id="download-btn" class="btn-download">Download Card</button>
+      </div>
+      <div class="hero-stats-col">
+        <h2 class="stats-heading">Current Stats</h2>
+        <div id="stats-panel"></div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <button class="portal-tab portal-tab--active" data-tab="feedback">Feedback from Coach</button>
+      <button class="portal-tab" data-tab="messages">Messages</button>
+      <button class="portal-tab" data-tab="train">Train at Home</button>
+    </div>
+    <div class="tab-content">
+      <div id="tab-feedback" class="tab-panel active"></div>
+      <div id="tab-messages" class="tab-panel"></div>
+      <div id="tab-train" class="tab-panel"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast" hidden></div>
 
 </Base>
 
@@ -130,6 +105,9 @@ import Base from '../../layouts/Base.astro';
 <script>
 // ── CONFIG ────────────────────────────────────────────────────
 const DURL = import.meta.env.PUBLIC_DIRECTUS_URL || '';
+
+// ── HELPERS ───────────────────────────────────────────────────
+function asArray(v) { return Array.isArray(v) ? v : []; }
 
 // ── TOKEN HELPERS ─────────────────────────────────────────────
 const LS = {
@@ -195,48 +173,152 @@ function calcOverall(attrs, position) {
 }
 
 function cardTier(overall) {
-  if (overall >= 90) return { name: 'Elite',  class: 'card-elite'  };
-  if (overall >= 75) return { name: 'Gold',   class: 'card-gold'   };
-  if (overall >= 60) return { name: 'Silver', class: 'card-silver' };
-  return                    { name: 'Bronze', class: 'card-bronze' };
+  if (overall >= 90) return { name: 'Elite',  cls: 'card-elite'  };
+  if (overall >= 75) return { name: 'Gold',   cls: 'card-gold'   };
+  if (overall >= 60) return { name: 'Silver', cls: 'card-silver' };
+  return                    { name: 'Bronze', cls: 'card-bronze' };
 }
 
 function posLabel(position) {
   return { goalkeeper: 'GK', defender: 'CB', midfielder: 'MID', forward: 'FWD' }[position] || 'MID';
 }
 
-function buildFIFACard(profile, assessment) {
-  const ag = profile.enrollment?.age_group || 'u12-u13';
-  const pos = profile.position || 'midfielder';
+// ── HOME DRILLS ───────────────────────────────────────────────
+const HOME_DRILLS = {
+  pace: {
+    label: 'Pace & Speed',
+    drills: [
+      { icon: '⚡', name: 'Sprint Intervals', desc: 'Mark 20m with two cones. Sprint as fast as you can, walk back. Repeat 8 times. Rest 2 minutes, do another 8.' },
+      { icon: '🏃', name: 'High Knees', desc: 'Drive your knees up to hip height as fast as you can on the spot for 30 seconds. Rest 30 sec. Do 5 rounds.' },
+      { icon: '🎯', name: 'Reaction Sprint', desc: 'Stand 5m from a wall. The moment the ball bounces off the wall, sprint 10m. Have someone throw it for you, or throw it yourself and react.' },
+    ]
+  },
+  shooting: {
+    label: 'Shooting',
+    drills: [
+      { icon: '⚽', name: 'Wall Strikes', desc: "Stand 8m from a wall or fence. Strike the ball at a target mark. 50 strikes with your strong foot, 50 with your weak foot. Aim, don't blast." },
+      { icon: '🦶', name: 'Weak Foot Training', desc: "For 15 minutes each day, use ONLY your weak foot to pass and receive against a wall. Uncomfortable is good — that's how you improve." },
+      { icon: '🎯', name: 'Accuracy Targets', desc: 'Place 3 objects (cones, bottles) 10m away in a line. Try to hit each one 5 times in a row with your strong foot, then 5 times with your weak foot.' },
+    ]
+  },
+  passing: {
+    label: 'Passing',
+    drills: [
+      { icon: '🔁', name: 'Two-Touch Wall Passing', desc: 'Stand 5m from a wall. Pass the ball to the wall (touch 1), let it bounce back, control it (touch 2), then pass again. Do 100 reps both feet.' },
+      { icon: '🎯', name: 'Target Passing', desc: 'Place a cone 15m away. Try to hit it 10 times in a row with a driven pass. Then try with your weak foot. Count your best streak.' },
+      { icon: '🤲', name: 'Control and Pass', desc: 'Throw the ball against a wall at different heights. First touch to control, second touch to pass back. Focus on cushioning the ball, not stabbing it.' },
+    ]
+  },
+  dribbling: {
+    label: 'Dribbling & Ball Control',
+    drills: [
+      { icon: '🏠', name: 'Household Slalom', desc: 'Set up 6 objects in a line (shoes, bottles, toys) about 1m apart. Dribble through them as fast as you can with both feet. 10 runs each day.' },
+      { icon: '👟', name: '100 Toe-Taps Daily', desc: 'Place the ball in front of you. Alternate tapping the top of the ball with your right and left foot — 100 taps every single day. Build your feel.' },
+      { icon: '🔄', name: 'Sole Rolls', desc: 'Use the sole of your foot to roll the ball side to side without it stopping. Do this for 2 minutes without breaking. Switch feet.' },
+    ]
+  },
+  defending: {
+    label: 'Defending',
+    drills: [
+      { icon: '🧘', name: 'Single-Leg Balance', desc: 'Stand on one leg for 30 seconds, rest, then the other leg for 30 seconds. Do 5 rounds each leg. Close your eyes for a harder version.' },
+      { icon: '↔️', name: 'Lateral Shuffle', desc: 'Place two cones 5m apart. Shuffle sideways from one to the other WITHOUT crossing your feet. Touch each cone. Do 10 lengths as fast as you can.' },
+      { icon: '👥', name: 'Mirror Drill', desc: 'Stand 1m from a wall or a friend. Shuffle, lunge and move — mirroring or being unpredictable. Stay low, react fast. Do 3 x 30-second rounds.' },
+    ]
+  },
+  physical: {
+    label: 'Strength & Fitness',
+    drills: [
+      { icon: '💪', name: 'Mini Circuit', desc: 'Do this 3 times through: 10 squat jumps, 10 push-ups (knees OK), 20 mountain climbers, 30-second plank. Rest 1 minute between rounds.' },
+      { icon: '🐻', name: 'Bear Crawl & Crab Walk', desc: 'Bear crawl on hands and feet (face down) for 10m, then crab walk (face up) back. Repeat 5 times without stopping. Great for core and shoulders.' },
+      { icon: '🦘', name: 'Jump and Reach', desc: 'Mark a high point on a wall or fence with chalk or tape. Jump and touch it 15 times. Rest, try to beat your jump height. Arms drive you upward.' },
+    ]
+  },
+};
+
+// ── QUOTES ────────────────────────────────────────────────────
+const QUOTES = [
+  { text: "The more difficult the victory, the greater the happiness in winning.", author: "Pelé" },
+  { text: "You have to fight to reach your dream. You have to sacrifice and work hard for it.", author: "Lionel Messi" },
+  { text: "Talent without working hard is nothing.", author: "Cristiano Ronaldo" },
+  { text: "Football is simple, but it is difficult to play simple football.", author: "Johan Cruyff" },
+  { text: "I learned all about life with a ball at my feet.", author: "Ronaldinho" },
+  { text: "The secret is to believe in your dreams; in your potential that you can be like your star.", author: "Neymar" },
+  { text: "When people succeed, it is because of hard work. Luck has nothing to do with success.", author: "Diego Maradona" },
+  { text: "Every day I wake up knowing that the more I train, the closer I am to greatness.", author: "Ronaldinho" },
+  { text: "There is pressure in every moment of life. You have to learn to live with it.", author: "Arsène Wenger" },
+  { text: "Hard work beats talent when talent doesn't work hard.", author: "Tim Notke" },
+  { text: "Success is no accident. It is hard work, perseverance, learning and love of what you are doing.", author: "Pelé" },
+  { text: "To watch us play is to watch us dance.", author: "Johan Cruyff" },
+  { text: "Ask me to show you poetry in motion and I will show you a footballer.", author: "Paul Gascoigne" },
+  { text: "The ball is round. The game lasts ninety minutes. Everything else is pure theory.", author: "Sepp Herberger" },
+  { text: "I am not a perfectionist, but I like to feel that things are done with a lot of love and passion.", author: "Ronaldinho" },
+];
+
+// ── STATE ─────────────────────────────────────────────────────
+let currentProfiles = [];
+let currentProfileIdx = 0;
+function currentProfile() { return currentProfiles[currentProfileIdx]; }
+
+// ── TOAST ─────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.hidden = false;
+  t.classList.add('visible');
+  setTimeout(() => {
+    t.classList.remove('visible');
+    setTimeout(() => { t.hidden = true; }, 300);
+  }, 2000);
+}
+
+// ── TABS ──────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.portal-tab').forEach(b => b.classList.toggle('portal-tab--active', b.dataset.tab === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${name}`));
+}
+
+// ── VIEWS ─────────────────────────────────────────────────────
+function showLogin() {
+  LS.clear();
+  document.getElementById('view-login').hidden = false;
+  document.getElementById('view-dashboard').hidden = true;
+}
+
+function showDashboard() {
+  document.getElementById('view-login').hidden = true;
+  document.getElementById('view-dashboard').hidden = false;
+}
+
+// ── BUILD FIFA CARD ───────────────────────────────────────────
+function buildFIFACard(enrollment, profile, assessment) {
+  const ag  = enrollment?.age_group || 'u12-u13';
+  const pos = profile?.position || 'midfielder';
 
   const attrs = assessment ? {
-    pac: normalize(assessment.pace_raw,     ag),
-    sho: normalize(assessment.shooting_raw, ag),
-    pas: normalize(assessment.passing_raw,  ag),
-    dri: normalize(assessment.dribbling_raw,ag),
-    def: normalize(assessment.defending_raw,ag),
-    phy: normalize(assessment.physical_raw, ag),
+    pac: normalize(assessment.pace_raw,      ag),
+    sho: normalize(assessment.shooting_raw,  ag),
+    pas: normalize(assessment.passing_raw,   ag),
+    dri: normalize(assessment.dribbling_raw, ag),
+    def: normalize(assessment.defending_raw, ag),
+    phy: normalize(assessment.physical_raw,  ag),
   } : { pac: '?', sho: '?', pas: '?', dri: '?', def: '?', phy: '?' };
 
   const overall = assessment ? calcOverall(attrs, pos) : '—';
-  const tier = assessment ? cardTier(overall) : { name: 'Unrated', class: 'card-bronze' };
+  const tier    = assessment ? cardTier(overall) : { name: 'Unrated', cls: 'card-bronze' };
 
-  const photoSrc = profile.photo
+  const photoSrc = profile?.photo
     ? `${DURL}/assets/${profile.photo}?width=200&height=200&format=webp&fit=cover`
     : null;
 
-  const agLabel = {
-    'u8-u9': 'U9', 'u10-u11': 'U11', 'u12-u13': 'U13', 'u14-u16': 'U16'
-  }[ag] || ag.toUpperCase();
-
-  const firstName = profile.enrollment?.player_first_name || '';
-  const lastName  = profile.enrollment?.player_last_name  || '';
-  const name = `${firstName} ${lastName[0] || ''}.`.trim();
+  const agLabel = { 'u8-u9': 'U9', 'u10-u11': 'U11', 'u12-u13': 'U13', 'u14-u16': 'U16' }[ag] || ag.toUpperCase();
+  const firstName = enrollment?.player_first_name || '';
+  const lastName  = enrollment?.player_last_name  || '';
+  const nameDisplay = `${firstName} ${lastName ? lastName[0] + '.' : ''}`.trim();
 
   return `
-<div class="fifa-card ${tier.class}" id="fifa-card">
+<div class="fifa-card ${tier.cls}">
   <div class="fc-header">
-    <div class="fc-left">
+    <div>
       <div class="fc-overall">${overall}</div>
       <div class="fc-pos">${posLabel(pos)}</div>
       <div class="fc-tier">${tier.name}</div>
@@ -250,10 +332,10 @@ function buildFIFACard(profile, assessment) {
   </div>
   <div class="fc-photo">
     ${photoSrc
-      ? `<img src="${photoSrc}" alt="${name}" class="fc-photo-img">`
-      : `<svg viewBox="0 0 80 100" fill="none" width="80" height="100"><circle cx="40" cy="26" r="18" fill="rgba(255,255,255,0.2)"/><path d="M8 95 C8 65 20 54 40 52 C60 54 72 65 72 95" fill="rgba(255,255,255,0.2)"/></svg>`}
+      ? `<img src="${photoSrc}" alt="${nameDisplay}" class="fc-photo-img">`
+      : `<svg class="fc-photo-svg" viewBox="0 0 80 100" fill="none" width="80" height="100"><circle cx="40" cy="26" r="18" fill="rgba(255,255,255,0.2)"/><path d="M8 95 C8 65 20 54 40 52 C60 54 72 65 72 95" fill="rgba(255,255,255,0.2)"/></svg>`}
   </div>
-  <div class="fc-name">${name.toUpperCase()}</div>
+  <div class="fc-name">${nameDisplay.toUpperCase()}</div>
   <div class="fc-age">${agLabel} · Warriors FC</div>
   <div class="fc-stats">
     <div class="fc-stat"><span class="fc-sv">${attrs.pac}</span><span class="fc-sl">PAC</span></div>
@@ -266,30 +348,25 @@ function buildFIFACard(profile, assessment) {
 </div>`;
 }
 
-// ── STATS PANEL ───────────────────────────────────────────────
+// ── BUILD STATS PANEL ─────────────────────────────────────────
 function buildStatsPanel(profile, assessment) {
   if (!assessment) {
-    return `
-<div class="stats-empty">
-  <p class="empty-msg">No assessment yet. Check back after your first session.</p>
-</div>`;
+    return `<p style="color:var(--muted);font-style:italic;padding:16px 0;">No assessment yet. Check back after your first session.</p>`;
   }
 
-  const ag  = profile.enrollment?.age_group || 'u12-u13';
-  const pos = profile.position || 'midfielder';
+  const ag  = profile?.enrollment?.age_group || 'u12-u13';
+  const pos = profile?.position || 'midfielder';
 
   const attrList = [
-    { key: 'pace',      label: 'Pace',      raw: assessment.pace_raw      },
-    { key: 'shooting',  label: 'Shooting',  raw: assessment.shooting_raw  },
-    { key: 'passing',   label: 'Passing',   raw: assessment.passing_raw   },
-    { key: 'dribbling', label: 'Dribbling', raw: assessment.dribbling_raw },
-    { key: 'defending', label: 'Defending', raw: assessment.defending_raw },
-    { key: 'physical',  label: 'Physical',  raw: assessment.physical_raw  },
+    { key: 'pace',      label: 'PAC', raw: assessment.pace_raw      },
+    { key: 'shooting',  label: 'SHO', raw: assessment.shooting_raw  },
+    { key: 'passing',   label: 'PAS', raw: assessment.passing_raw   },
+    { key: 'dribbling', label: 'DRI', raw: assessment.dribbling_raw },
+    { key: 'defending', label: 'DEF', raw: assessment.defending_raw },
+    { key: 'physical',  label: 'PHY', raw: assessment.physical_raw  },
   ];
 
   const normalised = attrList.map(a => ({ ...a, value: normalize(a.raw, ag) }));
-
-  // Find two lowest
   const sorted = [...normalised].sort((a, b) => a.value - b.value);
   const focusKeys = new Set([sorted[0].key, sorted[1].key]);
 
@@ -312,156 +389,143 @@ function buildStatsPanel(profile, assessment) {
     const isFocus = focusKeys.has(a.key);
     const width   = Math.min(a.value, 99);
     return `
-<div class="stat-row${isFocus ? ' stat-row--focus' : ''}">
+<div class="stat-row">
   <span class="stat-label">${a.label}</span>
-  <div class="stat-bar"><div class="stat-bar-fill" style="width:${width}%"></div></div>
-  <span class="stat-value-chip">${a.value}</span>
-  ${isFocus ? '<span class="stat-focus-arrow">▼ focus</span>' : ''}
+  <div class="stat-bar-wrap">
+    <div class="stat-bar ${isFocus ? 'stat-bar--focus' : 'stat-bar--normal'}" data-width="${width}" style="width:0%"></div>
+  </div>
+  <span class="stat-value">${a.value}</span>
+  ${isFocus ? '<span class="stat-focus-badge">▲ Focus Area</span>' : ''}
 </div>`;
   }).join('');
 
   return `
 ${rows}
 <div class="stats-overall">
-  <div class="overall-badge">${overall} <span style="font-size:16px;font-weight:400;color:var(--muted)">· ${tier.name}</span></div>
-  <div style="font-size:12px;color:var(--muted);margin-top:6px">${dateStr ? `Last assessed: ${dateStr}` : 'Not yet assessed'}</div>
+  Overall: <strong>${overall}</strong> <span style="color:var(--muted)">· ${tier.name}</span>
+  ${dateStr ? `<span style="font-size:12px;color:var(--muted);display:block;margin-top:4px">Last assessed: ${dateStr}</span>` : ''}
 </div>`;
 }
 
-// ── PROGRESS HISTORY ──────────────────────────────────────────
-function buildProgressHistory(assessments, ageGroup, position, limit = 5) {
-  if (!Array.isArray(assessments)) assessments = [];
-  if (!assessments || assessments.length === 0) {
-    return '<p class="empty-msg">No assessments yet. Check back after your first term.</p>';
-  }
-  const sorted = [...assessments]
-    .sort((a, b) => new Date(b.assessment_date) - new Date(a.assessment_date))
-    .slice(0, limit);
+// ── BUILD FEEDBACK TAB ────────────────────────────────────────
+function buildFeedbackTab(latestAssessment, allAssessments, ageGroup, position) {
   const ag  = ageGroup  || 'u12-u13';
   const pos = position  || 'midfielder';
 
-  const rows = sorted.map(a => {
-    const attrs = {
-      pac: normalize(a.pace_raw, ag), sho: normalize(a.shooting_raw, ag),
-      pas: normalize(a.passing_raw, ag), dri: normalize(a.dribbling_raw, ag),
-      def: normalize(a.defending_raw, ag), phy: normalize(a.physical_raw, ag),
+  let feedbackCard = '';
+  if (latestAssessment?.notes) {
+    const dateStr = latestAssessment.assessment_date
+      ? new Date(latestAssessment.assessment_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
+      : '';
+    const coachName = latestAssessment.coach_name || 'Technical Director';
+    feedbackCard = `
+<div class="feedback-card">
+  <p class="feedback-quote">${latestAssessment.notes.replace(/\n/g, '<br>')}</p>
+  <div class="feedback-meta">${coachName}${dateStr ? ' · ' + dateStr : ''}</div>
+</div>`;
+  } else {
+    feedbackCard = `<p class="feedback-empty">No coach notes recorded yet. Check back after your next assessment.</p>`;
+  }
+
+  // Progress timeline (up to 3)
+  const histEntries = allAssessments.slice(0, 3).map(a => {
+    const attrs2 = {
+      pac: normalize(a.pace_raw, ag),
+      sho: normalize(a.shooting_raw, ag),
+      pas: normalize(a.passing_raw, ag),
+      dri: normalize(a.dribbling_raw, ag),
+      def: normalize(a.defending_raw, ag),
+      phy: normalize(a.physical_raw, ag),
     };
-    const ov   = calcOverall(attrs, pos);
+    const ov   = calcOverall(attrs2, pos);
     const tier = cardTier(ov);
-    const d    = new Date(a.assessment_date).toLocaleDateString('en-AU', { month: 'short', year: 'numeric' });
+    const d    = a.assessment_date
+      ? new Date(a.assessment_date).toLocaleDateString('en-AU', { month: 'short', year: 'numeric' })
+      : '—';
+    const tierChipCls = `tier-chip tier-chip--${tier.cls.replace('card-', '')}`;
+    const bars = [
+      ['PAC', attrs2.pac], ['SHO', attrs2.sho], ['PAS', attrs2.pas],
+      ['DRI', attrs2.dri], ['DEF', attrs2.def], ['PHY', attrs2.phy],
+    ].map(([l, v]) => `
+<div class="he-bar">
+  <span class="he-bar-val">${v}</span>
+  <div class="he-bar-track"><div class="he-bar-fill" style="width:${Math.min(v,99)}%"></div></div>
+  <span class="he-bar-label">${l}</span>
+</div>`).join('');
     return `
 <div class="hist-entry">
-  <div class="hist-date">${d}</div>
-  <div class="hist-overall"><span class="hist-badge ${tier.class}">${ov}</span>${tier.name}</div>
-  <div class="hist-bars">
-    ${[['PAC',attrs.pac],['SHO',attrs.sho],['PAS',attrs.pas],['DRI',attrs.dri],['DEF',attrs.def],['PHY',attrs.phy]].map(([l,v]) => `
-    <div class="hist-bar-row">
-      <span class="hist-lbl">${l}</span>
-      <div class="hist-bar-bg"><div class="hist-bar-fill" style="width:${Math.min(v,99)}%"></div></div>
-      <span class="hist-bv">${v}</span>
-    </div>`).join('')}
+  <div class="hist-header">
+    <span class="hist-date">${d}</span>
+    <span class="${tierChipCls}">${ov} · ${tier.name}</span>
   </div>
+  <div class="he-bars">${bars}</div>
 </div>`;
-  });
-  return rows.join('');
+  }).join('');
+
+  const histSection = allAssessments.length > 0
+    ? `<p class="progress-heading" style="margin-top:28px">Progress Timeline</p>${histEntries}`
+    : `<p class="feedback-empty" style="margin-top:28px">No assessments yet. Check back after your first term.</p>`;
+
+  return feedbackCard + histSection;
 }
 
-// ── MESSAGES ──────────────────────────────────────────────────
-function buildMessages(messages) {
-  if (!messages || messages.length === 0) {
-    return '<p class="empty-msg">No messages yet. Use the form below to get in touch.</p>';
-  }
-  return messages.map(m => `
-<div class="msg msg--${m.sender_role}">
-  <div class="msg-meta">
-    <span class="msg-author">${m.sender_name || (m.sender_role === 'coach' ? 'Technical Director' : 'You')}</span>
-    <span class="msg-date">${new Date(m.date_created).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' })}</span>
-  </div>
-  <div class="msg-body">${m.body.replace(/\n/g, '<br>')}</div>
-</div>`).join('');
-}
+// ── BUILD MESSAGES TAB ────────────────────────────────────────
+function buildMessagesTab(messages, playerId) {
+  const bubbles = messages.length === 0
+    ? `<p class="msg-empty">No messages yet. Use the form below to get in touch.</p>`
+    : messages.map(m => {
+        const isParent = m.sender_role === 'parent';
+        const senderDisplay = m.sender_name || (isParent ? 'You' : 'Technical Director');
+        const dateDisplay = m.date_created
+          ? new Date(m.date_created).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
+          : '';
+        return `
+<div class="msg-bubble msg--${isParent ? 'parent' : 'coach'}">
+  <div class="msg-body">${(m.body || '').replace(/\n/g, '<br>')}</div>
+  <div class="msg-meta">${senderDisplay}${dateDisplay ? ' · ' + dateDisplay : ''}</div>
+</div>`;
+      }).join('');
 
-// ── HOME DRILLS ───────────────────────────────────────────────
-const HOME_DRILLS = {
-  pace: {
-    label: 'Pace & Speed',
-    drills: [
-      { name: 'Sprint Intervals', desc: 'Mark 20m with two cones. Sprint as fast as you can, walk back. Repeat 8 times. Rest 2 minutes, do another 8.' },
-      { name: 'High Knees', desc: 'Drive your knees up to hip height as fast as you can on the spot for 30 seconds. Rest 30 sec. Do 5 rounds.' },
-      { name: 'Reaction Sprint', desc: 'Stand 5m from a wall. The moment the ball bounces off the wall, sprint 10m. Have someone throw it for you, or throw it yourself and react.' },
-    ]
-  },
-  shooting: {
-    label: 'Shooting',
-    drills: [
-      { name: 'Wall Strikes', desc: "Stand 8m from a wall or fence. Strike the ball at a target mark. 50 strikes with your strong foot, 50 with your weak foot. Aim, don't blast." },
-      { name: 'Weak Foot Training', desc: 'For 15 minutes each day, use ONLY your weak foot to pass and receive against a wall. Uncomfortable is good — that\'s how you improve.' },
-      { name: 'Accuracy Targets', desc: 'Place 3 objects (cones, bottles) 10m away in a line. Try to hit each one 5 times in a row with your strong foot, then 5 times with your weak foot.' },
-    ]
-  },
-  passing: {
-    label: 'Passing',
-    drills: [
-      { name: 'Two-Touch Wall Passing', desc: 'Stand 5m from a wall. Pass the ball to the wall (touch 1), let it bounce back, control it (touch 2), then pass again. Do 100 reps both feet.' },
-      { name: 'Target Passing', desc: 'Place a cone 15m away. Try to hit it 10 times in a row with a driven pass. Then try with your weak foot. Count your best streak.' },
-      { name: 'Control and Pass', desc: 'Throw the ball against a wall at different heights. First touch to control, second touch to pass back. Focus on cushioning the ball, not stabbing it.' },
-    ]
-  },
-  dribbling: {
-    label: 'Dribbling & Ball Control',
-    drills: [
-      { name: 'Household Slalom', desc: 'Set up 6 objects in a line (shoes, bottles, toys) about 1m apart. Dribble through them as fast as you can with both feet. 10 runs each day.' },
-      { name: '100 Toe-Taps Daily', desc: 'Place the ball in front of you. Alternate tapping the top of the ball with your right and left foot — 100 taps every single day. Build your feel.' },
-      { name: 'Sole Rolls', desc: 'Use the sole of your foot to roll the ball side to side without it stopping. Do this for 2 minutes without breaking. Switch feet.' },
-    ]
-  },
-  defending: {
-    label: 'Defending',
-    drills: [
-      { name: 'Single-Leg Balance', desc: 'Stand on one leg for 30 seconds, rest, then the other leg for 30 seconds. Do 5 rounds each leg. Close your eyes for a harder version.' },
-      { name: 'Lateral Shuffle', desc: 'Place two cones 5m apart. Shuffle sideways from one to the other WITHOUT crossing your feet. Touch each cone. Do 10 lengths as fast as you can.' },
-      { name: 'Mirror Drill', desc: 'Stand 1m from a wall or a friend. Shuffle, lunge and move — mirroring or being unpredictable. Stay low, react fast. Do 3 x 30-second rounds.' },
-    ]
-  },
-  physical: {
-    label: 'Strength & Fitness',
-    drills: [
-      { name: 'Mini Circuit', desc: 'Do this 3 times through: 10 squat jumps, 10 push-ups (knees OK), 20 mountain climbers, 30-second plank. Rest 1 minute between rounds.' },
-      { name: 'Bear Crawl & Crab Walk', desc: 'Bear crawl on hands and feet (face down) for 10m, then crab walk (face up) back. Repeat 5 times without stopping. Great for core and shoulders.' },
-      { name: 'Jump and Reach', desc: 'Mark a high point on a wall or fence with chalk or tape. Jump and touch it 15 times. Rest, try to beat your jump height. Arms drive you upward.' },
-    ]
-  },
-};
-
-function buildDrillSection(attrKey, isFocus) {
-  const section = HOME_DRILLS[attrKey];
-  if (!section) return '';
-  const focusBadge = isFocus ? '<span class="focus-badge">Focus Area</span>' : '';
-  const cards = section.drills.map(d => `
-<div class="drill-card">
-  <h4>${d.name}</h4>
-  <p>${d.desc}</p>
-</div>`).join('');
   return `
-<div class="drills-section">
-  <div class="drills-section-header">
-    <span class="drills-section-title">Improve your ${section.label}</span>
-    ${focusBadge}
-  </div>
-  <div class="drills-grid">${cards}</div>
-</div>`;
+<div class="message-thread" id="msg-thread">${bubbles}</div>
+<form id="msg-compose-form" class="compose-form">
+  <textarea class="compose-textarea" placeholder="Write a message to the Technical Director…" rows="3"></textarea>
+  <span class="compose-error"></span>
+  <button type="submit" class="btn-send">Send Message →</button>
+</form>`;
 }
 
-function buildTrainAtHome(profile, assessment) {
+// ── BUILD TRAIN TAB ───────────────────────────────────────────
+function buildTrainTab(profile, assessment) {
   const allKeys = ['pace', 'shooting', 'passing', 'dribbling', 'defending', 'physical'];
 
-  if (!assessment) {
-    // No assessment — show all sections
-    const sections = allKeys.map(k => buildDrillSection(k, false)).join('');
-    return `<div>${sections}</div>`;
+  function drillSection(attrKey, isFocus) {
+    const section = HOME_DRILLS[attrKey];
+    if (!section) return '';
+    const focusBadge = isFocus ? `<span class="focus-badge">Focus Area</span>` : '';
+    const items = section.drills.map(d => `
+<div class="drill-item">
+  <span class="drill-icon">${d.icon || '⚽'}</span>
+  <div>
+    <strong style="font-family:var(--font-cond);font-size:15px;color:var(--text);display:block;margin-bottom:4px">${d.name}</strong>
+    <span style="color:var(--muted);font-size:13px;line-height:1.6">${d.desc}</span>
+  </div>
+</div>`).join('');
+    return `
+<div class="drill-section">
+  <div class="drill-section-header">
+    <span class="drill-title">${section.label}</span>
+    ${focusBadge}
+  </div>
+  <div class="drill-list">${items}</div>
+</div>`;
   }
 
-  const ag = profile.enrollment?.age_group || 'u12-u13';
+  if (!assessment) {
+    return `<div>${allKeys.map(k => drillSection(k, false)).join('')}</div>`;
+  }
+
+  const ag = profile?.enrollment?.age_group || 'u12-u13';
   const attrValues = [
     { key: 'pace',      value: normalize(assessment.pace_raw,      ag) },
     { key: 'shooting',  value: normalize(assessment.shooting_raw,  ag) },
@@ -473,221 +537,139 @@ function buildTrainAtHome(profile, assessment) {
 
   const sorted    = [...attrValues].sort((a, b) => a.value - b.value);
   const focusKeys = [sorted[0].key, sorted[1].key];
+  const focusSections = focusKeys.map(k => drillSection(k, true)).join('');
 
-  // Focus areas first
-  const focusSections = focusKeys.map(k => buildDrillSection(k, true)).join('');
-
-  // General fitness section (link to S&C sessions)
   const generalSection = `
-<div class="drills-section">
-  <div class="drills-section-header">
-    <span class="drills-section-title">General Fitness</span>
+<div class="drill-section">
+  <div class="drill-section-header">
+    <span class="drill-title">General Fitness</span>
   </div>
   <p style="color:var(--muted);font-size:14px;line-height:1.7;margin-bottom:16px">
     Alongside your focus areas, staying generally fit makes everything easier on the pitch.
     Browse the full S&amp;C session library for structured training sessions by age group.
   </p>
-  <a href="/coaching/sessions" class="btn btn-outline-green" style="display:inline-flex">View Session Plans →</a>
+  <a href="/coaching/sessions" class="btn-download" style="display:inline-flex;text-decoration:none">View Session Plans →</a>
 </div>`;
 
   return `<div>${focusSections}${generalSection}</div>`;
 }
 
-// ── TAB SWITCHING ─────────────────────────────────────────────
-function switchTab(name) {
-  document.querySelectorAll('.tab-panel').forEach(el => { el.hidden = true; });
-  const panel = document.getElementById(`tab-${name}`);
-  if (panel) panel.hidden = false;
-
-  document.querySelectorAll('.portal-tab').forEach(btn => {
-    btn.classList.toggle('portal-tab--active', btn.dataset.tab === name);
+// ── REWIRE MESSAGE FORM ───────────────────────────────────────
+function rewireMessageForm(profile) {
+  const form = document.getElementById('msg-compose-form');
+  if (!form) return;
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const ta     = form.querySelector('textarea');
+    const btn    = form.querySelector('button[type=submit]');
+    const errEl  = form.querySelector('.compose-error');
+    const body   = ta.value.trim();
+    if (!body) return;
+    btn.disabled = true; btn.textContent = 'Sending…';
+    const user       = LS.user;
+    const senderName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Parent';
+    const result = await api('/items/academy_messages', {
+      method: 'POST',
+      body: JSON.stringify({ player: profile.id, sender_role: 'parent', sender_name: senderName, body }),
+    });
+    if (result) {
+      ta.value = '';
+      const newMsgsData = await api(`/items/academy_messages?filter[player][_eq]=${profile.id}&sort[]=date_created&fields=*`);
+      document.getElementById('tab-messages').innerHTML = buildMessagesTab(asArray(newMsgsData), profile.id);
+      const thread = document.getElementById('msg-thread');
+      if (thread) thread.scrollTop = thread.scrollHeight;
+      rewireMessageForm(profile);
+      showToast('Message sent!');
+    } else {
+      errEl.style.display = 'block';
+      errEl.textContent = 'Failed to send. Check your connection and try again.';
+    }
+    btn.disabled = false; btn.textContent = 'Send Message →';
   });
-}
-
-// ── STATE ─────────────────────────────────────────────────────
-let currentProfiles = [];
-let currentProfileIdx = 0;
-
-function currentProfile() { return currentProfiles[currentProfileIdx]; }
-
-// ── VIEWS ─────────────────────────────────────────────────────
-function showLogin() {
-  LS.clear();
-  document.getElementById('view-login').hidden = false;
-  document.getElementById('view-dashboard').hidden = true;
-}
-
-function showDashboard(user) {
-  document.getElementById('view-login').hidden = true;
-  document.getElementById('view-dashboard').hidden = false;
-  const firstName = user?.first_name || '';
-  const lastName  = user?.last_name  || '';
-  const namePart  = [firstName, lastName].filter(Boolean).join(' ');
-  document.getElementById('dash-welcome').textContent = namePart
-    ? `${namePart} · Warriors Academy`
-    : 'Warriors Academy';
-}
-
-function setDashLoading(loading) {
-  document.getElementById('dash-loading').hidden = !loading;
-}
-
-function setPlayerContent(visible) {
-  document.getElementById('player-content').hidden = !visible;
 }
 
 // ── RENDER PLAYER CONTENT ─────────────────────────────────────
 function renderPlayerContent(profile, latestAssessment, allAssessments, messages) {
+  const enr = profile.enrollment;
+
+  document.getElementById('dash-title').textContent = enr?.player_first_name
+    ? `${enr.player_first_name}'s Card`
+    : 'Player Portal';
+
   // FIFA card
-  document.getElementById('fifa-card-wrap').innerHTML = buildFIFACard(profile, latestAssessment);
+  document.getElementById('fifa-card-wrap').innerHTML = buildFIFACard(enr, profile, latestAssessment);
+  setTimeout(() => document.querySelector('#fifa-card-wrap .fifa-card')?.classList.add('card-animate'), 50);
 
   // Stats panel
   document.getElementById('stats-panel').innerHTML = buildStatsPanel(profile, latestAssessment);
+  setTimeout(() => {
+    document.querySelectorAll('.stat-bar').forEach(b => {
+      const w = b.dataset.width;
+      if (w) b.style.width = w + '%';
+    });
+  }, 100);
 
-  // Latest feedback tab
-  const ag  = profile.enrollment?.age_group || 'u12-u13';
+  // Tab content
+  const ag  = enr?.age_group || 'u12-u13';
   const pos = profile.position || 'midfielder';
-  let feedbackHtml = '';
+  document.getElementById('tab-feedback').innerHTML = buildFeedbackTab(latestAssessment, allAssessments, ag, pos);
+  document.getElementById('tab-messages').innerHTML = buildMessagesTab(messages, profile.id);
+  document.getElementById('tab-train').innerHTML    = buildTrainTab(profile, latestAssessment);
 
-  if (latestAssessment?.notes) {
-    const dateStr = latestAssessment.assessment_date
-      ? new Date(latestAssessment.assessment_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
-      : '';
-    const coachName = latestAssessment.coach_name || 'Technical Director';
-    feedbackHtml = `
-<div class="feedback-card">
-  <p class="feedback-quote">${latestAssessment.notes.replace(/\n/g, '<br>')}</p>
-  <div class="feedback-meta">${coachName}${dateStr ? ' · ' + dateStr : ''}</div>
-</div>`;
-  } else {
-    feedbackHtml = `
-<div class="feedback-card">
-  <p class="feedback-quote empty-msg">No coach notes recorded yet. Check back after your next assessment.</p>
-</div>`;
-  }
+  // Scroll thread to bottom
+  const thread = document.getElementById('msg-thread');
+  if (thread) thread.scrollTop = thread.scrollHeight;
 
-  // Progress timeline (limit 3)
-  const progressHtml = buildProgressHistory(allAssessments, ag, pos, 3);
-  feedbackHtml += `
-<div class="section-label" style="margin-top:8px">Progress Timeline</div>
-${progressHtml}`;
+  // Wire up message form
+  rewireMessageForm(profile);
 
-  document.getElementById('tab-feedback').innerHTML = feedbackHtml;
-
-  // Messages tab
-  document.getElementById('message-thread').innerHTML = buildMessages(messages);
-  const thread = document.getElementById('message-thread');
-  thread.scrollTop = thread.scrollHeight;
-
-  // Train at home tab
-  document.getElementById('tab-train').innerHTML = buildTrainAtHome(profile, latestAssessment);
-
-  // Show first tab
+  // Wire up tab buttons
+  document.querySelectorAll('.portal-tab').forEach(b => {
+    b.addEventListener('click', () => switchTab(b.dataset.tab));
+  });
   switchTab('feedback');
+
+  // Show content
+  document.getElementById('dash-loading').hidden = true;
+  document.getElementById('dash-content').hidden = false;
 }
 
 // ── LOAD PLAYER DATA ──────────────────────────────────────────
 async function loadPlayerData(profile) {
-  setDashLoading(true);
-  setPlayerContent(false);
-  document.getElementById('dash-error').hidden = true;
+  document.getElementById('dash-loading').hidden = false;
+  document.getElementById('dash-content').hidden = true;
+  document.getElementById('dash-error').hidden   = true;
 
   try {
-    // Resolve enrollment object if it's just an ID
+    // Resolve enrollment if string/number
     let enrollment = profile.enrollment;
-    if (typeof enrollment === 'string') {
-      enrollment = await api(`/items/academy_enrollments/${enrollment}?fields=age_group,player_first_name,player_last_name`);
+    if (typeof enrollment === 'string' || typeof enrollment === 'number') {
+      enrollment = await api(`/items/academy_enrollments/${enrollment}?fields=id,age_group,player_first_name,player_last_name,parent_email`);
+      if (!enrollment) throw new Error('enrollment fetch failed');
       profile.enrollment = enrollment;
     }
 
-    // Latest assessment
-    const assessmentData = await api(
-      `/items/academy_assessments?filter[player][_eq]=${profile.id}&filter[is_latest][_eq]=true&limit=1&fields=*`
-    );
-    const latestAssessment = Array.isArray(assessmentData) ? assessmentData[0] : null;
+    const [historyData, messagesData] = await Promise.all([
+      api(`/items/academy_assessments?filter[player][_eq]=${profile.id}&sort[]=-assessment_date&limit=5&fields=*`),
+      api(`/items/academy_messages?filter[player][_eq]=${profile.id}&sort[]=date_created&fields=*`),
+    ]);
 
-    // History (last 5 for timeline; we'll limit to 3 in render)
-    const historyData = await api(
-      `/items/academy_assessments?filter[player][_eq]=${profile.id}&sort[]=-assessment_date&limit=5&fields=*`
-    );
-    const allAssessments = Array.isArray(historyData) ? historyData : [];
-
-    // Messages
-    const messagesData = await api(
-      `/items/academy_messages?filter[player][_eq]=${profile.id}&sort[]=date_created&fields=*`
-    );
-    const messages = Array.isArray(messagesData) ? messagesData : [];
+    const allAssessments    = asArray(historyData);
+    const messages          = asArray(messagesData);
+    const latestAssessment  = allAssessments.find(a => a.is_latest) || allAssessments[0] || null;
 
     renderPlayerContent(profile, latestAssessment, allAssessments, messages);
-
-    setDashLoading(false);
-    setPlayerContent(true);
-
   } catch (err) {
-    console.error('Failed to load player data:', err);
-    setDashLoading(false);
-    document.getElementById('dash-error').hidden = false;
+    console.error('loadPlayerData error:', err);
+    document.getElementById('dash-loading').hidden = true;
+    document.getElementById('dash-error').hidden   = false;
   }
 }
 
-async function loadProfiles(user) {
-  try {
-  const allStatuses = 'pending,accepted,enrolled';
-
-  let enrollments = await api(
-    `/items/academy_enrollments?filter[directus_user_id][_eq]=${user.id}&filter[status][_in]=${allStatuses}&fields=id,status,age_group,player_first_name,player_last_name`
-  );
-  if (!Array.isArray(enrollments)) enrollments = null;
-
-  if (!enrollments || enrollments.length === 0) {
-    const email = user.email.toLowerCase();
-    enrollments = await api(
-      `/items/academy_enrollments?filter[parent_email][_eq]=${email}&filter[status][_in]=${allStatuses}&fields=id,status,age_group,player_first_name,player_last_name`
-    );
-    if (!Array.isArray(enrollments)) enrollments = null;
-  }
-
-  if (!enrollments || enrollments.length === 0) {
-    setDashLoading(false);
-    document.getElementById('player-content').innerHTML = `
-      <div class="pending-state">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <h3>No enrollment found</h3>
-        <p>We couldn't find a registration matching your account. If you've recently submitted an interest form, the Technical Director may not have linked your account yet.</p>
-        <a href="/about#contact" class="btn btn-secondary" style="margin-top:16px">Contact Us</a>
-      </div>`;
-    document.getElementById('player-content').hidden = false;
-    return;
-  }
-
-  const pending = enrollments.filter(e => e.status === 'pending');
-  const active  = enrollments.filter(e => e.status === 'accepted' || e.status === 'enrolled');
-
-  if (active.length === 0 && pending.length > 0) {
-    const name = `${pending[0].player_first_name} ${pending[0].player_last_name}`;
-    setDashLoading(false);
-    document.getElementById('player-content').innerHTML = `
-      <div class="pending-state">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <h3>Application Under Review</h3>
-        <p>Your registration for <strong>${name}</strong> has been received and is being reviewed by the Technical Director. You'll hear back within 3 business days.</p>
-        <p style="margin-top:8px">Once approved, your child's Player Card and portal features will appear here.</p>
-        <a href="/about#contact" class="btn btn-secondary" style="margin-top:16px">Get in Touch</a>
-      </div>`;
-    document.getElementById('player-content').hidden = false;
-    return;
-  }
-
-  return loadProfilesFromEnrollments(active);
-  } catch (err) {
-    console.error('loadProfiles error:', err);
-    setDashLoading(false);
-    document.getElementById('dash-error').hidden = false;
-  }
-}
-
+// ── LOAD PROFILES FROM ENROLLMENTS ───────────────────────────
 async function loadProfilesFromEnrollments(enrollments) {
   const profiles = [];
+
   for (const enr of enrollments) {
     const profileData = await api(
       `/items/academy_player_profiles?filter[enrollment][_eq]=${enr.id}&limit=1&fields=id,position,photo,jersey_number,enrollment`
@@ -698,36 +680,35 @@ async function loadProfilesFromEnrollments(enrollments) {
       profiles.push(p);
     } else {
       const name = `${enr.player_first_name} ${enr.player_last_name}`;
-      setDashLoading(false);
-      document.getElementById('player-content').innerHTML = `
-        <div class="pending-state">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--green-bright)" stroke-width="1.2"><polyline points="20 6 9 17 4 12"/></svg>
-          <h3>Accepted — Profile Being Set Up</h3>
-          <p>Great news — <strong>${name}'s</strong> application has been accepted! The Technical Director is setting up the player profile. Check back shortly and your Player Card will be ready.</p>
-          <a href="/about#contact" class="btn btn-secondary" style="margin-top:16px">Contact Us</a>
-        </div>`;
-      document.getElementById('player-content').hidden = false;
+      document.getElementById('dash-loading').hidden = true;
+      document.getElementById('dash-pending').hidden = false;
+      document.getElementById('dash-pending').innerHTML = `
+<div class="pending-state">
+  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.2"><polyline points="20 6 9 17 4 12"/></svg>
+  <h3 class="pending-h3">Accepted — Profile Being Set Up</h3>
+  <p class="pending-p">Great news — <strong>${name}'s</strong> application has been accepted! The Technical Director is setting up the player profile. Check back shortly and your Player Card will be ready.</p>
+  <a href="/contact" class="btn-secondary" style="margin-top:16px;display:inline-block;text-decoration:none">Contact Us</a>
+</div>`;
       return;
     }
   }
 
-  currentProfiles = profiles;
-  currentProfileIdx = 0;
+  currentProfiles    = profiles;
+  currentProfileIdx  = 0;
 
   // Build player tabs if multiple players
   const tabsWrap = document.getElementById('player-tabs');
   if (profiles.length > 1) {
     tabsWrap.hidden = false;
-    document.getElementById('tabs-inner').innerHTML = profiles.map((p, i) => `
-      <button class="player-tab ${i === 0 ? 'player-tab--active' : ''}" data-idx="${i}">
-        ${p.enrollment.player_first_name} ${p.enrollment.player_last_name}
-      </button>
-    `).join('');
-    document.querySelectorAll('.player-tab').forEach(btn => {
+    tabsWrap.innerHTML = profiles.map((p, i) => `
+<button class="player-tab-btn ${i === 0 ? 'player-tab-btn--active' : ''}" data-idx="${i}">
+  ${p.enrollment.player_first_name} ${p.enrollment.player_last_name}
+</button>`).join('');
+    tabsWrap.querySelectorAll('.player-tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         currentProfileIdx = parseInt(btn.dataset.idx);
-        document.querySelectorAll('.player-tab').forEach(b => b.classList.remove('player-tab--active'));
-        btn.classList.add('player-tab--active');
+        tabsWrap.querySelectorAll('.player-tab-btn').forEach(b => b.classList.remove('player-tab-btn--active'));
+        btn.classList.add('player-tab-btn--active');
         loadPlayerData(currentProfiles[currentProfileIdx]);
       });
     });
@@ -738,23 +719,78 @@ async function loadProfilesFromEnrollments(enrollments) {
   if (profiles.length > 0) {
     loadPlayerData(profiles[0]);
   } else {
-    setDashLoading(false);
-    setPlayerContent(true);
-    document.getElementById('tab-feedback').innerHTML = '<p class="empty-msg">No player profile found. Please contact the Technical Director.</p>';
+    document.getElementById('dash-loading').hidden = true;
+    document.getElementById('dash-content').hidden = false;
+    document.getElementById('tab-feedback').innerHTML = '<p style="color:var(--muted);font-style:italic">No player profile found. Please contact the Technical Director.</p>';
+    switchTab('feedback');
+  }
+}
+
+// ── LOAD PROFILES ─────────────────────────────────────────────
+async function loadProfiles(user) {
+  try {
+    const allStatuses = 'pending,accepted,enrolled';
+
+    let enrollments = asArray(await api(
+      `/items/academy_enrollments?filter[directus_user_id][_eq]=${user.id}&filter[status][_in]=${allStatuses}&fields=id,status,age_group,player_first_name,player_last_name,parent_email`
+    ));
+
+    if (enrollments.length === 0) {
+      const email = (user.email || '').toLowerCase();
+      enrollments = asArray(await api(
+        `/items/academy_enrollments?filter[parent_email][_eq]=${email}&filter[status][_in]=${allStatuses}&fields=id,status,age_group,player_first_name,player_last_name,parent_email`
+      ));
+    }
+
+    if (enrollments.length === 0) {
+      document.getElementById('dash-loading').hidden = true;
+      document.getElementById('dash-pending').hidden = false;
+      document.getElementById('dash-pending').innerHTML = `
+<div class="pending-state">
+  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  <h3 class="pending-h3">No enrollment found</h3>
+  <p class="pending-p">We couldn't find a registration matching your account. If you've recently submitted an interest form, the Technical Director may not have linked your account yet.</p>
+  <a href="/contact" class="btn-secondary" style="margin-top:16px;display:inline-block;text-decoration:none">Contact Us</a>
+</div>`;
+      return;
+    }
+
+    const pending = enrollments.filter(e => e.status === 'pending');
+    const active  = enrollments.filter(e => e.status === 'accepted' || e.status === 'enrolled');
+
+    if (active.length === 0 && pending.length > 0) {
+      const name = `${pending[0].player_first_name} ${pending[0].player_last_name}`;
+      document.getElementById('dash-loading').hidden = true;
+      document.getElementById('dash-pending').hidden = false;
+      document.getElementById('dash-pending').innerHTML = `
+<div class="pending-state">
+  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+  <h3 class="pending-h3">Application Under Review</h3>
+  <p class="pending-p">Your registration for <strong>${name}</strong> has been received and is being reviewed by the Technical Director. You'll hear back within 3 business days.</p>
+  <p class="pending-p" style="margin-top:8px">Once approved, your child's Player Card and portal features will appear here.</p>
+  <a href="/contact" class="btn-secondary" style="margin-top:16px;display:inline-block;text-decoration:none">Get in Touch</a>
+</div>`;
+      return;
+    }
+
+    return loadProfilesFromEnrollments(active);
+  } catch (err) {
+    console.error('loadProfiles error:', err);
+    document.getElementById('dash-loading').hidden = true;
+    document.getElementById('dash-error').hidden   = false;
   }
 }
 
 // ── LOGIN ─────────────────────────────────────────────────────
-document.getElementById('login-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const errEl    = document.getElementById('login-error');
+document.getElementById('login-btn').addEventListener('click', async () => {
+  const errEl   = document.getElementById('login-error');
   const loginBtn = document.getElementById('login-btn');
-  errEl.hidden   = true;
+  errEl.hidden  = true;
   loginBtn.disabled = true;
   loginBtn.textContent = 'Signing in…';
 
-  const email    = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
+  const email    = (document.getElementById('login-email') as HTMLInputElement).value.trim();
+  const password = (document.getElementById('login-password') as HTMLInputElement).value;
 
   try {
     const res = await fetch(`${DURL}/auth/login`, {
@@ -772,22 +808,27 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     if (!user) throw new Error('Could not load user profile');
     LS.user = user;
 
-    showDashboard(user);
+    showDashboard();
     loadProfiles(user);
-
   } catch (err) {
-    errEl.textContent = err.message === 'Login failed' ? 'Invalid email or password.' : err.message;
+    errEl.textContent = (err as Error).message === 'Login failed' ? 'Invalid email or password.' : (err as Error).message;
     errEl.hidden = false;
     loginBtn.disabled = false;
     loginBtn.textContent = 'Sign In →';
   }
 });
 
+// Also allow Enter key on password field
+document.getElementById('login-password')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('login-btn')?.click();
+});
+
 // ── LOGOUT ────────────────────────────────────────────────────
 document.getElementById('logout-btn').addEventListener('click', () => {
   if (LS.token) {
     fetch(`${DURL}/auth/logout`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: LS.refresh }),
     }).catch(() => {});
   }
@@ -797,63 +838,26 @@ document.getElementById('logout-btn').addEventListener('click', () => {
 // ── RETRY ─────────────────────────────────────────────────────
 document.getElementById('retry-btn')?.addEventListener('click', () => {
   const user = LS.user;
-  if (user) loadProfiles(user);
-});
-
-// ── SEND MESSAGE ──────────────────────────────────────────────
-document.getElementById('message-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const input   = document.getElementById('message-input');
-  const sendBtn = document.getElementById('send-msg-btn');
-  const body    = input.value.trim();
-  if (!body) return;
-
-  const profile = currentProfile();
-  if (!profile) return;
-  const user = LS.user;
-
-  sendBtn.disabled = true;
-  sendBtn.textContent = 'Sending…';
-
-  const payload = {
-    player: profile.id,
-    sender_role: 'parent',
-    sender_name: `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Parent',
-    body,
-  };
-
-  const result = await api('/items/academy_messages', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
-
-  if (result) {
-    input.value = '';
-    const messagesData = await api(
-      `/items/academy_messages?filter[player][_eq]=${profile.id}&sort[]=date_created&fields=*`
-    );
-    document.getElementById('message-thread').innerHTML = buildMessages(messagesData || []);
-    const thread = document.getElementById('message-thread');
-    thread.scrollTop = thread.scrollHeight;
+  if (user) {
+    document.getElementById('dash-error').hidden = true;
+    document.getElementById('dash-loading').hidden = false;
+    loadProfiles(user);
   }
-
-  sendBtn.disabled = false;
-  sendBtn.textContent = 'Send Message →';
 });
 
 // ── DOWNLOAD CARD ─────────────────────────────────────────────
-document.getElementById('download-card-btn').addEventListener('click', async () => {
-  const card = document.getElementById('fifa-card');
-  if (!card || typeof html2canvas === 'undefined') return;
-
-  const btn = document.getElementById('download-card-btn');
+document.getElementById('download-btn').addEventListener('click', async () => {
+  if (typeof html2canvas === 'undefined') {
+    showToast('Download not available yet. Please try again in a moment.');
+    return;
+  }
+  const wrap = document.getElementById('fifa-card-wrap');
+  if (!wrap) return;
+  const btn = document.getElementById('download-btn');
   btn.textContent = 'Generating…';
   btn.disabled = true;
-
   try {
-    const canvas = await html2canvas(card, {
-      backgroundColor: null, scale: 3, useCORS: true, allowTaint: false,
-    });
+    const canvas = await html2canvas(wrap, { backgroundColor: null, scale: 3, useCORS: true, allowTaint: false });
     const link = document.createElement('a');
     const profile = currentProfile();
     const name = profile?.enrollment
@@ -862,211 +866,505 @@ document.getElementById('download-card-btn').addEventListener('click', async () 
     link.download = `warriors-player-card-${name}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
+    showToast('Card saved!');
   } catch (err) {
     console.error('Card download failed:', err);
+    showToast('Download failed. Please try again.');
   }
-
   btn.textContent = 'Download Card';
   btn.disabled = false;
 });
 
-// ── TAB BUTTON EVENTS ─────────────────────────────────────────
-document.querySelectorAll('.portal-tab').forEach(btn => {
-  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-});
-
 // ── INIT ──────────────────────────────────────────────────────
-(async function init() {
+async function init() {
+  // Inject random quote
+  const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+  document.getElementById('quote-band').innerHTML = `
+    <p class="quote-text">"${q.text}"</p>
+    <p class="quote-attr">— ${q.author}</p>`;
+
+  // Check session expired flag
+  if (sessionStorage.getItem('portal_session_expired')) {
+    document.getElementById('session-expired-msg').hidden = false;
+    sessionStorage.removeItem('portal_session_expired');
+  }
+
+  // Check auth
   if (!LS.token) { showLogin(); return; }
+
   const user = await api('/users/me?fields=id,email,first_name,last_name,role');
   if (!user) { showLogin(); return; }
   LS.user = user;
-  showDashboard(user);
-  loadProfiles(user);
-})();
+
+  showDashboard();
+  await loadProfiles(user);
+}
+
+document.addEventListener('DOMContentLoaded', init);
 </script>
 
 <style>
+/* ── DESIGN SYSTEM ───────────────────────────────────────── */
+:root {
+  --bg:         #0a0e1a;
+  --surface:    #131928;
+  --card:       #1a2235;
+  --border:     rgba(255,255,255,0.08);
+  --text:       #e8eaf0;
+  --muted:      #8892a4;
+  --green:      #00d68f;
+  --green-dim:  rgba(0,214,143,0.12);
+  --amber:      #f59e0b;
+  --amber-dim:  rgba(245,158,11,0.15);
+  --red:        #ef4444;
+  --font-body:  'Barlow', sans-serif;
+  --font-cond:  'Barlow Condensed', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font-body); }
+
+/* ── QUOTE BAND ──────────────────────────────────────────── */
+.quote-band {
+  background: #080c17;
+  border-bottom: 1px solid rgba(0,214,143,0.15);
+  padding: 14px 24px;
+  text-align: center;
+}
+.quote-text {
+  font-style: italic;
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.5;
+}
+.quote-attr {
+  font-size: 12px;
+  color: var(--green);
+  margin-top: 4px;
+  font-family: var(--font-cond);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
 /* ── PORTAL VIEWS ────────────────────────────────────────── */
 .portal-view { min-height: 100vh; }
 
-/* Login */
-.portal-hero { background: linear-gradient(135deg, var(--green-dark), var(--off-black)); padding: 60px 48px 40px; border-bottom: 1px solid var(--border); }
-.portal-hero-inner { max-width: 600px; margin: 0 auto; }
-.portal-hero h1 { font-size: clamp(48px, 6vw, 72px); margin: 10px 0 8px; }
-.portal-hero p  { color: var(--muted); }
-.login-outer { display: flex; justify-content: center; padding: 56px 20px; }
-.login-card { width: 100%; max-width: 440px; padding: 40px; }
-.login-card h2 { font-size: 36px; margin-bottom: 6px; }
-.login-sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
-.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
-.field label { font-family: var(--font-cond); font-size: 14px; font-weight: 700; }
-input[type="email"], input[type="password"] {
-  background: var(--black); border: 1px solid var(--border); border-radius: var(--radius);
-  color: var(--white); font-family: var(--font-body); font-size: 15px; padding: 11px 14px; width: 100%;
+/* ── LOGIN ───────────────────────────────────────────────── */
+.login-hero {
+  background: linear-gradient(135deg, #0d1f0f 0%, #0a0e1a 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 60px 48px 48px;
 }
-input:focus { outline: none; border-color: var(--green); }
-.btn-full { width: 100%; justify-content: center; margin-top: 8px; }
+.login-hero-inner { max-width: 600px; margin: 0 auto; }
+.login-label {
+  font-family: var(--font-cond);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+.login-h1 {
+  font-family: var(--font-cond);
+  font-size: clamp(44px, 6vw, 72px);
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+  margin: 10px 0 8px;
+}
+.login-sub { color: var(--muted); font-size: 16px; line-height: 1.5; }
+.login-outer { display: flex; justify-content: center; padding: 56px 20px; }
+.login-card { width: 100%; max-width: 440px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 36px; }
+.login-field-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.login-field-group label { font-family: var(--font-cond); font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.login-field-group input {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  padding: 11px 14px;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+.login-field-group input:focus { outline: none; border-color: var(--green); }
+.form-msg--error {
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: #ff6b6b;
+  margin-bottom: 12px;
+}
 .login-footer { margin-top: 20px; display: flex; flex-direction: column; gap: 6px; }
 .login-footer p { font-size: 13px; color: var(--muted); }
-.login-footer a { color: var(--green-bright); text-decoration: none; }
-.form-msg--error {
-  background: rgba(217,48,37,0.1); border: 1px solid rgba(217,48,37,0.3); border-radius: var(--radius);
-  padding: 12px 14px; font-size: 14px; color: #ff6b6b; margin-bottom: 12px;
+.login-footer a { color: var(--green); text-decoration: none; }
+
+/* ── DASHBOARD HEADER ────────────────────────────────────── */
+.dash-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 32px; }
+.dash-header-inner { max-width: 960px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.dash-label {
+  font-family: var(--font-cond);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+.dash-h1 {
+  font-family: var(--font-cond);
+  font-size: clamp(22px, 3vw, 36px);
+  font-weight: 900;
+  color: var(--text);
+  margin-top: 4px;
 }
 
-/* Dashboard header */
-.dash-header { background: var(--off-black); border-bottom: 1px solid var(--border); padding: 20px 48px; }
-.dash-header-inner { max-width: 1280px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 20px; }
-.dash-header h1 { font-size: clamp(22px, 3vw, 36px); }
-.btn-sm { padding: 8px 16px; font-size: 13px; }
-
-/* Multi-player tabs */
-.player-tabs { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 48px; }
-.tabs-inner { max-width: 1280px; margin: 0 auto; display: flex; gap: 4px; }
-.player-tab {
-  background: none; border: none; border-bottom: 3px solid transparent;
-  color: var(--muted); font-family: var(--font-cond); font-size: 15px; font-weight: 700;
-  padding: 14px 20px; cursor: pointer; transition: all 0.15s;
+/* ── PLAYER TABS (multi-child) ───────────────────────────── */
+.player-tabs {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  display: flex;
+  gap: 4px;
+  max-width: 100%;
+  overflow-x: auto;
 }
-.player-tab:hover { color: var(--white); }
-.player-tab--active { color: var(--green-bright); border-bottom-color: var(--green-bright); }
+.player-tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--muted);
+  font-family: var(--font-cond);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 14px 20px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.player-tab-btn:hover { color: var(--text); }
+.player-tab-btn--active { color: var(--green); border-bottom-color: var(--green); }
 
-/* Dash body */
-.dash-body { max-width: 1280px; margin: 0 auto; }
+/* ── LOADING / ERROR ─────────────────────────────────────── */
 .dash-loading { text-align: center; padding: 80px 0; color: var(--muted); }
 .spinner {
-  width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--green);
-  border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+  width: 32px; height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 .dash-error { text-align: center; padding: 40px; color: var(--muted); }
-.link-btn { background: none; border: none; color: var(--green-bright); cursor: pointer; text-decoration: underline; font-size: inherit; }
+.dash-error a { color: var(--green); }
 
-/* Section label */
-.section-label {
-  font-family: var(--font-cond); font-size: 11px; font-weight: 700; letter-spacing: 2.5px;
-  text-transform: uppercase; color: var(--green-bright); margin-bottom: 14px;
-  display: flex; align-items: center; gap: 8px;
+/* ── PENDING STATES ──────────────────────────────────────── */
+.pending-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 64px 32px;
+  max-width: 480px;
+  margin: 0 auto;
 }
-.section-label::before { content: ''; display: block; width: 14px; height: 2px; background: var(--green-bright); }
-
-/* ── HERO LAYOUT ─────────────────────────────────────────── */
-.player-hero { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; padding: 32px 40px; border-bottom: 1px solid var(--border); }
-.player-hero-card { display: flex; flex-direction: column; align-items: center; gap: 16px; }
-.player-hero-stats { display: flex; flex-direction: column; gap: 12px; }
-
-/* ── STAT BARS ───────────────────────────────────────────── */
-.stat-row { display: flex; align-items: center; gap: 12px; }
-.stat-row--focus .stat-label { color: var(--amber, #ffb400); }
-.stat-label { width: 80px; font-size: 13px; color: var(--muted); font-family: var(--font-cond); text-transform: uppercase; letter-spacing: 1px; }
-.stat-bar { flex: 1; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
-.stat-bar-fill { height: 100%; background: var(--green-bright); border-radius: 4px; transition: width 0.4s ease; }
-.stat-row--focus .stat-bar-fill { background: #ffb400; }
-.stat-value-chip { width: 32px; text-align: right; font-size: 14px; font-weight: 700; }
-.stat-focus-arrow { font-size: 11px; color: #ffb400; }
-.stats-overall { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
-.overall-badge { font-family: var(--font-cond); font-size: 28px; font-weight: 800; }
-.stats-empty { padding: 24px 0; }
-
-/* ── TABS ────────────────────────────────────────────────── */
-.portal-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); padding: 0 40px; }
-.portal-tab { background: none; border: none; color: var(--muted); padding: 16px 20px; font-size: 14px; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; font-family: var(--font-body); }
-.portal-tab:hover { color: var(--white); }
-.portal-tab--active { color: var(--green-bright); border-bottom-color: var(--green-bright); }
-.tab-panel { padding: 32px 40px; }
-.tab-panel[hidden] { display: none !important; }
-
-/* ── FEEDBACK TAB ────────────────────────────────────────── */
-.feedback-card { background: rgba(37,160,76,0.06); border: 1px solid rgba(37,160,76,0.2); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
-.feedback-quote { font-size: 16px; line-height: 1.7; color: var(--text); margin: 0 0 12px; }
-.feedback-meta { font-size: 12px; color: var(--muted); }
-
-/* ── PROGRESS HISTORY ────────────────────────────────────── */
-.hist-entry { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 10px; }
-.hist-date  { font-family: var(--font-cond); font-size: 12px; color: var(--muted); letter-spacing: 1px; margin-bottom: 8px; }
-.hist-overall { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-family: var(--font-cond); font-size: 13px; color: var(--muted); font-weight: 700; }
-.hist-badge { font-family: var(--font-cond); font-size: 16px; font-weight: 800; color: #fff; padding: 2px 10px; border-radius: 4px; }
-.hist-badge.card-bronze { background: #cd7f32; }
-.hist-badge.card-silver { background: #7a8a90; }
-.hist-badge.card-gold   { background: #c9a030; }
-.hist-badge.card-elite  { background: var(--green); }
-.hist-bars { display: flex; flex-direction: column; gap: 5px; }
-.hist-bar-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-.hist-lbl { font-family: var(--font-cond); font-size: 11px; font-weight: 700; color: var(--muted); min-width: 28px; }
-.hist-bar-bg  { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
-.hist-bar-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.4s; }
-.hist-bv { font-family: var(--font-cond); font-weight: 700; font-size: 12px; color: var(--white); min-width: 22px; text-align: right; }
-
-/* ── MESSAGES TAB ────────────────────────────────────────── */
-.message-thread { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
-.msg { padding: 12px 16px; border-radius: var(--radius); max-width: 88%; }
-.msg--parent { background: rgba(37,160,76,0.12); border: 1px solid rgba(37,160,76,0.2); align-self: flex-end; }
-.msg--coach  { background: var(--card); border: 1px solid var(--border); align-self: flex-start; }
-.msg-meta { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
-.msg-author { font-family: var(--font-cond); font-size: 12px; font-weight: 700; color: var(--white); }
-.msg-date   { font-size: 11px; color: var(--muted); }
-.msg-body   { font-size: 14px; color: var(--muted); line-height: 1.6; }
-.message-compose textarea {
-  width: 100%; background: var(--black); border: 1px solid var(--border);
-  border-radius: var(--radius); color: var(--white); font-family: var(--font-body);
-  font-size: 14px; padding: 12px 14px; resize: vertical; margin-bottom: 10px;
-}
-.message-compose textarea:focus { outline: none; border-color: var(--green); }
-
-/* ── DRILL CARDS ─────────────────────────────────────────── */
-.drills-section { margin-bottom: 32px; }
-.drills-section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-.drills-section-title { font-family: var(--font-cond); font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-.focus-badge { background: rgba(255,180,0,0.15); color: #ffb400; border: 1px solid rgba(255,180,0,0.3); padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
-.drills-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
-.drill-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
-.drill-card h4 { font-family: var(--font-cond); font-size: 15px; font-weight: 700; margin: 0 0 8px; color: var(--green-bright); }
-.drill-card p { font-size: 13px; color: var(--muted); line-height: 1.6; margin: 0; }
+.pending-h3 { font-family: var(--font-cond); font-size: 28px; font-weight: 900; color: var(--text); margin: 16px 0 10px; }
+.pending-p  { color: var(--muted); line-height: 1.65; font-size: 15px; }
+.pending-p strong { color: var(--text); }
 
 /* ── FIFA CARD ───────────────────────────────────────────── */
+@keyframes cardIn {
+  from { opacity: 0; transform: scale(0.92) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.card-animate { animation: cardIn 0.5s ease-out forwards; }
+
 .fifa-card {
-  width: 252px; border-radius: 16px; padding: 18px 16px 16px;
-  box-shadow: 0 24px 56px rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.12);
+  width: 252px;
+  border-radius: 16px;
+  padding: 20px 16px 16px;
   position: relative;
+  filter: drop-shadow(0 32px 64px rgba(0,0,0,0.7));
+  cursor: default;
+  user-select: none;
 }
-.card-bronze { background: linear-gradient(160deg, #cd7f32 0%, #8b4513 55%, #5c2c0a 100%); }
-.card-silver { background: linear-gradient(160deg, #d0d0d0 0%, #7a8a90 55%, #4a5a60 100%); }
-.card-gold   { background: linear-gradient(160deg, #d4a017 0%, #8b6400 55%, #5c3d00 100%); }
-.card-elite  { background: linear-gradient(160deg, #00c853 0%, #1d7a3a 55%, #0d3d1c 100%); }
-
+.card-bronze { background: linear-gradient(145deg, #3d2008 0%, #7c4010 40%, #b86020 100%); }
+.card-silver { background: linear-gradient(145deg, #1a1f2e 0%, #3a4060 40%, #6070a0 100%); }
+.card-gold   { background: linear-gradient(145deg, #2a1f00 0%, #7a5800 40%, #c09020 100%); }
+.card-elite  { background: linear-gradient(145deg, #001a2e 0%, #003060 40%, #0060b0 100%); animation: eliteShimmer 4s ease-in-out infinite; }
+@keyframes eliteShimmer {
+  0%,100% { background-position: 0% 50%; }
+  50%     { background-position: 100% 50%; }
+}
 .fc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-.fc-left   { display: flex; flex-direction: column; gap: 2px; }
-.fc-overall { font-family: var(--font-display); font-size: 56px; color: rgba(255,255,255,0.92); line-height: 1; letter-spacing: 1px; }
-.fc-pos  { font-family: var(--font-cond); font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.75); letter-spacing: 2px; }
-.fc-tier { font-family: var(--font-cond); font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.55); letter-spacing: 1.5px; text-transform: uppercase; }
-.fc-photo { text-align: center; margin: 2px 0 8px; }
-.fc-photo-img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; margin: 0 auto; border: 2px solid rgba(255,255,255,0.2); }
-.fc-photo svg { opacity: 0.3; }
-.fc-name { font-family: var(--font-display); font-size: 17px; color: rgba(255,255,255,0.9); text-align: center; letter-spacing: 2px; margin-bottom: 3px; }
-.fc-age  { font-family: var(--font-cond); font-size: 10px; color: rgba(255,255,255,0.5); text-align: center; letter-spacing: 1.5px; margin-bottom: 10px; }
-.fc-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 12px; }
-.fc-stat  { text-align: center; }
-.fc-sv { display: block; font-family: var(--font-cond); font-size: 22px; font-weight: 800; color: rgba(255,255,255,0.92); }
-.fc-sl { display: block; font-family: var(--font-cond); font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.5); letter-spacing: 1.5px; }
+.fc-overall { font-size: 48px; font-weight: 900; color: #fff; line-height: 1; font-family: var(--font-cond); }
+.fc-pos   { font-size: 13px; color: rgba(255,255,255,0.7); font-family: var(--font-cond); font-weight: 700; letter-spacing: 0.1em; }
+.fc-tier  { font-size: 11px; color: rgba(255,255,255,0.5); font-family: var(--font-cond); letter-spacing: 0.08em; text-transform: uppercase; }
+.fc-badge svg { opacity: 0.8; }
+.fc-photo { display: flex; justify-content: center; margin: 8px 0; }
+.fc-photo-img { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.3); }
+.fc-photo-svg { opacity: 0.4; }
+.fc-name  { text-align: center; font-size: 15px; font-weight: 800; color: #fff; font-family: var(--font-cond); letter-spacing: 0.08em; margin: 6px 0 2px; }
+.fc-age   { text-align: center; font-size: 10px; color: rgba(255,255,255,0.5); font-family: var(--font-cond); letter-spacing: 0.05em; margin-bottom: 10px; }
+.fc-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px 8px; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 10px; }
+.fc-stat  { display: flex; flex-direction: column; align-items: center; }
+.fc-sv    { font-size: 17px; font-weight: 800; color: #fff; font-family: var(--font-cond); line-height: 1; }
+.fc-sl    { font-size: 9px; color: rgba(255,255,255,0.6); font-family: var(--font-cond); letter-spacing: 0.06em; }
 
-/* ── MISC ────────────────────────────────────────────────── */
-.empty-msg { color: var(--muted); font-size: 14px; font-style: italic; }
-
-.pending-state {
-  display: flex; flex-direction: column; align-items: center; text-align: center;
-  padding: 64px 32px; max-width: 480px; margin: 0 auto;
+/* ── HERO LAYOUT ─────────────────────────────────────────── */
+.player-hero {
+  max-width: 900px;
+  margin: 32px auto 0;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 40px;
+  align-items: start;
 }
-.pending-state h3 { font-size: 32px; margin: 16px 0 10px; }
-.pending-state p  { color: var(--muted); line-height: 1.65; font-size: 15px; }
-.pending-state strong { color: var(--white); }
+.hero-card-col { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.hero-stats-col { padding-top: 8px; }
+
+/* ── STATS BARS ──────────────────────────────────────────── */
+.stats-heading { font-family: var(--font-cond); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+.stat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.stat-label { width: 28px; font-family: var(--font-cond); font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 0.06em; }
+.stat-bar-wrap { flex: 1; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
+.stat-bar { height: 100%; border-radius: 4px; transition: width 0.8s ease-out; width: 0%; }
+.stat-bar--normal { background: var(--green); }
+.stat-bar--focus  { background: var(--amber); }
+.stat-value { width: 28px; text-align: right; font-family: var(--font-cond); font-size: 13px; font-weight: 700; color: var(--text); }
+.stat-focus-badge { font-size: 9px; color: var(--amber); font-family: var(--font-cond); letter-spacing: 0.04em; white-space: nowrap; }
+.stats-overall { margin-top: 16px; font-family: var(--font-cond); font-size: 15px; color: var(--muted); }
+.stats-overall strong { color: var(--text); font-size: 18px; }
+
+/* ── TAB BAR ─────────────────────────────────────────────── */
+.tab-bar {
+  max-width: 900px;
+  margin: 32px auto 0;
+  padding: 0 24px;
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  gap: 4px;
+}
+.portal-tab {
+  padding: 10px 18px;
+  font-family: var(--font-cond);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.portal-tab:hover { color: var(--text); }
+.portal-tab--active { color: var(--green); border-bottom-color: var(--green); }
+.tab-content { max-width: 900px; margin: 0 auto; padding: 24px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── FEEDBACK TAB ────────────────────────────────────────── */
+.feedback-card {
+  background: var(--green-dim);
+  border: 1px solid rgba(0,214,143,0.2);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+.feedback-quote { font-size: 16px; line-height: 1.7; color: var(--text); font-style: italic; }
+.feedback-meta  { margin-top: 12px; font-size: 13px; color: var(--muted); font-family: var(--font-cond); letter-spacing: 0.04em; }
+.feedback-empty { color: var(--muted); font-style: italic; padding: 16px 0; }
+.progress-heading { font-family: var(--font-cond); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+.hist-entry { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 12px; }
+.hist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.hist-date { font-size: 13px; color: var(--muted); font-family: var(--font-cond); }
+.tier-chip { font-family: var(--font-cond); font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.06em; }
+.tier-chip--bronze { background: rgba(180,80,20,0.2); color: #e0804a; }
+.tier-chip--silver { background: rgba(80,100,160,0.2); color: #8899cc; }
+.tier-chip--gold   { background: rgba(180,140,20,0.2); color: #e0b840; }
+.tier-chip--elite  { background: rgba(0,90,180,0.2); color: #60aaff; }
+.he-bars { display: grid; grid-template-columns: repeat(6,1fr); gap: 8px; }
+.he-bar  { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.he-bar-track { width: 100%; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+.he-bar-fill  { height: 100%; background: var(--green); border-radius: 2px; }
+.he-bar-label { font-size: 9px; font-family: var(--font-cond); color: var(--muted); }
+.he-bar-val   { font-size: 11px; font-family: var(--font-cond); font-weight: 700; color: var(--text); }
+
+/* ── MESSAGES TAB ────────────────────────────────────────── */
+.message-thread {
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+.msg-bubble { max-width: 80%; }
+.msg--parent { align-self: flex-end; }
+.msg--coach  { align-self: flex-start; }
+.msg-body {
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+.msg--parent .msg-body { background: var(--green-dim); border: 1px solid rgba(0,214,143,0.2); }
+.msg--coach  .msg-body { background: var(--card); border: 1px solid var(--border); }
+.msg-meta { font-size: 11px; color: var(--muted); font-family: var(--font-cond); margin-top: 4px; }
+.msg--parent .msg-meta { text-align: right; }
+.msg-empty { color: var(--muted); font-style: italic; text-align: center; padding: 24px 0; width: 100%; }
+.compose-form { display: flex; flex-direction: column; gap: 10px; }
+.compose-textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  resize: vertical;
+}
+.compose-textarea:focus { outline: none; border-color: var(--green); }
+.compose-error { font-size: 13px; color: var(--red); display: none; }
+
+/* ── TRAIN AT HOME ───────────────────────────────────────── */
+.drill-section { margin-bottom: 28px; }
+.drill-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.drill-title { font-family: var(--font-cond); font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: 0.04em; }
+.focus-badge {
+  font-size: 10px;
+  font-family: var(--font-cond);
+  font-weight: 700;
+  background: var(--amber-dim);
+  color: var(--amber);
+  padding: 3px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.drill-list { display: flex; flex-direction: column; gap: 8px; }
+.drill-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--card);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.drill-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+
+/* ── BUTTONS ─────────────────────────────────────────────── */
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: var(--green);
+  color: #0a0e1a;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-cond);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  margin-top: 8px;
+}
+.btn-primary:hover { opacity: 0.9; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 6px;
+  font-family: var(--font-cond);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-secondary:hover { border-color: var(--text); color: var(--text); }
+.btn-download {
+  padding: 10px 20px;
+  background: transparent;
+  border: 1px solid var(--green);
+  color: var(--green);
+  border-radius: 8px;
+  font-family: var(--font-cond);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-download:hover { background: var(--green-dim); }
+.btn-send {
+  align-self: flex-end;
+  padding: 10px 20px;
+  background: var(--green);
+  color: #0a0e1a;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-cond);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── TOAST ───────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--green);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-family: var(--font-cond);
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+  z-index: 1000;
+}
+.toast.visible { opacity: 1; transform: translateY(0); }
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */
-@media (max-width: 800px) {
+@media (max-width: 700px) {
+  .player-hero { grid-template-columns: 1fr; padding: 24px 16px; gap: 24px; }
+  .hero-card-col { align-items: center; }
+  .tab-bar { padding: 0 16px; overflow-x: auto; }
+  .tab-content { padding: 20px 16px; }
   .dash-header { padding: 16px 20px; }
-  .player-tabs { padding: 0 20px; }
-  .player-hero { grid-template-columns: 1fr; padding: 24px 20px; }
-  .portal-tabs { padding: 0 20px; overflow-x: auto; }
-  .tab-panel { padding: 24px 20px; }
+  .player-tabs { padding: 0 16px; }
+  .he-bars { grid-template-columns: repeat(3,1fr); }
+  .login-hero { padding: 40px 24px 32px; }
+  .login-outer { padding: 32px 16px; }
 }
 </style>
