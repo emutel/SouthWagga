@@ -90,7 +90,10 @@ const hasContent = (p: any) => p.desc || p.activities || p.setup;
 
   <div class="page-hero">
     <div class="page-hero-inner">
-      <a href="/coaching/sessions" class="back-link">← Session Plans</a>
+      <div class="hero-top-row">
+        <a href="/coaching/sessions" class="back-link">← Session Plans</a>
+        <button onclick="window.print()" class="print-btn" aria-label="Print session plan">🖨 Print Plan</button>
+      </div>
       {plan.age_group && <div class="label">{ageLabels[plan.age_group] ?? plan.age_group}</div>}
       <h1>{plan.title}</h1>
       <div class="plan-meta">
@@ -232,8 +235,11 @@ const hasContent = (p: any) => p.desc || p.activities || p.setup;
 <style>
 .page-hero          { background: linear-gradient(135deg, var(--green-dark), var(--off-black)); border-bottom: 1px solid var(--border); padding: 60px 48px 48px; }
 .page-hero-inner    { max-width: 1280px; margin: 0 auto; }
-.back-link          { color: var(--green-bright); font-size: 13px; text-decoration: none; display: inline-block; margin-bottom: 16px; }
+.hero-top-row       { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.back-link          { color: var(--green-bright); font-size: 13px; text-decoration: none; display: inline-block; }
 .back-link:hover    { text-decoration: underline; }
+.print-btn          { background: rgba(255,255,255,0.08); border: 1px solid var(--border); color: var(--text); padding: 7px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; transition: background 0.15s; }
+.print-btn:hover    { background: rgba(255,255,255,0.15); }
 .page-hero h1       { font-size: clamp(32px, 4vw, 60px); margin: 10px 0 12px; }
 .plan-meta          { display: flex; flex-wrap: wrap; gap: 8px; }
 .meta-tag           { background: rgba(255,255,255,0.08); border: 1px solid var(--border); padding: 4px 12px; border-radius: 20px; font-size: 13px; color: var(--muted); }
@@ -299,5 +305,72 @@ const hasContent = (p: any) => p.desc || p.activities || p.setup;
 }
 @media (max-width: 600px) {
   .cues-grid { grid-template-columns: 1fr; }
+}
+
+@media print {
+  /* Hide site chrome */
+  .nav-outer, nav, footer, .footer, .print-btn, .back-link { display: none !important; }
+
+  /* White page */
+  html, body { background: white !important; color: black !important; font-size: 11pt; }
+
+  /* Hero: strip dark gradient */
+  .page-hero {
+    background: white !important;
+    border-bottom: 2px solid #000 !important;
+    padding: 20px 0 16px !important;
+    color: black !important;
+  }
+  .page-hero h1 { color: black !important; font-size: 22pt; }
+  .label        { color: #333 !important; border-color: #333 !important; background: #eee !important; }
+  .meta-tag     { background: #eee !important; border-color: #999 !important; color: #333 !important; }
+
+  /* Layout: single column for print */
+  .plan-layout  { display: block !important; padding: 0 !important; max-width: 100% !important; }
+  .plan-sidebar { display: block !important; margin-bottom: 16pt !important; }
+
+  /* Cards: white with border */
+  .card, .phase-block, .sidebar-block {
+    background: white !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    color: black !important;
+  }
+
+  /* Phase headers */
+  .phase-header   { background: #f0f0f0 !important; border-bottom: 1px solid #ccc !important; }
+  .phase-icon     { display: none; }
+  .phase-num      { color: #333 !important; }
+  .phase-title-group h2 { color: black !important; font-size: 13pt; }
+  .phase-time     { color: #555 !important; }
+  .phase-framework-note { color: #555 !important; border-bottom-color: #ccc !important; }
+
+  /* Phase sections */
+  .phase-section         { border-bottom-color: #ddd !important; }
+  .phase-section--setup  { background: #fafafa !important; }
+  .phase-section--amber  { background: #fffdf0 !important; }
+  .phase-section h4      { color: #333 !important; }
+  .activity-text, .whitespace, .setup-text { color: black !important; }
+  .activity-list         { color: #222 !important; }
+
+  /* Coaching cues: strip green tint */
+  .coaching-cues  { background: #f8f8f8 !important; border-top: 2px solid #333 !important; }
+  .cues-header    { color: #333 !important; }
+  .cue-check      { color: #333 !important; }
+  .cue-text       { color: black !important; }
+  .intervention-tip { border-top-color: #ccc !important; color: #444 !important; }
+  .int-label      { color: #333 !important; }
+
+  /* Sidebar */
+  .sidebar-block h3 { color: #333 !important; }
+  .sidebar-block p, .obj-list { color: #222 !important; }
+  .sidebar-td       { border-color: #333 !important; }
+  .timeline-item    { color: black !important; border-bottom-color: #ddd !important; }
+  .tl-time          { color: #555 !important; }
+
+  /* Page breaks */
+  .phase-block      { page-break-inside: avoid; margin-bottom: 16pt; }
+  .plan-sidebar     { page-break-after: avoid; }
+  h1, h2, h3, h4   { page-break-after: avoid; }
 }
 </style>
