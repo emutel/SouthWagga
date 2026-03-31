@@ -657,7 +657,7 @@ document.getElementById('coach-login-form').addEventListener('submit', async (e)
     CLS.user = user;
 
     const role = user?.role?.name?.toLowerCase() || '';
-    if (!['coach','administrator','admin','technical_director'].some(r => role.includes(r))) {
+    if (!['coach','administrator','admin','technical_director','technical director','director'].some(r => role.includes(r))) {
       CLS.clear();
       document.getElementById('c-access-denied').hidden = false;
       document.getElementById('c-loading').hidden = true;

@@ -862,7 +862,7 @@ document.getElementById('admin-login-form').addEventListener('submit', async (e)
     if (!user) throw new Error('Could not load user');
     ALS.user = user;
     const role = (user?.role?.name||'').toLowerCase();
-    if (!['administrator','admin','technical_director','coach'].some(r => role.includes(r))) {
+    if (!['administrator','admin','technical_director','technical director','director','coach'].some(r => role.includes(r))) {
       ALS.clear();
       throw new Error('Your account does not have admin access.');
     }

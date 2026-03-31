@@ -330,6 +330,7 @@ ${rows}
 
 // ── PROGRESS HISTORY ──────────────────────────────────────────
 function buildProgressHistory(assessments, ageGroup, position, limit = 5) {
+  if (!Array.isArray(assessments)) assessments = [];
   if (!assessments || assessments.length === 0) {
     return '<p class="empty-msg">No assessments yet. Check back after your first term.</p>';
   }
@@ -630,17 +631,20 @@ async function loadPlayerData(profile) {
 }
 
 async function loadProfiles(user) {
+  try {
   const allStatuses = 'pending,accepted,enrolled';
 
   let enrollments = await api(
     `/items/academy_enrollments?filter[directus_user_id][_eq]=${user.id}&filter[status][_in]=${allStatuses}&fields=id,status,age_group,player_first_name,player_last_name`
   );
+  if (!Array.isArray(enrollments)) enrollments = null;
 
   if (!enrollments || enrollments.length === 0) {
     const email = user.email.toLowerCase();
     enrollments = await api(
       `/items/academy_enrollments?filter[parent_email][_eq]=${email}&filter[status][_in]=${allStatuses}&fields=id,status,age_group,player_first_name,player_last_name`
     );
+    if (!Array.isArray(enrollments)) enrollments = null;
   }
 
   if (!enrollments || enrollments.length === 0) {
@@ -675,6 +679,11 @@ async function loadProfiles(user) {
   }
 
   return loadProfilesFromEnrollments(active);
+  } catch (err) {
+    console.error('loadProfiles error:', err);
+    setDashLoading(false);
+    document.getElementById('dash-error').hidden = false;
+  }
 }
 
 async function loadProfilesFromEnrollments(enrollments) {
