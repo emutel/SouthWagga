@@ -74,71 +74,49 @@ import Base from '../../layouts/Base.astro';
 
       <!-- Player content -->
       <div id="player-content" hidden>
-        <div class="content-grid">
 
-          <!-- LEFT: FIFA Card + Download -->
-          <div class="col-card">
-            <div class="section-label">Player Card</div>
+        <!-- Hero: FIFA card left, stats right -->
+        <div class="player-hero">
+          <div class="player-hero-card">
             <div id="fifa-card-wrap">
               <!-- FIFA card rendered by JS -->
             </div>
-            <button id="download-card-btn" class="btn btn-outline-green btn-full" style="margin-top:16px">
+            <button id="download-card-btn" class="btn btn-outline-green btn-full" style="margin-top:4px">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Download Card
             </button>
-            <div class="coach-notes-card card" id="coach-notes-wrap" hidden>
-              <div class="cn-label">Latest Coach Notes</div>
-              <p id="coach-notes-text"></p>
-              <div class="cn-date" id="coach-notes-date"></div>
-            </div>
           </div>
-
-          <!-- RIGHT: Progress History + Messages -->
-          <div class="col-right">
-
-            <!-- Progress history -->
-            <div class="progress-section">
-              <div class="section-label">Progress History</div>
-              <div id="progress-history">
-                <p class="empty-msg">No assessments yet. Check back after your first term.</p>
-              </div>
-            </div>
-
-            <!-- Messages -->
-            <div class="messages-section">
-              <div class="section-label">Messages with Technical Director</div>
-              <div id="message-thread" class="message-thread">
-                <p class="empty-msg">No messages yet.</p>
-              </div>
-              <form id="message-form" class="message-compose">
-                <textarea id="message-input" rows="3" placeholder="Write a message to the Technical Director…"></textarea>
-                <button type="submit" class="btn btn-primary btn-sm" id="send-msg-btn">Send Message →</button>
-              </form>
-            </div>
-
-            <!-- Resources -->
-            <div class="resources-section">
-              <div class="section-label">Coaching Resources</div>
-              <div id="resources-links" class="resources-links">
-                <a href="/coaching/sessions" class="resource-link card">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green-bright)" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  <div>
-                    <strong>Session Plans</strong>
-                    <span>Browse coaching session plans by age group</span>
-                  </div>
-                </a>
-                <a href="/coaching/resources" class="resource-link card">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green-bright)" stroke-width="1.8"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                  <div>
-                    <strong>Drills &amp; Videos</strong>
-                    <span>Technical drill sheets and coaching videos</span>
-                  </div>
-                </a>
-              </div>
-            </div>
-
+          <div class="player-hero-stats" id="stats-panel">
+            <!-- Stats panel rendered by JS -->
           </div>
         </div>
+
+        <!-- Tab bar -->
+        <div class="portal-tabs">
+          <button class="portal-tab portal-tab--active" data-tab="feedback">Latest Feedback</button>
+          <button class="portal-tab" data-tab="messages">Messages</button>
+          <button class="portal-tab" data-tab="train">Train at Home</button>
+        </div>
+
+        <!-- Tab panels -->
+        <div id="tab-feedback" class="tab-panel">
+          <!-- Rendered by JS -->
+        </div>
+
+        <div id="tab-messages" class="tab-panel" hidden>
+          <div id="message-thread" class="message-thread">
+            <p class="empty-msg">No messages yet. Use the form below to get in touch.</p>
+          </div>
+          <form id="message-form" class="message-compose">
+            <textarea id="message-input" rows="3" placeholder="Write a message to the Technical Director…"></textarea>
+            <button type="submit" class="btn btn-primary btn-sm" id="send-msg-btn">Send Message →</button>
+          </form>
+        </div>
+
+        <div id="tab-train" class="tab-panel" hidden>
+          <!-- Rendered by JS -->
+        </div>
+
       </div>
 
     </div>
@@ -170,7 +148,6 @@ async function api(path, opts = {}, token = LS.token) {
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${DURL}${path}`, { ...opts, headers: { ...headers, ...(opts.headers||{}) } });
   if (res.status === 401) {
-    // Attempt token refresh
     const refreshed = await tryRefresh();
     if (refreshed) return api(path, opts, LS.token);
     showLogin();
@@ -289,13 +266,78 @@ function buildFIFACard(profile, assessment) {
 </div>`;
 }
 
-function buildProgressHistory(assessments, ageGroup, position) {
+// ── STATS PANEL ───────────────────────────────────────────────
+function buildStatsPanel(profile, assessment) {
+  if (!assessment) {
+    return `
+<div class="stats-empty">
+  <p class="empty-msg">No assessment yet. Check back after your first session.</p>
+</div>`;
+  }
+
+  const ag  = profile.enrollment?.age_group || 'u12-u13';
+  const pos = profile.position || 'midfielder';
+
+  const attrList = [
+    { key: 'pace',      label: 'Pace',      raw: assessment.pace_raw      },
+    { key: 'shooting',  label: 'Shooting',  raw: assessment.shooting_raw  },
+    { key: 'passing',   label: 'Passing',   raw: assessment.passing_raw   },
+    { key: 'dribbling', label: 'Dribbling', raw: assessment.dribbling_raw },
+    { key: 'defending', label: 'Defending', raw: assessment.defending_raw },
+    { key: 'physical',  label: 'Physical',  raw: assessment.physical_raw  },
+  ];
+
+  const normalised = attrList.map(a => ({ ...a, value: normalize(a.raw, ag) }));
+
+  // Find two lowest
+  const sorted = [...normalised].sort((a, b) => a.value - b.value);
+  const focusKeys = new Set([sorted[0].key, sorted[1].key]);
+
+  const attrs = {
+    pac: normalize(assessment.pace_raw, ag),
+    sho: normalize(assessment.shooting_raw, ag),
+    pas: normalize(assessment.passing_raw, ag),
+    dri: normalize(assessment.dribbling_raw, ag),
+    def: normalize(assessment.defending_raw, ag),
+    phy: normalize(assessment.physical_raw, ag),
+  };
+  const overall = calcOverall(attrs, pos);
+  const tier    = cardTier(overall);
+
+  const dateStr = assessment.assessment_date
+    ? new Date(assessment.assessment_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
+    : null;
+
+  const rows = normalised.map(a => {
+    const isFocus = focusKeys.has(a.key);
+    const width   = Math.min(a.value, 99);
+    return `
+<div class="stat-row${isFocus ? ' stat-row--focus' : ''}">
+  <span class="stat-label">${a.label}</span>
+  <div class="stat-bar"><div class="stat-bar-fill" style="width:${width}%"></div></div>
+  <span class="stat-value-chip">${a.value}</span>
+  ${isFocus ? '<span class="stat-focus-arrow">▼ focus</span>' : ''}
+</div>`;
+  }).join('');
+
+  return `
+${rows}
+<div class="stats-overall">
+  <div class="overall-badge">${overall} <span style="font-size:16px;font-weight:400;color:var(--muted)">· ${tier.name}</span></div>
+  <div style="font-size:12px;color:var(--muted);margin-top:6px">${dateStr ? `Last assessed: ${dateStr}` : 'Not yet assessed'}</div>
+</div>`;
+}
+
+// ── PROGRESS HISTORY ──────────────────────────────────────────
+function buildProgressHistory(assessments, ageGroup, position, limit = 5) {
   if (!assessments || assessments.length === 0) {
     return '<p class="empty-msg">No assessments yet. Check back after your first term.</p>';
   }
-  const sorted = [...assessments].sort((a, b) => new Date(b.assessment_date) - new Date(a.assessment_date)).slice(0, 5);
-  const ag = ageGroup || 'u12-u13';
-  const pos = position || 'midfielder';
+  const sorted = [...assessments]
+    .sort((a, b) => new Date(b.assessment_date) - new Date(a.assessment_date))
+    .slice(0, limit);
+  const ag  = ageGroup  || 'u12-u13';
+  const pos = position  || 'midfielder';
 
   const rows = sorted.map(a => {
     const attrs = {
@@ -303,9 +345,9 @@ function buildProgressHistory(assessments, ageGroup, position) {
       pas: normalize(a.passing_raw, ag), dri: normalize(a.dribbling_raw, ag),
       def: normalize(a.defending_raw, ag), phy: normalize(a.physical_raw, ag),
     };
-    const ov = calcOverall(attrs, pos);
+    const ov   = calcOverall(attrs, pos);
     const tier = cardTier(ov);
-    const d = new Date(a.assessment_date).toLocaleDateString('en-AU', { month: 'short', year: 'numeric' });
+    const d    = new Date(a.assessment_date).toLocaleDateString('en-AU', { month: 'short', year: 'numeric' });
     return `
 <div class="hist-entry">
   <div class="hist-date">${d}</div>
@@ -323,6 +365,7 @@ function buildProgressHistory(assessments, ageGroup, position) {
   return rows.join('');
 }
 
+// ── MESSAGES ──────────────────────────────────────────────────
 function buildMessages(messages) {
   if (!messages || messages.length === 0) {
     return '<p class="empty-msg">No messages yet. Use the form below to get in touch.</p>';
@@ -335,6 +378,129 @@ function buildMessages(messages) {
   </div>
   <div class="msg-body">${m.body.replace(/\n/g, '<br>')}</div>
 </div>`).join('');
+}
+
+// ── HOME DRILLS ───────────────────────────────────────────────
+const HOME_DRILLS = {
+  pace: {
+    label: 'Pace & Speed',
+    drills: [
+      { name: 'Sprint Intervals', desc: 'Mark 20m with two cones. Sprint as fast as you can, walk back. Repeat 8 times. Rest 2 minutes, do another 8.' },
+      { name: 'High Knees', desc: 'Drive your knees up to hip height as fast as you can on the spot for 30 seconds. Rest 30 sec. Do 5 rounds.' },
+      { name: 'Reaction Sprint', desc: 'Stand 5m from a wall. The moment the ball bounces off the wall, sprint 10m. Have someone throw it for you, or throw it yourself and react.' },
+    ]
+  },
+  shooting: {
+    label: 'Shooting',
+    drills: [
+      { name: 'Wall Strikes', desc: "Stand 8m from a wall or fence. Strike the ball at a target mark. 50 strikes with your strong foot, 50 with your weak foot. Aim, don't blast." },
+      { name: 'Weak Foot Training', desc: 'For 15 minutes each day, use ONLY your weak foot to pass and receive against a wall. Uncomfortable is good — that\'s how you improve.' },
+      { name: 'Accuracy Targets', desc: 'Place 3 objects (cones, bottles) 10m away in a line. Try to hit each one 5 times in a row with your strong foot, then 5 times with your weak foot.' },
+    ]
+  },
+  passing: {
+    label: 'Passing',
+    drills: [
+      { name: 'Two-Touch Wall Passing', desc: 'Stand 5m from a wall. Pass the ball to the wall (touch 1), let it bounce back, control it (touch 2), then pass again. Do 100 reps both feet.' },
+      { name: 'Target Passing', desc: 'Place a cone 15m away. Try to hit it 10 times in a row with a driven pass. Then try with your weak foot. Count your best streak.' },
+      { name: 'Control and Pass', desc: 'Throw the ball against a wall at different heights. First touch to control, second touch to pass back. Focus on cushioning the ball, not stabbing it.' },
+    ]
+  },
+  dribbling: {
+    label: 'Dribbling & Ball Control',
+    drills: [
+      { name: 'Household Slalom', desc: 'Set up 6 objects in a line (shoes, bottles, toys) about 1m apart. Dribble through them as fast as you can with both feet. 10 runs each day.' },
+      { name: '100 Toe-Taps Daily', desc: 'Place the ball in front of you. Alternate tapping the top of the ball with your right and left foot — 100 taps every single day. Build your feel.' },
+      { name: 'Sole Rolls', desc: 'Use the sole of your foot to roll the ball side to side without it stopping. Do this for 2 minutes without breaking. Switch feet.' },
+    ]
+  },
+  defending: {
+    label: 'Defending',
+    drills: [
+      { name: 'Single-Leg Balance', desc: 'Stand on one leg for 30 seconds, rest, then the other leg for 30 seconds. Do 5 rounds each leg. Close your eyes for a harder version.' },
+      { name: 'Lateral Shuffle', desc: 'Place two cones 5m apart. Shuffle sideways from one to the other WITHOUT crossing your feet. Touch each cone. Do 10 lengths as fast as you can.' },
+      { name: 'Mirror Drill', desc: 'Stand 1m from a wall or a friend. Shuffle, lunge and move — mirroring or being unpredictable. Stay low, react fast. Do 3 x 30-second rounds.' },
+    ]
+  },
+  physical: {
+    label: 'Strength & Fitness',
+    drills: [
+      { name: 'Mini Circuit', desc: 'Do this 3 times through: 10 squat jumps, 10 push-ups (knees OK), 20 mountain climbers, 30-second plank. Rest 1 minute between rounds.' },
+      { name: 'Bear Crawl & Crab Walk', desc: 'Bear crawl on hands and feet (face down) for 10m, then crab walk (face up) back. Repeat 5 times without stopping. Great for core and shoulders.' },
+      { name: 'Jump and Reach', desc: 'Mark a high point on a wall or fence with chalk or tape. Jump and touch it 15 times. Rest, try to beat your jump height. Arms drive you upward.' },
+    ]
+  },
+};
+
+function buildDrillSection(attrKey, isFocus) {
+  const section = HOME_DRILLS[attrKey];
+  if (!section) return '';
+  const focusBadge = isFocus ? '<span class="focus-badge">Focus Area</span>' : '';
+  const cards = section.drills.map(d => `
+<div class="drill-card">
+  <h4>${d.name}</h4>
+  <p>${d.desc}</p>
+</div>`).join('');
+  return `
+<div class="drills-section">
+  <div class="drills-section-header">
+    <span class="drills-section-title">Improve your ${section.label}</span>
+    ${focusBadge}
+  </div>
+  <div class="drills-grid">${cards}</div>
+</div>`;
+}
+
+function buildTrainAtHome(profile, assessment) {
+  const allKeys = ['pace', 'shooting', 'passing', 'dribbling', 'defending', 'physical'];
+
+  if (!assessment) {
+    // No assessment — show all sections
+    const sections = allKeys.map(k => buildDrillSection(k, false)).join('');
+    return `<div>${sections}</div>`;
+  }
+
+  const ag = profile.enrollment?.age_group || 'u12-u13';
+  const attrValues = [
+    { key: 'pace',      value: normalize(assessment.pace_raw,      ag) },
+    { key: 'shooting',  value: normalize(assessment.shooting_raw,  ag) },
+    { key: 'passing',   value: normalize(assessment.passing_raw,   ag) },
+    { key: 'dribbling', value: normalize(assessment.dribbling_raw, ag) },
+    { key: 'defending', value: normalize(assessment.defending_raw, ag) },
+    { key: 'physical',  value: normalize(assessment.physical_raw,  ag) },
+  ];
+
+  const sorted    = [...attrValues].sort((a, b) => a.value - b.value);
+  const focusKeys = [sorted[0].key, sorted[1].key];
+
+  // Focus areas first
+  const focusSections = focusKeys.map(k => buildDrillSection(k, true)).join('');
+
+  // General fitness section (link to S&C sessions)
+  const generalSection = `
+<div class="drills-section">
+  <div class="drills-section-header">
+    <span class="drills-section-title">General Fitness</span>
+  </div>
+  <p style="color:var(--muted);font-size:14px;line-height:1.7;margin-bottom:16px">
+    Alongside your focus areas, staying generally fit makes everything easier on the pitch.
+    Browse the full S&amp;C session library for structured training sessions by age group.
+  </p>
+  <a href="/coaching/sessions" class="btn btn-outline-green" style="display:inline-flex">View Session Plans →</a>
+</div>`;
+
+  return `<div>${focusSections}${generalSection}</div>`;
+}
+
+// ── TAB SWITCHING ─────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(el => { el.hidden = true; });
+  const panel = document.getElementById(`tab-${name}`);
+  if (panel) panel.hidden = false;
+
+  document.querySelectorAll('.portal-tab').forEach(btn => {
+    btn.classList.toggle('portal-tab--active', btn.dataset.tab === name);
+  });
 }
 
 // ── STATE ─────────────────────────────────────────────────────
@@ -353,8 +519,12 @@ function showLogin() {
 function showDashboard(user) {
   document.getElementById('view-login').hidden = true;
   document.getElementById('view-dashboard').hidden = false;
-  const name = user?.first_name || 'there';
-  document.getElementById('dash-welcome').textContent = `Welcome back, ${name}`;
+  const firstName = user?.first_name || '';
+  const lastName  = user?.last_name  || '';
+  const namePart  = [firstName, lastName].filter(Boolean).join(' ');
+  document.getElementById('dash-welcome').textContent = namePart
+    ? `${namePart} · Warriors Academy`
+    : 'Warriors Academy';
 }
 
 function setDashLoading(loading) {
@@ -365,6 +535,56 @@ function setPlayerContent(visible) {
   document.getElementById('player-content').hidden = !visible;
 }
 
+// ── RENDER PLAYER CONTENT ─────────────────────────────────────
+function renderPlayerContent(profile, latestAssessment, allAssessments, messages) {
+  // FIFA card
+  document.getElementById('fifa-card-wrap').innerHTML = buildFIFACard(profile, latestAssessment);
+
+  // Stats panel
+  document.getElementById('stats-panel').innerHTML = buildStatsPanel(profile, latestAssessment);
+
+  // Latest feedback tab
+  const ag  = profile.enrollment?.age_group || 'u12-u13';
+  const pos = profile.position || 'midfielder';
+  let feedbackHtml = '';
+
+  if (latestAssessment?.notes) {
+    const dateStr = latestAssessment.assessment_date
+      ? new Date(latestAssessment.assessment_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
+      : '';
+    const coachName = latestAssessment.coach_name || 'Technical Director';
+    feedbackHtml = `
+<div class="feedback-card">
+  <p class="feedback-quote">${latestAssessment.notes.replace(/\n/g, '<br>')}</p>
+  <div class="feedback-meta">${coachName}${dateStr ? ' · ' + dateStr : ''}</div>
+</div>`;
+  } else {
+    feedbackHtml = `
+<div class="feedback-card">
+  <p class="feedback-quote empty-msg">No coach notes recorded yet. Check back after your next assessment.</p>
+</div>`;
+  }
+
+  // Progress timeline (limit 3)
+  const progressHtml = buildProgressHistory(allAssessments, ag, pos, 3);
+  feedbackHtml += `
+<div class="section-label" style="margin-top:8px">Progress Timeline</div>
+${progressHtml}`;
+
+  document.getElementById('tab-feedback').innerHTML = feedbackHtml;
+
+  // Messages tab
+  document.getElementById('message-thread').innerHTML = buildMessages(messages);
+  const thread = document.getElementById('message-thread');
+  thread.scrollTop = thread.scrollHeight;
+
+  // Train at home tab
+  document.getElementById('tab-train').innerHTML = buildTrainAtHome(profile, latestAssessment);
+
+  // Show first tab
+  switchTab('feedback');
+}
+
 // ── LOAD PLAYER DATA ──────────────────────────────────────────
 async function loadPlayerData(profile) {
   setDashLoading(true);
@@ -372,7 +592,7 @@ async function loadPlayerData(profile) {
   document.getElementById('dash-error').hidden = true;
 
   try {
-    // Fetch enrollment for this profile (to get age_group)
+    // Resolve enrollment object if it's just an ID
     let enrollment = profile.enrollment;
     if (typeof enrollment === 'string') {
       enrollment = await api(`/items/academy_enrollments/${enrollment}?fields=age_group,player_first_name,player_last_name`);
@@ -385,11 +605,11 @@ async function loadPlayerData(profile) {
     );
     const latestAssessment = Array.isArray(assessmentData) ? assessmentData[0] : null;
 
-    // History (last 5)
+    // History (last 5 for timeline; we'll limit to 3 in render)
     const historyData = await api(
       `/items/academy_assessments?filter[player][_eq]=${profile.id}&sort[]=-assessment_date&limit=5&fields=*`
     );
-    const history = historyData || [];
+    const allAssessments = historyData || [];
 
     // Messages
     const messagesData = await api(
@@ -397,27 +617,7 @@ async function loadPlayerData(profile) {
     );
     const messages = messagesData || [];
 
-    // Render FIFA card
-    document.getElementById('fifa-card-wrap').innerHTML = buildFIFACard(profile, latestAssessment);
-
-    // Coach notes
-    if (latestAssessment?.notes) {
-      document.getElementById('coach-notes-wrap').hidden = false;
-      document.getElementById('coach-notes-text').textContent = latestAssessment.notes;
-      document.getElementById('coach-notes-date').textContent =
-        new Date(latestAssessment.assessment_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' });
-    } else {
-      document.getElementById('coach-notes-wrap').hidden = true;
-    }
-
-    // Progress history
-    document.getElementById('progress-history').innerHTML = buildProgressHistory(
-      history, profile.enrollment?.age_group, profile.position
-    );
-
-    // Messages
-    document.getElementById('message-thread').innerHTML = buildMessages(messages);
-    document.getElementById('message-thread').scrollTop = document.getElementById('message-thread').scrollHeight;
+    renderPlayerContent(profile, latestAssessment, allAssessments, messages);
 
     setDashLoading(false);
     setPlayerContent(true);
@@ -430,10 +630,8 @@ async function loadPlayerData(profile) {
 }
 
 async function loadProfiles(user) {
-  // Search all statuses so we can show pending/accepted states too
   const allStatuses = 'pending,accepted,enrolled';
 
-  // Try by directus_user_id first, then fall back to email match
   let enrollments = await api(
     `/items/academy_enrollments?filter[directus_user_id][_eq]=${user.id}&filter[status][_in]=${allStatuses}&fields=id,status,age_group,player_first_name,player_last_name`
   );
@@ -458,7 +656,6 @@ async function loadProfiles(user) {
     return;
   }
 
-  // Check if any are still pending (not yet accepted/enrolled)
   const pending = enrollments.filter(e => e.status === 'pending');
   const active  = enrollments.filter(e => e.status === 'accepted' || e.status === 'enrolled');
 
@@ -491,7 +688,6 @@ async function loadProfilesFromEnrollments(enrollments) {
       p.enrollment = enr;
       profiles.push(p);
     } else {
-      // Enrolled but profile not created yet — show setup pending state
       const name = `${enr.player_first_name} ${enr.player_last_name}`;
       setDashLoading(false);
       document.getElementById('player-content').innerHTML = `
@@ -535,16 +731,16 @@ async function loadProfilesFromEnrollments(enrollments) {
   } else {
     setDashLoading(false);
     setPlayerContent(true);
-    document.getElementById('progress-history').innerHTML = '<p class="empty-msg">No player profile found. Please contact the Technical Director.</p>';
+    document.getElementById('tab-feedback').innerHTML = '<p class="empty-msg">No player profile found. Please contact the Technical Director.</p>';
   }
 }
 
 // ── LOGIN ─────────────────────────────────────────────────────
 document.getElementById('login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const errEl  = document.getElementById('login-error');
+  const errEl    = document.getElementById('login-error');
   const loginBtn = document.getElementById('login-btn');
-  errEl.hidden = true;
+  errEl.hidden   = true;
   loginBtn.disabled = true;
   loginBtn.textContent = 'Signing in…';
 
@@ -624,12 +820,12 @@ document.getElementById('message-form').addEventListener('submit', async (e) => 
 
   if (result) {
     input.value = '';
-    // Reload messages
     const messagesData = await api(
       `/items/academy_messages?filter[player][_eq]=${profile.id}&sort[]=date_created&fields=*`
     );
     document.getElementById('message-thread').innerHTML = buildMessages(messagesData || []);
-    document.getElementById('message-thread').scrollTop = document.getElementById('message-thread').scrollHeight;
+    const thread = document.getElementById('message-thread');
+    thread.scrollTop = thread.scrollHeight;
   }
 
   sendBtn.disabled = false;
@@ -663,6 +859,11 @@ document.getElementById('download-card-btn').addEventListener('click', async () 
 
   btn.textContent = 'Download Card';
   btn.disabled = false;
+});
+
+// ── TAB BUTTON EVENTS ─────────────────────────────────────────
+document.querySelectorAll('.portal-tab').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
 });
 
 // ── INIT ──────────────────────────────────────────────────────
@@ -705,12 +906,13 @@ input:focus { outline: none; border-color: var(--green); }
   padding: 12px 14px; font-size: 14px; color: #ff6b6b; margin-bottom: 12px;
 }
 
-/* Dashboard */
+/* Dashboard header */
 .dash-header { background: var(--off-black); border-bottom: 1px solid var(--border); padding: 20px 48px; }
 .dash-header-inner { max-width: 1280px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 20px; }
-.dash-header h1 { font-size: clamp(28px, 4vw, 44px); }
+.dash-header h1 { font-size: clamp(22px, 3vw, 36px); }
 .btn-sm { padding: 8px 16px; font-size: 13px; }
 
+/* Multi-player tabs */
 .player-tabs { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 48px; }
 .tabs-inner { max-width: 1280px; margin: 0 auto; display: flex; gap: 4px; }
 .player-tab {
@@ -721,7 +923,8 @@ input:focus { outline: none; border-color: var(--green); }
 .player-tab:hover { color: var(--white); }
 .player-tab--active { color: var(--green-bright); border-bottom-color: var(--green-bright); }
 
-.dash-body { max-width: 1280px; margin: 0 auto; padding: 40px 48px 80px; }
+/* Dash body */
+.dash-body { max-width: 1280px; margin: 0 auto; }
 .dash-loading { text-align: center; padding: 80px 0; color: var(--muted); }
 .spinner {
   width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--green);
@@ -731,8 +934,7 @@ input:focus { outline: none; border-color: var(--green); }
 .dash-error { text-align: center; padding: 40px; color: var(--muted); }
 .link-btn { background: none; border: none; color: var(--green-bright); cursor: pointer; text-decoration: underline; font-size: inherit; }
 
-/* Content grid */
-.content-grid { display: grid; grid-template-columns: 280px 1fr; gap: 40px; align-items: start; }
+/* Section label */
 .section-label {
   font-family: var(--font-cond); font-size: 11px; font-weight: 700; letter-spacing: 2.5px;
   text-transform: uppercase; color: var(--green-bright); margin-bottom: 14px;
@@ -740,7 +942,80 @@ input:focus { outline: none; border-color: var(--green); }
 }
 .section-label::before { content: ''; display: block; width: 14px; height: 2px; background: var(--green-bright); }
 
-/* FIFA card styles */
+/* ── HERO LAYOUT ─────────────────────────────────────────── */
+.player-hero { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; padding: 32px 40px; border-bottom: 1px solid var(--border); }
+.player-hero-card { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.player-hero-stats { display: flex; flex-direction: column; gap: 12px; }
+
+/* ── STAT BARS ───────────────────────────────────────────── */
+.stat-row { display: flex; align-items: center; gap: 12px; }
+.stat-row--focus .stat-label { color: var(--amber, #ffb400); }
+.stat-label { width: 80px; font-size: 13px; color: var(--muted); font-family: var(--font-cond); text-transform: uppercase; letter-spacing: 1px; }
+.stat-bar { flex: 1; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
+.stat-bar-fill { height: 100%; background: var(--green-bright); border-radius: 4px; transition: width 0.4s ease; }
+.stat-row--focus .stat-bar-fill { background: #ffb400; }
+.stat-value-chip { width: 32px; text-align: right; font-size: 14px; font-weight: 700; }
+.stat-focus-arrow { font-size: 11px; color: #ffb400; }
+.stats-overall { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.overall-badge { font-family: var(--font-cond); font-size: 28px; font-weight: 800; }
+.stats-empty { padding: 24px 0; }
+
+/* ── TABS ────────────────────────────────────────────────── */
+.portal-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); padding: 0 40px; }
+.portal-tab { background: none; border: none; color: var(--muted); padding: 16px 20px; font-size: 14px; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; font-family: var(--font-body); }
+.portal-tab:hover { color: var(--white); }
+.portal-tab--active { color: var(--green-bright); border-bottom-color: var(--green-bright); }
+.tab-panel { padding: 32px 40px; }
+.tab-panel[hidden] { display: none !important; }
+
+/* ── FEEDBACK TAB ────────────────────────────────────────── */
+.feedback-card { background: rgba(37,160,76,0.06); border: 1px solid rgba(37,160,76,0.2); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+.feedback-quote { font-size: 16px; line-height: 1.7; color: var(--text); margin: 0 0 12px; }
+.feedback-meta { font-size: 12px; color: var(--muted); }
+
+/* ── PROGRESS HISTORY ────────────────────────────────────── */
+.hist-entry { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 10px; }
+.hist-date  { font-family: var(--font-cond); font-size: 12px; color: var(--muted); letter-spacing: 1px; margin-bottom: 8px; }
+.hist-overall { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-family: var(--font-cond); font-size: 13px; color: var(--muted); font-weight: 700; }
+.hist-badge { font-family: var(--font-cond); font-size: 16px; font-weight: 800; color: #fff; padding: 2px 10px; border-radius: 4px; }
+.hist-badge.card-bronze { background: #cd7f32; }
+.hist-badge.card-silver { background: #7a8a90; }
+.hist-badge.card-gold   { background: #c9a030; }
+.hist-badge.card-elite  { background: var(--green); }
+.hist-bars { display: flex; flex-direction: column; gap: 5px; }
+.hist-bar-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.hist-lbl { font-family: var(--font-cond); font-size: 11px; font-weight: 700; color: var(--muted); min-width: 28px; }
+.hist-bar-bg  { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.hist-bar-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.4s; }
+.hist-bv { font-family: var(--font-cond); font-weight: 700; font-size: 12px; color: var(--white); min-width: 22px; text-align: right; }
+
+/* ── MESSAGES TAB ────────────────────────────────────────── */
+.message-thread { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.msg { padding: 12px 16px; border-radius: var(--radius); max-width: 88%; }
+.msg--parent { background: rgba(37,160,76,0.12); border: 1px solid rgba(37,160,76,0.2); align-self: flex-end; }
+.msg--coach  { background: var(--card); border: 1px solid var(--border); align-self: flex-start; }
+.msg-meta { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
+.msg-author { font-family: var(--font-cond); font-size: 12px; font-weight: 700; color: var(--white); }
+.msg-date   { font-size: 11px; color: var(--muted); }
+.msg-body   { font-size: 14px; color: var(--muted); line-height: 1.6; }
+.message-compose textarea {
+  width: 100%; background: var(--black); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--white); font-family: var(--font-body);
+  font-size: 14px; padding: 12px 14px; resize: vertical; margin-bottom: 10px;
+}
+.message-compose textarea:focus { outline: none; border-color: var(--green); }
+
+/* ── DRILL CARDS ─────────────────────────────────────────── */
+.drills-section { margin-bottom: 32px; }
+.drills-section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.drills-section-title { font-family: var(--font-cond); font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.focus-badge { background: rgba(255,180,0,0.15); color: #ffb400; border: 1px solid rgba(255,180,0,0.3); padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+.drills-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.drill-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+.drill-card h4 { font-family: var(--font-cond); font-size: 15px; font-weight: 700; margin: 0 0 8px; color: var(--green-bright); }
+.drill-card p { font-size: 13px; color: var(--muted); line-height: 1.6; margin: 0; }
+
+/* ── FIFA CARD ───────────────────────────────────────────── */
 .fifa-card {
   width: 252px; border-radius: 16px; padding: 18px 16px 16px;
   box-shadow: 0 24px 56px rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.12);
@@ -766,56 +1041,7 @@ input:focus { outline: none; border-color: var(--green); }
 .fc-sv { display: block; font-family: var(--font-cond); font-size: 22px; font-weight: 800; color: rgba(255,255,255,0.92); }
 .fc-sl { display: block; font-family: var(--font-cond); font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.5); letter-spacing: 1.5px; }
 
-/* Coach notes */
-.coach-notes-card { padding: 16px; margin-top: 16px; width: 252px; }
-.cn-label { font-family: var(--font-cond); font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--green-bright); margin-bottom: 8px; }
-.coach-notes-card p { font-size: 13px; color: var(--muted); line-height: 1.65; }
-.cn-date { font-size: 11px; color: var(--muted); margin-top: 8px; opacity: 0.7; }
-
-/* Progress history */
-.progress-section { margin-bottom: 36px; }
-.hist-entry { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 10px; }
-.hist-date  { font-family: var(--font-cond); font-size: 12px; color: var(--muted); letter-spacing: 1px; margin-bottom: 8px; }
-.hist-overall { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-family: var(--font-cond); font-size: 13px; color: var(--muted); font-weight: 700; }
-.hist-badge { font-family: var(--font-cond); font-size: 16px; font-weight: 800; color: #fff; padding: 2px 10px; border-radius: 4px; }
-.hist-badge.card-bronze { background: #cd7f32; }
-.hist-badge.card-silver { background: #7a8a90; }
-.hist-badge.card-gold   { background: #c9a030; }
-.hist-badge.card-elite  { background: var(--green); }
-.hist-bars { display: flex; flex-direction: column; gap: 5px; }
-.hist-bar-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-.hist-lbl { font-family: var(--font-cond); font-size: 11px; font-weight: 700; color: var(--muted); min-width: 28px; }
-.hist-bar-bg  { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
-.hist-bar-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.4s; }
-.hist-bv { font-family: var(--font-cond); font-weight: 700; font-size: 12px; color: var(--white); min-width: 22px; text-align: right; }
-
-/* Messages */
-.messages-section { margin-bottom: 36px; }
-.message-thread { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
-.msg { padding: 12px 16px; border-radius: var(--radius); max-width: 88%; }
-.msg--parent { background: rgba(37,160,76,0.12); border: 1px solid rgba(37,160,76,0.2); align-self: flex-end; }
-.msg--coach  { background: var(--card); border: 1px solid var(--border); align-self: flex-start; }
-.msg-meta { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
-.msg-author { font-family: var(--font-cond); font-size: 12px; font-weight: 700; color: var(--white); }
-.msg-date   { font-size: 11px; color: var(--muted); }
-.msg-body   { font-size: 14px; color: var(--muted); line-height: 1.6; }
-.message-compose textarea {
-  width: 100%; background: var(--black); border: 1px solid var(--border);
-  border-radius: var(--radius); color: var(--white); font-family: var(--font-body);
-  font-size: 14px; padding: 12px 14px; resize: vertical; margin-bottom: 10px;
-}
-.message-compose textarea:focus { outline: none; border-color: var(--green); }
-
-/* Resources */
-.resources-links { display: flex; flex-direction: column; gap: 10px; }
-.resource-link {
-  display: flex; align-items: center; gap: 14px; padding: 16px;
-  text-decoration: none; transition: border-color 0.15s;
-}
-.resource-link:hover { border-color: var(--green); }
-.resource-link strong { display: block; font-family: var(--font-cond); font-size: 15px; font-weight: 700; margin-bottom: 2px; }
-.resource-link span { font-size: 12px; color: var(--muted); }
-
+/* ── MISC ────────────────────────────────────────────────── */
 .empty-msg { color: var(--muted); font-size: 14px; font-style: italic; }
 
 .pending-state {
@@ -826,12 +1052,12 @@ input:focus { outline: none; border-color: var(--green); }
 .pending-state p  { color: var(--muted); line-height: 1.65; font-size: 15px; }
 .pending-state strong { color: var(--white); }
 
-@media (max-width: 900px) {
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 800px) {
   .dash-header { padding: 16px 20px; }
-  .dash-body   { padding: 24px 20px 56px; }
   .player-tabs { padding: 0 20px; }
-  .content-grid { grid-template-columns: 1fr; }
-  .col-card { display: flex; flex-direction: column; align-items: center; }
-  .coach-notes-card { width: 100%; max-width: 252px; }
+  .player-hero { grid-template-columns: 1fr; padding: 24px 20px; }
+  .portal-tabs { padding: 0 20px; overflow-x: auto; }
+  .tab-panel { padding: 24px 20px; }
 }
 </style>

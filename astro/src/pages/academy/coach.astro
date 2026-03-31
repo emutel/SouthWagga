@@ -50,6 +50,7 @@ import Base from '../../layouts/Base.astro';
         </div>
         <div class="dash-header-actions">
           <span id="coach-name-display" class="coach-name"></span>
+          <a href="/coaching/sessions" target="_blank" class="btn btn-outline-green btn-sm">Session Plans ↗</a>
           <button class="btn btn-secondary btn-sm" id="c-logout-btn">Sign Out</button>
         </div>
       </div>
@@ -305,12 +306,22 @@ async function loadAllPlayers() {
 
   allPlayers = profiles.map(p => ({ profile: p, enrollment: p.enrollment }));
 
-  renderPlayerList(allPlayers);
+  // Batch-fetch all latest assessments to populate player list badges
+  const latestAssessments = await capi('/items/academy_assessments?filter[is_latest][_eq]=true&limit=200&fields=player,pace_raw,shooting_raw,passing_raw,dribbling_raw,defending_raw,physical_raw,assessment_date');
+  const assessMap = {};
+  (latestAssessments || []).forEach(a => { assessMap[String(a.player)] = a; });
+
+  renderPlayerList(allPlayers, assessMap);
   document.getElementById('c-loading').hidden = true;
   document.getElementById('c-content').hidden = false;
 }
 
-function renderPlayerList(players) {
+// Stored assessMap so renderPlayerList (called on search/re-render) can reuse it
+let _lastAssessMap = {};
+
+function renderPlayerList(players, assessMap) {
+  if (assessMap) _lastAssessMap = assessMap;
+  const aMap = _lastAssessMap;
   const list = document.getElementById('player-list');
   if (players.length === 0) {
     list.innerHTML = '<p class="empty-list-msg">No enrolled players found.</p>';
@@ -320,11 +331,36 @@ function renderPlayerList(players) {
     const enr = p.enrollment || {};
     const name = `${enr.player_first_name || ''} ${enr.player_last_name || ''}`.trim();
     const ag = enr.age_group ? enr.age_group.toUpperCase().replace('-','/') : '—';
+    const pos = (p.profile?.position || p.position || '').toUpperCase();
+    const posShort = { GOALKEEPER:'GK', DEFENDER:'CB', MIDFIELDER:'MID', FORWARD:'FWD' }[pos] || pos || 'MID';
     const originalIdx = allPlayers.indexOf(p);
+    const profileId = p.profile?.id || p.id;
+    const assess = aMap[String(profileId)];
+    let tierBadgeHtml = '';
+    let assessedHtml = '<div class="pi-assessed">Never assessed</div>';
+    if (assess) {
+      const ageKey = enr.age_group || 'u12-u13';
+      const posKey = p.profile?.position || p.position || 'midfielder';
+      const attrs = {
+        pac: normalize(assess.pace_raw, ageKey),
+        sho: normalize(assess.shooting_raw, ageKey),
+        pas: normalize(assess.passing_raw, ageKey),
+        dri: normalize(assess.dribbling_raw, ageKey),
+        def: normalize(assess.defending_raw, ageKey),
+        phy: normalize(assess.physical_raw, ageKey),
+      };
+      const ov = calcOverall(attrs, posKey);
+      const tierLabel = ov >= 90 ? 'ELITE' : ov >= 75 ? 'GOLD' : ov >= 60 ? 'SILVER' : 'BRONZE';
+      const tierKey   = tierLabel.toLowerCase();
+      tierBadgeHtml = `<span class="tier-badge tier-${tierKey}">${tierLabel} ${ov}</span>`;
+      const d = new Date(assess.assessment_date).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' });
+      assessedHtml = `<div class="pi-assessed">Last assessed: ${d}</div>`;
+    }
     return `
 <button class="player-item ${selectedIdx === originalIdx ? 'player-item--active' : ''}" data-idx="${originalIdx}">
   <div class="pi-name">${name}</div>
-  <div class="pi-meta"><span class="pi-ag">${ag}</span></div>
+  <div class="pi-sub">${ag}${posShort ? ' · ' + posShort : ''} ${tierBadgeHtml}</div>
+  ${assessedHtml}
 </button>`;
   }).join('');
 
@@ -358,13 +394,17 @@ async function selectPlayer(idx) {
   const name = `${enrollment?.player_first_name||''} ${enrollment?.player_last_name||''}`.trim();
   const ag = enrollment?.age_group || 'u12-u13';
 
+  const ageLabels = { 'u8-u11':'MiniRoos 8–11', 'u12-u13':'Youth U12–U13', 'u14-u16':'Youth U14–U16', 'u5-u7':'MiniRoos 5–7' };
+  const planLink = `<a href="/coaching/sessions${ag ? '?age='+ag : ''}" target="_blank" class="session-plan-link">View ${ageLabels[ag] || ''} Session Plans ↗</a>`;
+
   document.getElementById('detail-player-info').innerHTML = `
 <h2 class="detail-name">${name}</h2>
 <div class="detail-meta">
   <span class="detail-ag">${ag.toUpperCase().replace('-','/')}</span>
   <span class="detail-pos">${(profile.position||'midfielder').toUpperCase()}</span>
   ${profile.jersey_number ? `<span class="detail-jersey">#${profile.jersey_number}</span>` : ''}
-</div>`;
+</div>
+${planLink}`;
 
   // Set hidden fields
   document.getElementById('assess-player-id').value  = profile.id;
@@ -409,6 +449,12 @@ async function selectPlayer(idx) {
 }
 
 // ── SLIDER PREVIEW ────────────────────────────────────────────
+function normChipClass(v) {
+  if (v >= 65) return 'norm-green';
+  if (v >= 50) return 'norm-amber';
+  return 'norm-red';
+}
+
 function updateAllPreviews(ag) {
   ['pace','shooting','passing','dribbling','defending','physical'].forEach(attr => {
     const slider = document.getElementById(`slider-${attr}`);
@@ -416,9 +462,12 @@ function updateAllPreviews(ag) {
     const normEl = document.getElementById(`sn-${attr}`);
     if (!slider) return;
     const raw = parseInt(slider.value);
-    const norm = normalize(raw, ag);
-    if (valEl)  valEl.textContent  = raw;
-    if (normEl) normEl.textContent = `→ ${norm}`;
+    const normVal = normalize(raw, ag);
+    if (valEl)  valEl.textContent = raw;
+    if (normEl) {
+      normEl.textContent = normVal;
+      normEl.className = `slider-norm ${normChipClass(normVal)}`;
+    }
   });
 }
 
@@ -709,10 +758,29 @@ input:focus { outline: none; border-color: var(--green); }
 }
 .player-item:hover { background: rgba(37,160,76,0.06); }
 .player-item--active { background: rgba(37,160,76,0.1); border-left: 3px solid var(--green-bright); }
-.pi-name { font-family: var(--font-cond); font-size: 15px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
-.pi-meta { display: flex; gap: 8px; }
-.pi-ag   { font-size: 11px; font-family: var(--font-cond); color: var(--green-bright); font-weight: 700; letter-spacing: 1px; background: rgba(37,160,76,0.12); padding: 2px 7px; border-radius: 3px; }
+.pi-name     { font-family: var(--font-cond); font-size: 15px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
+.pi-meta     { display: flex; gap: 8px; }
+.pi-sub      { font-size: 11px; font-family: var(--font-cond); color: var(--muted); font-weight: 700; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 3px; }
+.pi-assessed { font-size: 11px; color: var(--muted); font-style: italic; }
+.pi-ag       { font-size: 11px; font-family: var(--font-cond); color: var(--green-bright); font-weight: 700; letter-spacing: 1px; background: rgba(37,160,76,0.12); padding: 2px 7px; border-radius: 3px; }
 .empty-list-msg { padding: 20px 16px; font-size: 13px; color: var(--muted); }
+
+/* Tier badges in player list */
+.tier-badge  { font-family: var(--font-cond); font-size: 10px; font-weight: 800; letter-spacing: 1px; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+.tier-elite  { background: #e5f4ff; color: #0088cc; }
+.tier-gold   { background: #fffde0; color: #cc8800; }
+.tier-silver { background: #f0f0f0; color: #666; }
+.tier-bronze { background: #fff4e0; color: #8b5000; }
+
+/* Normalised value chips on sliders */
+.slider-norm { padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 700; }
+.norm-green  { background: rgba(37,160,76,0.15); color: var(--green-bright); }
+.norm-amber  { background: rgba(255,180,0,0.15); color: #ffb400; }
+.norm-red    { background: rgba(220,50,50,0.15); color: #e05050; }
+
+/* Session plan link in player detail */
+.session-plan-link { display: inline-block; margin-top: 8px; font-family: var(--font-cond); font-size: 12px; font-weight: 700; color: var(--green-bright); text-decoration: none; letter-spacing: 0.5px; }
+.session-plan-link:hover { text-decoration: underline; }
 
 /* Player detail */
 .player-detail-col { overflow-y: auto; padding: 32px 40px 80px; }
@@ -762,7 +830,6 @@ input:focus { outline: none; border-color: var(--green); }
 .slider-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
 .slider-header label { font-family: var(--font-cond); font-size: 13px; font-weight: 700; flex: 1; }
 .slider-val  { font-family: var(--font-display); font-size: 22px; color: var(--white); letter-spacing: 1px; }
-.slider-norm { font-family: var(--font-cond); font-size: 12px; color: var(--green-bright); font-weight: 700; }
 input[type="range"] {
   width: 100%; accent-color: var(--green); height: 4px; cursor: pointer;
   background: linear-gradient(to right, var(--green) 0%, var(--green) 50%, var(--border) 50%, var(--border) 100%);

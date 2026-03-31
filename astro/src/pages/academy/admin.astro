@@ -498,6 +498,39 @@ async function openPlayerDetail(player) {
 
   const assessDate = assessment ? new Date(assessment.assessment_date).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : 'Never';
 
+  // Pre-fill slider values from latest assessment
+  const prefill = assessment ? {
+    pace:      assessment.pace_raw      || 5,
+    shooting:  assessment.shooting_raw  || 5,
+    passing:   assessment.passing_raw   || 5,
+    dribbling: assessment.dribbling_raw || 5,
+    defending: assessment.defending_raw || 5,
+    physical:  assessment.physical_raw  || 5,
+  } : { pace:5, shooting:5, passing:5, dribbling:5, defending:5, physical:5 };
+  const prefillNotes = assessment?.notes || '';
+  const adminAg  = enr.age_group || 'u12-u13';
+  const adminPos = player.position || 'midfielder';
+
+  function adminNorm(raw, ag) {
+    const AGS = { 'u8-u9':{min:30,max:72},'u10-u11':{min:35,max:78},'u12-u13':{min:40,max:83},'u14-u16':{min:45,max:90} };
+    const s = AGS[ag] || AGS['u12-u13'];
+    return Math.round(s.min + (raw - 1) * (s.max - s.min) / 9);
+  }
+  function adminNormChipClass(v) { return v >= 65 ? 'norm-green' : v >= 50 ? 'norm-amber' : 'norm-red'; }
+
+  function adminSliderField(attr, label, rawVal, ag) {
+    const normVal = adminNorm(rawVal, ag);
+    const chipCls = adminNormChipClass(normVal);
+    return `<div class="slider-field" data-attr="${attr}">
+      <div class="slider-header">
+        <label>${label}</label>
+        <span class="slider-val" id="asv-${attr}">${rawVal}</span>
+        <span class="slider-norm ${chipCls}" id="asn-${attr}">${normVal}</span>
+      </div>
+      <input type="range" min="1" max="10" value="${rawVal}" id="aslider-${attr}" class="admin-attr-slider" data-attr="${attr}">
+    </div>`;
+  }
+
   detail.innerHTML = `
 <div class="player-detail-inner">
   <div class="pd-header">
@@ -509,34 +542,61 @@ async function openPlayerDetail(player) {
         <span style="font-size:12px;color:var(--muted)">Last assessed: ${assessDate}</span>
       </div>
     </div>
-    <a href="/academy/coach" class="btn btn-outline-green btn-sm">Assess in Coach Dashboard →</a>
   </div>
 
   <div class="pd-body">
     <div class="pd-card-col">
       <div class="section-label">Player Card</div>
-      ${buildFIFACard(player, assessment)}
+      <div id="admin-card-preview">${buildFIFACard(player, assessment)}</div>
       ${assessment?.notes ? `<div class="coach-note-box card" style="margin-top:16px"><div class="label" style="margin-bottom:6px">Coach Notes</div><p>${assessment.notes}</p><div style="font-size:11px;color:var(--muted);margin-top:6px">${assessDate}</div></div>` : ''}
     </div>
-    <div class="pd-msg-col">
-      <div class="section-label">Messages</div>
-      <div class="thread-msgs" id="pd-msgs-${pid}">
-        ${messages.length === 0
-          ? '<p class="empty-msg">No messages yet.</p>'
-          : messages.map(m => `<div class="msg msg--${m.sender_role}">
-              <div class="msg-meta"><span class="msg-author">${m.sender_name||(m.sender_role==='coach'?'You':'Parent')}</span><span class="msg-date">${new Date(m.date_created).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</span></div>
-              <div class="msg-body">${m.body.replace(/\n/g,'<br>')}</div>
-            </div>`).join('')}
-      </div>
-      <form class="pd-reply-form" data-player="${pid}">
-        <textarea class="reply-input" rows="3" placeholder="Write a message to ${name}'s family…"></textarea>
-        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
-          <button type="submit" class="btn btn-primary btn-sm">Send →</button>
-          <span class="reply-status" hidden style="font-size:12px;color:red"></span>
+    <div class="pd-assess-msg-col">
+
+      <div class="detail-section" style="padding:24px 28px; border-bottom:1px solid var(--border)">
+        <div class="section-label" style="margin-bottom:16px">Assessment</div>
+        <input type="hidden" id="admin-assess-player-id" value="${pid}">
+        <input type="hidden" id="admin-assess-age-group" value="${adminAg}">
+        <input type="hidden" id="admin-assess-position" value="${adminPos}">
+        <div class="sliders-grid">
+          ${adminSliderField('pace',      'PAC — Pace',      prefill.pace,      adminAg)}
+          ${adminSliderField('shooting',  'SHO — Shooting',  prefill.shooting,  adminAg)}
+          ${adminSliderField('passing',   'PAS — Passing',   prefill.passing,   adminAg)}
+          ${adminSliderField('dribbling', 'DRI — Dribbling', prefill.dribbling, adminAg)}
+          ${adminSliderField('defending', 'DEF — Defending', prefill.defending, adminAg)}
+          ${adminSliderField('physical',  'PHY — Physical',  prefill.physical,  adminAg)}
         </div>
-      </form>
-    </div>
-  </div>
+        <div class="field" style="margin-top:16px">
+          <label>Coach Notes (visible to parents)</label>
+          <textarea id="admin-assess-notes" rows="4" placeholder="Write feedback for the parent and player...">${prefillNotes}</textarea>
+        </div>
+        <div class="form-actions" style="margin-top:12px">
+          <button id="admin-save-assess-btn" class="btn btn-primary">Save Assessment →</button>
+          <span id="admin-assess-saved" hidden style="color:var(--green-bright);margin-left:12px;font-family:var(--font-cond);font-weight:700">Saved!</span>
+          <span id="admin-assess-error" hidden style="color:#e05050;margin-left:12px;font-family:var(--font-cond);font-weight:700">Failed to save.</span>
+        </div>
+      </div>
+
+      <div style="padding:28px">
+        <div class="section-label">Messages</div>
+        <div class="thread-msgs" id="pd-msgs-${pid}">
+          ${messages.length === 0
+            ? '<p class="empty-msg">No messages yet.</p>'
+            : messages.map(m => `<div class="msg msg--${m.sender_role}">
+                <div class="msg-meta"><span class="msg-author">${m.sender_name||(m.sender_role==='coach'?'You':'Parent')}</span><span class="msg-date">${new Date(m.date_created).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</span></div>
+                <div class="msg-body">${m.body.replace(/\n/g,'<br>')}</div>
+              </div>`).join('')}
+        </div>
+        <form class="pd-reply-form" data-player="${pid}">
+          <textarea class="reply-input" rows="3" placeholder="Write a message to ${name}'s family…"></textarea>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+            <button type="submit" class="btn btn-primary btn-sm">Send →</button>
+            <span class="reply-status" hidden style="font-size:12px;color:red"></span>
+          </div>
+        </form>
+      </div>
+
+    </div><!-- end pd-assess-msg-col -->
+  </div><!-- end pd-body -->
 </div>`;
 
   // Scroll messages
@@ -583,6 +643,98 @@ async function openPlayerDetail(player) {
       status.textContent='Failed. Try again.'; status.hidden=false;
       btn.disabled=false; btn.textContent='Send →';
     }
+  });
+
+  // ── ADMIN ASSESSMENT SLIDERS ──────────────────────────────────
+  function adminUpdatePreviews() {
+    const ag = document.getElementById('admin-assess-age-group')?.value || 'u12-u13';
+    ['pace','shooting','passing','dribbling','defending','physical'].forEach(attr => {
+      const slider  = document.getElementById(`aslider-${attr}`);
+      const valEl   = document.getElementById(`asv-${attr}`);
+      const normEl  = document.getElementById(`asn-${attr}`);
+      if (!slider) return;
+      const raw = parseInt(slider.value);
+      const AGS = { 'u8-u9':{min:30,max:72},'u10-u11':{min:35,max:78},'u12-u13':{min:40,max:83},'u14-u16':{min:45,max:90} };
+      const s = AGS[ag] || AGS['u12-u13'];
+      const normVal = Math.round(s.min + (raw - 1) * (s.max - s.min) / 9);
+      if (valEl) valEl.textContent = raw;
+      if (normEl) {
+        normEl.textContent = normVal;
+        normEl.className = `slider-norm ${normVal >= 65 ? 'norm-green' : normVal >= 50 ? 'norm-amber' : 'norm-red'}`;
+      }
+    });
+    // Update card preview
+    const ag2   = ag;
+    const pos2  = document.getElementById('admin-assess-position')?.value || 'midfielder';
+    const rawAttrs = {
+      pace:      parseInt(document.getElementById('aslider-pace')?.value      || 5),
+      shooting:  parseInt(document.getElementById('aslider-shooting')?.value  || 5),
+      passing:   parseInt(document.getElementById('aslider-passing')?.value   || 5),
+      dribbling: parseInt(document.getElementById('aslider-dribbling')?.value || 5),
+      defending: parseInt(document.getElementById('aslider-defending')?.value || 5),
+      physical:  parseInt(document.getElementById('aslider-physical')?.value  || 5),
+    };
+    const cardPreview = document.getElementById('admin-card-preview');
+    if (cardPreview) {
+      cardPreview.innerHTML = buildFIFACard(player, {
+        pace_raw:      rawAttrs.pace,
+        shooting_raw:  rawAttrs.shooting,
+        passing_raw:   rawAttrs.passing,
+        dribbling_raw: rawAttrs.dribbling,
+        defending_raw: rawAttrs.defending,
+        physical_raw:  rawAttrs.physical,
+      });
+    }
+  }
+
+  document.querySelectorAll('.admin-attr-slider').forEach(slider => {
+    slider.addEventListener('input', adminUpdatePreviews);
+  });
+
+  // ── ADMIN SAVE ASSESSMENT ─────────────────────────────────────
+  document.getElementById('admin-save-assess-btn')?.addEventListener('click', async () => {
+    const saveBtn  = document.getElementById('admin-save-assess-btn');
+    const savedEl  = document.getElementById('admin-assess-saved');
+    const errorEl  = document.getElementById('admin-assess-error');
+    savedEl.hidden = true; errorEl.hidden = true;
+    saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+
+    const playerId = document.getElementById('admin-assess-player-id').value;
+    const ag       = document.getElementById('admin-assess-age-group').value;
+    const pos      = document.getElementById('admin-assess-position').value;
+    const user     = ALS.user;
+
+    // Mark existing latest assessments as not-latest
+    const existing = await aapi(`/items/academy_assessments?filter[player][_eq]=${playerId}&filter[is_latest][_eq]=true&fields=id`);
+    if (existing && existing.length > 0) {
+      await Promise.all(existing.map(a =>
+        aapi(`/items/academy_assessments/${a.id}`, { method:'PATCH', body:JSON.stringify({ is_latest: false }) })
+      ));
+    }
+
+    const payload = {
+      player:            parseInt(playerId) || playerId,
+      assessed_by:       `${user?.first_name||''} ${user?.last_name||''}`.trim() || 'Technical Director',
+      assessment_date:   new Date().toISOString().split('T')[0],
+      age_group_at_time: ag,
+      pace_raw:          parseInt(document.getElementById('aslider-pace').value),
+      shooting_raw:      parseInt(document.getElementById('aslider-shooting').value),
+      passing_raw:       parseInt(document.getElementById('aslider-passing').value),
+      dribbling_raw:     parseInt(document.getElementById('aslider-dribbling').value),
+      defending_raw:     parseInt(document.getElementById('aslider-defending').value),
+      physical_raw:      parseInt(document.getElementById('aslider-physical').value),
+      notes:             document.getElementById('admin-assess-notes').value.trim() || null,
+      is_latest:         true,
+    };
+
+    const result = await aapi('/items/academy_assessments', { method:'POST', body:JSON.stringify(payload) });
+    if (result) {
+      savedEl.hidden = false;
+      setTimeout(() => { savedEl.hidden = true; }, 3000);
+    } else {
+      errorEl.hidden = false;
+    }
+    saveBtn.disabled = false; saveBtn.textContent = 'Save Assessment →';
   });
 }
 
@@ -834,7 +986,21 @@ document.getElementById('a-logout-btn').addEventListener('click', () => {
 .pd-body { display:grid; grid-template-columns:auto 1fr; gap:0; }
 .pd-card-col { padding:28px 28px; border-right:1px solid var(--border); min-width:220px; }
 .pd-msg-col  { padding:28px 36px; }
+.pd-assess-msg-col { overflow-y:auto; }
 .coach-note-box { padding:16px; }
+
+/* ── ASSESSMENT SLIDERS (admin) ── */
+.sliders-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.slider-field { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:4px; padding:14px 16px; }
+.slider-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+.slider-header label { font-family:var(--font-cond); font-size:13px; font-weight:700; flex:1; }
+.slider-val { font-family:var(--font-cond); font-size:22px; font-weight:900; color:var(--white); line-height:1; }
+.slider-norm { padding:2px 8px; border-radius:10px; font-size:12px; font-weight:700; font-family:var(--font-cond); }
+.norm-green  { background:rgba(37,160,76,0.15); color:var(--green-bright); }
+.norm-amber  { background:rgba(255,180,0,0.15); color:#ffb400; }
+.norm-red    { background:rgba(220,50,50,0.15); color:#e05050; }
+.admin-attr-slider { width:100%; accent-color:var(--green-bright); cursor:pointer; }
+.form-actions { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
 
 /* ── FIFA CARD ── */
 .fifa-card { width:160px; border-radius:10px; overflow:hidden; padding:12px 10px 10px; box-shadow:0 4px 20px rgba(0,0,0,0.5); }
@@ -881,6 +1047,7 @@ document.getElementById('a-logout-btn').addEventListener('click', () => {
   .split-pane { grid-template-columns:1fr; }
   .split-list { max-height:300px; border-right:none; border-bottom:1px solid var(--border); }
   .pd-body { grid-template-columns:1fr; }
+  .sliders-grid { grid-template-columns:1fr; }
   .pd-card-col { border-right:none; border-bottom:1px solid var(--border); display:flex; flex-direction:column; align-items:center; }
   .topbar-inner { padding:12px 16px; }
   .tab-nav { padding:0 16px; }
