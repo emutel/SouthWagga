@@ -1,6 +1,6 @@
 ---
 // src/pages/academy/admin.astro
-// Technical Director admin panel — Directus administrator role only
+// Technical Director admin panel — split-pane layout, no modals
 import Base from '../../layouts/Base.astro';
 ---
 <Base
@@ -50,7 +50,6 @@ import Base from '../../layouts/Base.astro';
           <button class="btn btn-secondary btn-sm" id="a-logout-btn">Sign Out</button>
         </div>
       </div>
-      <!-- Tab nav -->
       <div class="tab-nav">
         <button class="tab-btn tab-btn--active" data-tab="enrollments">Enrollments</button>
         <button class="tab-btn" data-tab="players">Players</button>
@@ -59,54 +58,55 @@ import Base from '../../layouts/Base.astro';
     </div>
 
     <div class="admin-body">
-      <div id="admin-loading" class="center-msg"><div class="spinner"></div><p>Loading…</p></div>
+      <div id="admin-loading" class="center-msg" hidden><div class="spinner"></div><p>Loading…</p></div>
 
       <!-- ── ENROLLMENTS TAB ─────────────────────── -->
       <div id="tab-enrollments" class="tab-panel">
-        <div class="panel-header">
-          <h2>Enrollments</h2>
-          <div class="filter-row">
-            <button class="filter-btn filter-btn--active" data-status="pending">Pending</button>
-            <button class="filter-btn" data-status="accepted">Accepted</button>
-            <button class="filter-btn" data-status="enrolled">Enrolled</button>
-            <button class="filter-btn" data-status="all">All</button>
+        <div class="split-pane">
+          <div class="split-list" id="enr-list-col">
+            <div class="list-header">
+              <div class="filter-row">
+                <button class="filter-btn filter-btn--active" data-status="pending">Pending</button>
+                <button class="filter-btn" data-status="accepted">Accepted</button>
+                <button class="filter-btn" data-status="enrolled">Enrolled</button>
+                <button class="filter-btn" data-status="all">All</button>
+              </div>
+            </div>
+            <div id="enrollments-list"></div>
           </div>
-        </div>
-        <div id="enrollments-list"></div>
-      </div>
-
-      <!-- ── PLAYERS TAB ─────────────────────────── -->
-      <div id="tab-players" class="tab-panel" hidden>
-        <div class="panel-header">
-          <h2>Players</h2>
-          <input type="text" id="player-search" placeholder="Search by name…" class="search-input">
-        </div>
-        <div id="players-grid"></div>
-      </div>
-
-      <!-- ── MESSAGES TAB ────────────────────────── -->
-      <div id="tab-messages" class="tab-panel" hidden>
-        <div class="messages-layout">
-          <div class="thread-list" id="thread-list">
-            <div class="thread-list-header">All Conversations</div>
-          </div>
-          <div class="thread-detail" id="thread-detail">
-            <div class="center-msg" style="height:300px">
-              <p style="color:var(--muted)">Select a conversation</p>
+          <div class="split-detail" id="enr-detail">
+            <div class="detail-placeholder">
+              <p>Select an enrollment to view details</p>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- ── ENROLLMENT DETAIL MODAL ─────────────────── -->
-    <div id="enr-modal" class="modal-overlay" style="display:none">
-      <div class="modal-box card">
-        <div class="modal-header">
-          <h3 id="modal-title">Enrollment</h3>
-          <button class="modal-close" id="modal-close">✕</button>
+      <!-- ── PLAYERS TAB ─────────────────────────── -->
+      <div id="tab-players" class="tab-panel" hidden>
+        <div class="split-pane">
+          <div class="split-list" id="player-list-col">
+            <div class="list-header">
+              <input type="text" id="player-search" placeholder="Search by name…" class="search-input">
+            </div>
+            <div id="players-list"></div>
+          </div>
+          <div class="split-detail" id="player-detail">
+            <div class="detail-placeholder">
+              <p>Select a player to view their card and messages</p>
+            </div>
+          </div>
         </div>
-        <div id="modal-body"></div>
+      </div>
+
+      <!-- ── MESSAGES TAB ────────────────────────── -->
+      <div id="tab-messages" class="tab-panel" hidden>
+        <div class="split-pane">
+          <div class="split-list" id="thread-list"></div>
+          <div class="split-detail" id="thread-detail">
+            <div class="detail-placeholder"><p>Select a conversation</p></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -132,7 +132,11 @@ async function aapi(path, opts = {}) {
   try {
     const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ALS.token}` };
     const res = await fetch(`${DURL}${path}`, { ...opts, headers: { ...headers, ...(opts.headers||{}) } });
-    if (res.status === 401) { showLogin(); return null; }
+    if (res.status === 401) {
+      const refreshed = await tryRefresh();
+      if (refreshed) return aapi(path, opts);
+      showLogin(); return null;
+    }
     if (res.status === 204) return { ok: true };
     if (!res.ok) return null;
     const json = await res.json();
@@ -140,10 +144,25 @@ async function aapi(path, opts = {}) {
   } catch(e) { console.error('API error', path, e); return null; }
 }
 
+async function tryRefresh() {
+  if (!ALS.refresh) return false;
+  try {
+    const res = await fetch(`${DURL}/auth/refresh`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: ALS.refresh, mode: 'json' }),
+    });
+    if (!res.ok) return false;
+    const { data } = await res.json();
+    ALS.token = data.access_token;
+    ALS.refresh = data.refresh_token;
+    return true;
+  } catch { return false; }
+}
+
 // ── FIFA CARD UTILS ───────────────────────────────────────────
 const AGE_SCALE = { 'u8-u9':{min:30,max:72},'u10-u11':{min:35,max:78},'u12-u13':{min:40,max:83},'u14-u16':{min:45,max:90} };
 function norm(raw, ag) { const s=AGE_SCALE[ag]||AGE_SCALE['u12-u13']; return Math.round(s.min+(raw-1)*(s.max-s.min)/9); }
-function overall(a, ag, pos) {
+function calcOverall(a, ag, pos) {
   const attrs = { pac:norm(a.pace_raw,ag),sho:norm(a.shooting_raw,ag),pas:norm(a.passing_raw,ag),dri:norm(a.dribbling_raw,ag),def:norm(a.defending_raw,ag),phy:norm(a.physical_raw,ag) };
   const isAtk = ['forward','midfielder'].includes(pos);
   const ov = isAtk ? Math.round((attrs.dri*2+attrs.sho*2+attrs.pac+attrs.pas+attrs.phy)/7)
@@ -151,6 +170,39 @@ function overall(a, ag, pos) {
   return { ov, attrs };
 }
 function tierClass(ov) { return ov>=90?'card-elite':ov>=75?'card-gold':ov>=60?'card-silver':'card-bronze'; }
+function tierName(ov)  { return ov>=90?'Elite':ov>=75?'Gold':ov>=60?'Silver':'Bronze'; }
+function posLabel(p)   { return {goalkeeper:'GK',defender:'CB',midfielder:'MID',forward:'FWD'}[p]||'MID'; }
+
+function buildFIFACard(profile, assessment) {
+  const ag  = (profile.enrollment?.age_group || 'u12-u13');
+  const pos = profile.position || 'midfielder';
+  const enr = profile.enrollment || {};
+  const name = `${enr.player_first_name||''} ${(enr.player_last_name||'')[0]||''}.`.trim();
+  const agLabel = {'u8-u9':'U9','u10-u11':'U11','u12-u13':'U13','u14-u16':'U16'}[ag]||ag.toUpperCase();
+
+  if (!assessment) {
+    return `<div class="fifa-card card-bronze unrated">
+      <div class="fc-header"><div class="fc-left"><div class="fc-overall">—</div><div class="fc-pos">${posLabel(pos)}</div><div class="fc-tier">Unrated</div></div></div>
+      <div class="fc-name">${name.toUpperCase()}</div>
+      <div class="fc-age">${agLabel} · Warriors FC</div>
+      <div class="fc-no-assess">Not yet assessed</div>
+    </div>`;
+  }
+  const { ov, attrs } = calcOverall(assessment, ag, pos);
+  const tc = tierClass(ov);
+  return `<div class="fifa-card ${tc}">
+    <div class="fc-header">
+      <div class="fc-left"><div class="fc-overall">${ov}</div><div class="fc-pos">${posLabel(pos)}</div><div class="fc-tier">${tierName(ov)}</div></div>
+      <div class="fc-badge"><svg viewBox="0 0 40 40" width="32" height="32" fill="none"><polygon points="20,3 37,12 37,28 20,37 3,28 3,12" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/><text x="20" y="26" text-anchor="middle" font-size="13" font-weight="bold" fill="rgba(255,255,255,0.7)" font-family="Arial">W</text></svg></div>
+    </div>
+    <div class="fc-photo"><svg viewBox="0 0 80 100" fill="none" width="70" height="88"><circle cx="40" cy="26" r="18" fill="rgba(255,255,255,0.2)"/><path d="M8 95 C8 65 20 54 40 52 C60 54 72 65 72 95" fill="rgba(255,255,255,0.2)"/></svg></div>
+    <div class="fc-name">${name.toUpperCase()}</div>
+    <div class="fc-age">${agLabel} · Warriors FC</div>
+    <div class="fc-stats">
+      ${[['PAC',attrs.pac],['SHO',attrs.sho],['PAS',attrs.pas],['DRI',attrs.dri],['DEF',attrs.def],['PHY',attrs.phy]].map(([l,v])=>`<div class="fc-stat"><span class="fc-sv">${v}</span><span class="fc-sl">${l}</span></div>`).join('')}
+    </div>
+  </div>`;
+}
 
 // ── STATE ─────────────────────────────────────────────────────
 let allEnrollments = [];
@@ -158,6 +210,8 @@ let allPlayers     = [];
 let allMessages    = [];
 let currentFilter  = 'pending';
 let activeTab      = 'enrollments';
+let selectedEnrId  = null;
+let selectedPlayerId = null;
 
 // ── VIEWS ─────────────────────────────────────────────────────
 function showLogin() { ALS.clear(); document.getElementById('view-login').hidden=false; document.getElementById('view-dashboard').hidden=true; }
@@ -171,7 +225,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     activeTab = btn.dataset.tab;
     document.querySelectorAll('.tab-panel').forEach(p => p.hidden = true);
     document.getElementById(`tab-${activeTab}`).hidden = false;
-    if (activeTab === 'messages') { ensurePlayersLoaded().then(() => { if (allMessages.length === 0) loadMessages(); else renderThreadList(); }); }
+    if (activeTab === 'messages') ensureMessagesLoaded();
   });
 });
 
@@ -181,6 +235,8 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('filter-btn--active'));
     btn.classList.add('filter-btn--active');
     currentFilter = btn.dataset.status;
+    selectedEnrId = null;
+    document.getElementById('enr-detail').innerHTML = '<div class="detail-placeholder"><p>Select an enrollment to view details</p></div>';
     renderEnrollments();
   });
 });
@@ -198,124 +254,91 @@ async function loadAll() {
     allPlayers     = players     || [];
     renderStats();
     renderEnrollments();
-    renderPlayers();
-    loadEl.hidden = true;
+    renderPlayerList();
   } catch(err) {
     console.error('loadAll error:', err);
-    loadEl.innerHTML = '<p style="color:var(--muted);padding:32px;text-align:center">Failed to load data. Please refresh or sign out and back in.</p>';
+    document.getElementById('enrollments-list').innerHTML =
+      '<p style="padding:32px;color:var(--muted);text-align:center">Error loading data — please refresh or sign out and back in.</p>';
+  } finally {
+    loadEl.hidden = true;
   }
 }
 
 // ── STATS BAR ─────────────────────────────────────────────────
 function renderStats() {
   const pending  = allEnrollments.filter(e => e.status === 'pending').length;
-  const enrolled = allEnrollments.filter(e => e.status === 'enrolled' || e.status === 'accepted').length;
+  const active   = allEnrollments.filter(e => e.status === 'enrolled' || e.status === 'accepted').length;
   document.getElementById('stats-bar').innerHTML = `
     <span class="stat-chip stat-chip--warn">${pending} pending</span>
-    <span class="stat-chip stat-chip--ok">${enrolled} active</span>
+    <span class="stat-chip stat-chip--ok">${active} active</span>
     <span class="stat-chip">${allPlayers.length} profiles</span>`;
 }
 
-// ── ENROLLMENTS ───────────────────────────────────────────────
+// ── ENROLLMENTS LIST ──────────────────────────────────────────
 function renderEnrollments() {
   const list = document.getElementById('enrollments-list');
   const filtered = currentFilter === 'all' ? allEnrollments : allEnrollments.filter(e => e.status === currentFilter);
-
   if (!filtered.length) {
-    list.innerHTML = `<p class="empty-msg" style="padding:32px">No ${currentFilter === 'all' ? '' : currentFilter + ' '}enrollments.</p>`;
+    list.innerHTML = `<p class="empty-msg">No ${currentFilter === 'all' ? '' : currentFilter + ' '}enrollments.</p>`;
     return;
   }
-
   list.innerHTML = filtered.map(e => {
-    const d = e.date_created ? new Date(e.date_created).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : '—';
-    const hasProfile = allPlayers.some(p => (p.enrollment?.id || p.enrollment) === e.id);
     const statusClass = { pending:'status-pending', accepted:'status-accepted', enrolled:'status-enrolled', inactive:'status-inactive' }[e.status] || '';
-    return `
-<div class="enr-row card" data-id="${e.id}">
-  <div class="enr-main">
-    <div class="enr-player"><strong>${e.player_first_name} ${e.player_last_name}</strong> <span class="age-chip">${(e.age_group||'').toUpperCase().replace('-','/')}</span></div>
-    <div class="enr-parent">${e.parent_first_name} ${e.parent_last_name} · ${e.parent_email}</div>
-    <div class="enr-date">Submitted ${d}</div>
-  </div>
-  <div class="enr-actions">
-    <span class="status-badge ${statusClass}">${e.status}</span>
-    ${e.status === 'pending' ? `<button class="btn btn-primary btn-sm" data-action="accept" data-id="${e.id}">Accept →</button>` : ''}
-    ${e.status === 'accepted' && !hasProfile ? `<button class="btn btn-outline-green btn-sm" data-action="create-profile" data-id="${e.id}">Create Profile →</button>` : ''}
-    ${e.status === 'accepted' && hasProfile ? `<button class="btn btn-secondary btn-sm" data-action="enroll" data-id="${e.id}">Mark Enrolled</button>` : ''}
-    <button class="btn btn-secondary btn-sm" data-action="view" data-id="${e.id}">View</button>
-  </div>
-</div>`;
+    const active = String(e.id) === String(selectedEnrId) ? 'list-item--active' : '';
+    return `<div class="list-item ${active}" data-id="${e.id}">
+      <div class="li-name">${e.player_first_name} ${e.player_last_name} <span class="status-badge ${statusClass}">${e.status}</span></div>
+      <div class="li-sub">${e.parent_first_name} ${e.parent_last_name} · <span class="age-chip">${(e.age_group||'').toUpperCase().replace('-','/')}</span></div>
+    </div>`;
   }).join('');
-
-  list.querySelectorAll('[data-action]').forEach(btn => {
-    btn.addEventListener('click', () => handleEnrAction(btn.dataset.action, btn.dataset.id));
+  list.querySelectorAll('.list-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const enr = allEnrollments.find(e => String(e.id) === String(item.dataset.id));
+      if (enr) openEnrollmentDetail(enr);
+    });
   });
 }
 
-async function handleEnrAction(action, id) {
-  const enr = allEnrollments.find(e => String(e.id) === String(id));
-  if (!enr) return;
-
-  if (action === 'view') {
-    openEnrollmentModal(enr);
-    return;
-  }
-  if (action === 'accept') {
-    await aapi(`/items/academy_enrollments/${id}`, { method: 'PATCH', body: JSON.stringify({ status: 'accepted' }) });
-    enr.status = 'accepted';
-    renderStats(); renderEnrollments();
-    openEnrollmentModal({ ...enr, status: 'accepted' });
-    return;
-  }
-  if (action === 'enroll') {
-    await aapi(`/items/academy_enrollments/${id}`, { method: 'PATCH', body: JSON.stringify({ status: 'enrolled' }) });
-    enr.status = 'enrolled';
-    renderStats(); renderEnrollments();
-    return;
-  }
-  if (action === 'create-profile') {
-    openCreateProfileModal(enr);
-    return;
-  }
-}
-
-// ── ENROLLMENT MODAL ──────────────────────────────────────────
-function openEnrollmentModal(enr) {
-  const hasProfile = allPlayers.some(p => (p.enrollment?.id || p.enrollment) === enr.id);
-  document.getElementById('modal-title').textContent = `${enr.player_first_name} ${enr.player_last_name}`;
-
+function openEnrollmentDetail(enr) {
+  selectedEnrId = enr.id;
+  renderEnrollments(); // refresh active state
+  const hasProfile = allPlayers.some(p => String(p.enrollment?.id || p.enrollment) === String(enr.id));
   const dob = enr.player_dob ? new Date(enr.player_dob).toLocaleDateString('en-AU') : '—';
+  const d   = enr.date_created ? new Date(enr.date_created).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : '—';
   const statusClass = { pending:'status-pending', accepted:'status-accepted', enrolled:'status-enrolled' }[enr.status] || '';
 
-  document.getElementById('modal-body').innerHTML = `
-<div class="modal-section">
-  <span class="status-badge ${statusClass}" style="margin-bottom:16px;display:inline-block">${enr.status}</span>
+  document.getElementById('enr-detail').innerHTML = `
+<div class="detail-section">
+  <div class="detail-title-row">
+    <h2>${enr.player_first_name} ${enr.player_last_name}</h2>
+    <span class="status-badge ${statusClass}">${enr.status}</span>
+  </div>
   <div class="detail-grid">
-    <div class="detail-row"><span>Player</span><strong>${enr.player_first_name} ${enr.player_last_name}</strong></div>
-    <div class="detail-row"><span>DOB</span><strong>${dob}</strong></div>
     <div class="detail-row"><span>Age Group</span><strong>${(enr.age_group||'—').toUpperCase().replace('-','/')}</strong></div>
+    <div class="detail-row"><span>Date of Birth</span><strong>${dob}</strong></div>
     <div class="detail-row"><span>Parent</span><strong>${enr.parent_first_name} ${enr.parent_last_name}</strong></div>
-    <div class="detail-row"><span>Email</span><strong>${enr.parent_email}</strong></div>
+    <div class="detail-row"><span>Email</span><strong><a href="mailto:${enr.parent_email}" style="color:var(--green-bright)">${enr.parent_email}</a></strong></div>
     <div class="detail-row"><span>Phone</span><strong>${enr.parent_phone||'—'}</strong></div>
+    <div class="detail-row"><span>Submitted</span><strong>${d}</strong></div>
     ${enr.previous_experience ? `<div class="detail-row detail-row--full"><span>Experience</span><p>${enr.previous_experience}</p></div>` : ''}
-    ${enr.medical_notes ? `<div class="detail-row detail-row--full"><span>Medical Notes</span><p class="medical-note">${enr.medical_notes}</p></div>` : ''}
+    ${enr.medical_notes       ? `<div class="detail-row detail-row--full medical-row"><span>⚠ Medical</span><p>${enr.medical_notes}</p></div>` : ''}
   </div>
 </div>
 
 ${enr.status === 'pending' ? `
-<div class="modal-actions">
-  <button class="btn btn-primary" data-modal-action="accept" data-id="${enr.id}">Accept Application →</button>
-  <button class="btn btn-secondary" data-modal-action="reject" data-id="${enr.id}">Reject</button>
+<div class="detail-section detail-actions-section">
+  <button class="btn btn-primary" id="btn-accept-${enr.id}">Accept Application →</button>
+  <button class="btn btn-secondary" id="btn-reject-${enr.id}">Reject</button>
+  <span id="action-msg-${enr.id}" class="action-msg" hidden></span>
 </div>` : ''}
 
 ${enr.status === 'accepted' && !hasProfile ? `
-<div class="modal-section">
-  <div class="label" style="margin-bottom:16px">Next Step — Create Player Profile</div>
-  <form id="inline-profile-form">
-    <div class="field-row">
+<div class="detail-section">
+  <div class="label" style="margin-bottom:16px">Create Player Profile</div>
+  <form id="profile-form-${enr.id}" class="profile-form">
+    <div class="form-row">
       <div class="field">
         <label>Position</label>
-        <select id="ip-position">
+        <select id="ip-position-${enr.id}">
           <option value="midfielder">Midfielder</option>
           <option value="forward">Forward</option>
           <option value="defender">Defender</option>
@@ -323,220 +346,283 @@ ${enr.status === 'accepted' && !hasProfile ? `
         </select>
       </div>
       <div class="field">
-        <label>Jersey Number (optional)</label>
-        <input type="number" id="ip-jersey" min="1" max="99" placeholder="e.g. 10">
+        <label>Jersey # (optional)</label>
+        <input type="number" id="ip-jersey-${enr.id}" min="1" max="99" placeholder="e.g. 10">
       </div>
     </div>
     <div class="field">
-      <label>Internal Notes (not visible to parents)</label>
-      <textarea id="ip-notes" rows="2" placeholder="Any notes for coaches…"></textarea>
+      <label>Internal Notes</label>
+      <textarea id="ip-notes-${enr.id}" rows="2" placeholder="Coach notes (not visible to parents)…"></textarea>
     </div>
-    <div class="modal-actions">
+    <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
       <button type="submit" class="btn btn-primary">Create Profile →</button>
-      <span id="ip-msg" hidden style="font-family:var(--font-cond);font-size:13px;color:var(--green-bright);font-weight:700"></span>
+      <span id="profile-msg-${enr.id}" class="action-msg" hidden></span>
     </div>
   </form>
 </div>
-<div class="invite-instructions">
+<div class="detail-section invite-section">
   <div class="label" style="margin-bottom:10px">Then — Invite Parent to Portal</div>
-  <ol>
-    <li>Go to <a href="${DURL}/admin/users" target="_blank" rel="noopener">Directus → Users ↗</a></li>
+  <ol class="invite-steps">
+    <li>Go to <a href="${DURL}/admin/users" target="_blank" rel="noopener" style="color:var(--green-bright)">Directus → Users ↗</a></li>
     <li>Click <strong>Invite Users</strong></li>
     <li>Enter <strong>${enr.parent_email}</strong></li>
     <li>Set role to <strong>parent</strong></li>
-    <li>Click Send — parent receives login email</li>
+    <li>Send — parent receives login email</li>
   </ol>
 </div>` : ''}
 
 ${enr.status === 'accepted' && hasProfile ? `
-<div class="modal-section">
-  <p style="color:var(--green-bright);font-family:var(--font-cond);font-weight:700">✓ Player profile created</p>
-  <div class="invite-instructions" style="margin-top:12px">
-    <div class="label" style="margin-bottom:10px">Invite Parent to Portal</div>
-    <ol>
-      <li>Go to <a href="${DURL}/admin/users" target="_blank" rel="noopener">Directus → Users ↗</a></li>
-      <li>Click <strong>Invite Users</strong></li>
-      <li>Enter <strong>${enr.parent_email}</strong></li>
-      <li>Set role to <strong>parent</strong></li>
-      <li>Click Send</li>
+<div class="detail-section">
+  <p style="color:var(--green-bright);font-family:var(--font-cond);font-weight:700;margin-bottom:12px">✓ Player profile created</p>
+  <button class="btn btn-primary" id="btn-enroll-${enr.id}">Mark as Enrolled →</button>
+  <span id="action-msg-${enr.id}" class="action-msg" hidden></span>
+  <div class="invite-section" style="margin-top:20px">
+    <div class="label" style="margin-bottom:10px">Invite Parent (if not done)</div>
+    <ol class="invite-steps">
+      <li>Go to <a href="${DURL}/admin/users" target="_blank" rel="noopener" style="color:var(--green-bright)">Directus → Users ↗</a></li>
+      <li>Click <strong>Invite Users</strong> → <strong>${enr.parent_email}</strong> → role: <strong>parent</strong></li>
     </ol>
   </div>
+</div>` : ''}
+
+${enr.status === 'enrolled' ? `
+<div class="detail-section">
+  <p style="color:var(--green-bright);font-family:var(--font-cond);font-weight:700">✓ Enrolled</p>
 </div>` : ''}`;
 
-  // Bind modal actions
-  document.querySelectorAll('[data-modal-action]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      if (btn.dataset.modalAction === 'accept') {
-        await aapi(`/items/academy_enrollments/${btn.dataset.id}`, { method:'PATCH', body:JSON.stringify({status:'accepted'}) });
-        enr.status = 'accepted';
-        renderStats(); renderEnrollments();
-        openEnrollmentModal(enr);
-      }
-      if (btn.dataset.modalAction === 'reject') {
-        if (!confirm(`Reject ${enr.player_first_name}'s application?`)) return;
-        await aapi(`/items/academy_enrollments/${btn.dataset.id}`, { method:'PATCH', body:JSON.stringify({status:'inactive'}) });
-        enr.status = 'inactive';
-        renderStats(); renderEnrollments();
-        closeModal();
-      }
-    });
+  // Bind accept/reject
+  document.getElementById(`btn-accept-${enr.id}`)?.addEventListener('click', async () => {
+    const msg = document.getElementById(`action-msg-${enr.id}`);
+    const btn = document.getElementById(`btn-accept-${enr.id}`);
+    btn.disabled = true; btn.textContent = 'Accepting…';
+    const result = await aapi(`/items/academy_enrollments/${enr.id}`, { method:'PATCH', body:JSON.stringify({status:'accepted'}) });
+    if (result) {
+      enr.status = 'accepted';
+      const idx = allEnrollments.findIndex(e => String(e.id) === String(enr.id));
+      if (idx > -1) allEnrollments[idx].status = 'accepted';
+      renderStats(); renderEnrollments();
+      openEnrollmentDetail(enr);
+    } else { btn.disabled=false; btn.textContent='Accept Application →'; msg.textContent='Failed. Try again.'; msg.hidden=false; }
   });
 
-  // Inline profile form
-  const profileForm = document.getElementById('inline-profile-form');
-  if (profileForm) {
-    profileForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const msgEl = document.getElementById('ip-msg');
-      const payload = {
-        enrollment:     enr.id,
-        position:       document.getElementById('ip-position').value,
-        jersey_number:  parseInt(document.getElementById('ip-jersey').value) || null,
-        notes:          document.getElementById('ip-notes').value.trim() || null,
-      };
-      const result = await aapi('/items/academy_player_profiles', { method:'POST', body:JSON.stringify(payload) });
-      if (result) {
-        allPlayers.push({ id: result.id || 'new', enrollment: { id: enr.id, ...enr }, ...payload });
-        msgEl.textContent = 'Profile created!'; msgEl.hidden = false;
-        renderPlayers();
-        setTimeout(() => openEnrollmentModal(enr), 1000);
-      } else {
-        msgEl.textContent = 'Failed — try again.'; msgEl.hidden = false;
-      }
-    });
-  }
+  document.getElementById(`btn-reject-${enr.id}`)?.addEventListener('click', async () => {
+    if (!confirm(`Reject ${enr.player_first_name}'s application?`)) return;
+    await aapi(`/items/academy_enrollments/${enr.id}`, { method:'PATCH', body:JSON.stringify({status:'inactive'}) });
+    enr.status = 'inactive';
+    const idx = allEnrollments.findIndex(e => String(e.id) === String(enr.id));
+    if (idx > -1) allEnrollments[idx].status = 'inactive';
+    renderStats(); renderEnrollments();
+    selectedEnrId = null;
+    document.getElementById('enr-detail').innerHTML = '<div class="detail-placeholder"><p>Application rejected.</p></div>';
+  });
 
-  document.getElementById('enr-modal').style.display = 'flex';
+  document.getElementById(`btn-enroll-${enr.id}`)?.addEventListener('click', async () => {
+    const msg = document.getElementById(`action-msg-${enr.id}`);
+    await aapi(`/items/academy_enrollments/${enr.id}`, { method:'PATCH', body:JSON.stringify({status:'enrolled'}) });
+    enr.status = 'enrolled';
+    const idx = allEnrollments.findIndex(e => String(e.id) === String(enr.id));
+    if (idx > -1) allEnrollments[idx].status = 'enrolled';
+    renderStats(); renderEnrollments();
+    openEnrollmentDetail(enr);
+  });
+
+  const profileForm = document.getElementById(`profile-form-${enr.id}`);
+  profileForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById(`profile-msg-${enr.id}`);
+    const btn = profileForm.querySelector('button[type="submit"]');
+    btn.disabled=true; btn.textContent='Creating…';
+    const payload = {
+      enrollment: parseInt(enr.id) || enr.id,
+      position: document.getElementById(`ip-position-${enr.id}`).value,
+      jersey_number: document.getElementById(`ip-jersey-${enr.id}`).value || null,
+      notes: document.getElementById(`ip-notes-${enr.id}`).value || null,
+    };
+    const result = await aapi('/items/academy_player_profiles', { method:'POST', body:JSON.stringify(payload) });
+    if (result) {
+      allPlayers.push({ id: result.id, position: payload.position, enrollment: { id: enr.id, age_group: enr.age_group, player_first_name: enr.player_first_name, player_last_name: enr.player_last_name, status: enr.status } });
+      renderStats(); renderPlayerList();
+      openEnrollmentDetail(enr);
+    } else { btn.disabled=false; btn.textContent='Create Profile →'; msg.textContent='Failed. Try again.'; msg.hidden=false; }
+  });
 }
 
-function openCreateProfileModal(enr) { openEnrollmentModal(enr); }
-
-function closeModal() { document.getElementById('enr-modal').style.display = 'none'; }
-document.getElementById('modal-close').addEventListener('click', closeModal);
-document.getElementById('enr-modal').addEventListener('click', (e) => { if (e.target === document.getElementById('enr-modal')) closeModal(); });
-
-// ── PLAYERS ───────────────────────────────────────────────────
-async function renderPlayers() {
-  const grid = document.getElementById('players-grid');
+// ── PLAYERS LIST ──────────────────────────────────────────────
+function renderPlayerList() {
+  const list   = document.getElementById('players-list');
   const search = document.getElementById('player-search')?.value?.toLowerCase() || '';
   const players = search
     ? allPlayers.filter(p => `${p.enrollment?.player_first_name||''} ${p.enrollment?.player_last_name||''}`.toLowerCase().includes(search))
     : allPlayers;
 
   if (!players.length) {
-    grid.innerHTML = '<p class="empty-msg" style="padding:32px">No player profiles yet. Accept an enrollment and create a profile first.</p>';
+    list.innerHTML = '<p class="empty-msg">No player profiles yet.</p>';
     return;
   }
-
-  // Fetch latest assessments for all players in one go
-  const playerIds = players.map(p => p.id).join(',');
-  const assessments = playerIds ? await aapi(
-    `/items/academy_assessments?filter[player][_in]=${playerIds}&filter[is_latest][_eq]=true&fields=player,pace_raw,shooting_raw,passing_raw,dribbling_raw,defending_raw,physical_raw,assessment_date`
-  ) : [];
-  const assessMap = {};
-  (assessments || []).forEach(a => { assessMap[a.player] = a; });
-
-  grid.innerHTML = players.map(p => {
+  list.innerHTML = players.map(p => {
     const enr  = p.enrollment || {};
     const name = `${enr.player_first_name||''} ${enr.player_last_name||''}`.trim();
-    const ag   = enr.age_group || 'u12-u13';
-    const a    = assessMap[p.id];
-    let cardHtml = '';
-    if (a) {
-      const { ov, attrs } = overall(a, ag, p.position||'midfielder');
-      const tc = tierClass(ov);
-      cardHtml = `<div class="mini-card ${tc}"><div class="mc-top"><span class="mc-ov">${ov}</span></div><div class="mc-attrs">${Object.entries(attrs).map(([k,v])=>`<span><b>${k.toUpperCase()}</b>${v}</span>`).join('')}</div></div>`;
-    } else {
-      cardHtml = `<div class="mini-card card-bronze unrated"><div class="mc-top"><span class="mc-ov">—</span></div><div class="mc-no-assess">Not yet assessed</div></div>`;
-    }
-    const lastAssessed = a ? new Date(a.assessment_date).toLocaleDateString('en-AU',{month:'short',year:'numeric'}) : 'Never';
-    return `
-<div class="player-card card" data-player-id="${p.id}">
-  ${cardHtml}
-  <div class="pc-info">
-    <div class="pc-name">${name}</div>
-    <div class="pc-meta">
-      <span class="age-chip">${ag.toUpperCase().replace('-','/')}</span>
-      <span class="pos-chip">${(p.position||'MID').slice(0,3).toUpperCase()}</span>
-    </div>
-    <div class="pc-last">Last assessed: ${lastAssessed}</div>
-    <div class="pc-actions">
-      <button class="btn btn-sm btn-secondary pc-msg-btn" data-player-id="${p.id}">Message</button>
-      <a href="/academy/coach" class="btn btn-sm btn-outline-green">Assess →</a>
-    </div>
-  </div>
-</div>`;
+    const active = String(p.id) === String(selectedPlayerId) ? 'list-item--active' : '';
+    return `<div class="list-item ${active}" data-id="${p.id}">
+      <div class="li-name">${name}</div>
+      <div class="li-sub"><span class="age-chip">${(enr.age_group||'').toUpperCase().replace('-','/')}</span> <span class="pos-chip">${posLabel(p.position||'midfielder')}</span></div>
+    </div>`;
   }).join('');
-
-  grid.querySelectorAll('.pc-msg-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const pid = btn.dataset.playerId;
-      // Switch to messages tab and open that player's thread
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-btn--active'));
-      document.querySelector('[data-tab="messages"]').classList.add('tab-btn--active');
-      activeTab = 'messages';
-      document.querySelectorAll('.tab-panel').forEach(p => p.hidden = true);
-      document.getElementById('tab-messages').hidden = false;
-      if (allMessages.length === 0) {
-        loadMessages().then(() => openThread(pid));
-      } else {
-        openThread(pid);
-      }
+  list.querySelectorAll('.list-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const player = allPlayers.find(p => String(p.id) === String(item.dataset.id));
+      if (player) openPlayerDetail(player);
     });
   });
 }
 
-document.getElementById('player-search').addEventListener('input', renderPlayers);
+document.getElementById('player-search').addEventListener('input', renderPlayerList);
 
-// ── MESSAGES ──────────────────────────────────────────────────
-async function loadMessages() {
-  const messages = await aapi(
-    '/items/academy_messages?sort[]=-date_created&limit=500&fields=id,player,sender_role,sender_name,body,date_created,read_at'
-  );
-  allMessages = messages || [];
-  renderThreadList();
+async function openPlayerDetail(player) {
+  selectedPlayerId = player.id;
+  renderPlayerList();
+  const detail = document.getElementById('player-detail');
+  const enr = player.enrollment || {};
+  const name = `${enr.player_first_name||''} ${enr.player_last_name||''}`.trim();
+
+  detail.innerHTML = `<div class="center-msg" style="height:120px"><div class="spinner"></div><p>Loading…</p></div>`;
+
+  // Fetch assessment + messages in parallel
+  const pid = String(player.id);
+  const [assessData, msgData] = await Promise.all([
+    aapi(`/items/academy_assessments?filter[player][_eq]=${pid}&filter[is_latest][_eq]=true&limit=1&fields=*`),
+    aapi(`/items/academy_messages?filter[player][_eq]=${pid}&sort[]=date_created&fields=*`),
+  ]);
+  const assessment = Array.isArray(assessData) ? assessData[0] : null;
+  const messages   = Array.isArray(msgData) ? msgData : (msgData ? [msgData] : []);
+
+  const assessDate = assessment ? new Date(assessment.assessment_date).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : 'Never';
+
+  detail.innerHTML = `
+<div class="player-detail-inner">
+  <div class="pd-header">
+    <div>
+      <h2>${name}</h2>
+      <div class="pd-meta">
+        <span class="age-chip">${(enr.age_group||'').toUpperCase().replace('-','/')}</span>
+        <span class="pos-chip">${posLabel(player.position||'midfielder')}</span>
+        <span style="font-size:12px;color:var(--muted)">Last assessed: ${assessDate}</span>
+      </div>
+    </div>
+    <a href="/academy/coach" class="btn btn-outline-green btn-sm">Assess in Coach Dashboard →</a>
+  </div>
+
+  <div class="pd-body">
+    <div class="pd-card-col">
+      <div class="section-label">Player Card</div>
+      ${buildFIFACard(player, assessment)}
+      ${assessment?.notes ? `<div class="coach-note-box card" style="margin-top:16px"><div class="label" style="margin-bottom:6px">Coach Notes</div><p>${assessment.notes}</p><div style="font-size:11px;color:var(--muted);margin-top:6px">${assessDate}</div></div>` : ''}
+    </div>
+    <div class="pd-msg-col">
+      <div class="section-label">Messages</div>
+      <div class="thread-msgs" id="pd-msgs-${pid}">
+        ${messages.length === 0
+          ? '<p class="empty-msg">No messages yet.</p>'
+          : messages.map(m => `<div class="msg msg--${m.sender_role}">
+              <div class="msg-meta"><span class="msg-author">${m.sender_name||(m.sender_role==='coach'?'You':'Parent')}</span><span class="msg-date">${new Date(m.date_created).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</span></div>
+              <div class="msg-body">${m.body.replace(/\n/g,'<br>')}</div>
+            </div>`).join('')}
+      </div>
+      <form class="pd-reply-form" data-player="${pid}">
+        <textarea class="reply-input" rows="3" placeholder="Write a message to ${name}'s family…"></textarea>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+          <button type="submit" class="btn btn-primary btn-sm">Send →</button>
+          <span class="reply-status" hidden style="font-size:12px;color:red"></span>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>`;
+
+  // Scroll messages
+  const msgsEl = document.getElementById(`pd-msgs-${pid}`);
+  if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
+
+  // Mark parent messages as read
+  messages.filter(m => m.sender_role === 'parent' && !m.read_at).forEach(m => {
+    aapi(`/items/academy_messages/${m.id}`, { method:'PATCH', body:JSON.stringify({read_at: new Date().toISOString()}) });
+  });
+
+  // Reply handler
+  document.querySelector(`.pd-reply-form[data-player="${pid}"]`).addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const textarea = e.target.querySelector('.reply-input');
+    const status   = e.target.querySelector('.reply-status');
+    const btn      = e.target.querySelector('button[type="submit"]');
+    const body     = textarea.value.trim();
+    if (!body) return;
+    btn.disabled=true; btn.textContent='Sending…';
+    const user = ALS.user;
+    const result = await aapi('/items/academy_messages', { method:'POST', body: JSON.stringify({
+      player: parseInt(pid)||pid,
+      sender_role: 'coach',
+      sender_name: `${user?.first_name||''} ${user?.last_name||''}`.trim() || 'Technical Director',
+      body,
+    })});
+    if (result) {
+      textarea.value = '';
+      btn.disabled=false; btn.textContent='Send →';
+      // Reload messages
+      const fresh = await aapi(`/items/academy_messages?filter[player][_eq]=${pid}&sort[]=date_created&fields=*`);
+      const freshMsgs = Array.isArray(fresh) ? fresh : [];
+      if (msgsEl) {
+        msgsEl.innerHTML = freshMsgs.map(m => `<div class="msg msg--${m.sender_role}">
+          <div class="msg-meta"><span class="msg-author">${m.sender_name||(m.sender_role==='coach'?'You':'Parent')}</span><span class="msg-date">${new Date(m.date_created).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</span></div>
+          <div class="msg-body">${m.body.replace(/\n/g,'<br>')}</div>
+        </div>`).join('');
+        msgsEl.scrollTop = msgsEl.scrollHeight;
+      }
+      // Update allMessages for the Messages tab
+      allMessages = allMessages.filter(m => String(m.player) !== pid).concat(freshMsgs);
+    } else {
+      status.textContent='Failed. Try again.'; status.hidden=false;
+      btn.disabled=false; btn.textContent='Send →';
+    }
+  });
 }
 
-async function ensurePlayersLoaded() {
+// ── MESSAGES TAB ──────────────────────────────────────────────
+async function ensureMessagesLoaded() {
   if (allPlayers.length === 0) {
     const players = await aapi('/items/academy_player_profiles?limit=200&fields=id,position,enrollment.id,enrollment.player_first_name,enrollment.player_last_name');
     allPlayers = players || [];
   }
+  if (allMessages.length === 0) {
+    const messages = await aapi('/items/academy_messages?sort[]=-date_created&limit=500&fields=id,player,sender_role,sender_name,body,date_created,read_at');
+    allMessages = messages || [];
+  }
+  renderThreadList();
 }
 
-function renderThreadList(activePlayerId) {
+function renderThreadList(activeId) {
   const list = document.getElementById('thread-list');
-
   const playerMap = {};
   allPlayers.forEach(p => {
     playerMap[String(p.id)] = `${p.enrollment?.player_first_name||''} ${p.enrollment?.player_last_name||''}`.trim();
   });
 
-  // Show ALL enrolled players, with message preview if they have messages
-  const playerEntries = allPlayers.map(p => {
-    const pid = String(p.id);
-    const msgs = allMessages.filter(m => String(m.player) === pid);
+  const entries = allPlayers.map(p => {
+    const pid   = String(p.id);
+    const msgs  = allMessages.filter(m => String(m.player) === pid);
     const unread = msgs.filter(m => m.sender_role === 'parent' && !m.read_at).length;
-    const latest = msgs.sort((a,b) => new Date(b.date_created)-new Date(a.date_created))[0];
-    const name = playerMap[pid] || 'Unknown Player';
-    const preview = latest ? (latest.body.length > 50 ? latest.body.slice(0,50)+'…' : latest.body) : 'No messages yet';
-    return { pid, name, unread, preview };
+    const latest = msgs.sort((a,b)=>new Date(b.date_created)-new Date(a.date_created))[0];
+    const preview = latest ? (latest.body.length>50?latest.body.slice(0,50)+'…':latest.body) : 'No messages yet';
+    return { pid, name: playerMap[pid]||'Player', unread, preview };
   });
 
-  if (!playerEntries.length) {
-    list.innerHTML = '<div class="thread-list-header">All Conversations</div><p class="empty-msg" style="padding:16px">No players yet.</p>';
-    return;
-  }
+  list.innerHTML = '<div class="list-header"><strong>All Conversations</strong></div>' + entries.map(({ pid, name, unread, preview }) => `
+<div class="list-item ${String(activeId)===pid?'list-item--active':''}" data-player-id="${pid}">
+  <div class="li-name">${name}${unread?` <span class="unread-badge">${unread}</span>`:''}</div>
+  <div class="li-sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${preview}</div>
+</div>`).join('');
 
-  list.innerHTML = '<div class="thread-list-header">All Conversations</div>' + playerEntries.map(({ pid, name, unread, preview }) => `
-<button class="thread-item ${activePlayerId && String(activePlayerId) === pid ? 'thread-item--active' : ''}" data-player-id="${pid}">
-  <div class="ti-name">${name} ${unread ? `<span class="unread-badge">${unread}</span>` : ''}</div>
-  <div class="ti-preview">${preview}</div>
-</button>`).join('');
-
-  list.querySelectorAll('.thread-item').forEach(btn => {
-    btn.addEventListener('click', () => openThread(btn.dataset.playerId));
+  list.querySelectorAll('[data-player-id]').forEach(item => {
+    item.addEventListener('click', () => openThread(item.dataset.playerId));
   });
 }
 
@@ -547,61 +633,58 @@ function openThread(playerId) {
   allPlayers.forEach(p => { playerMap[String(p.id)] = `${p.enrollment?.player_first_name||''} ${p.enrollment?.player_last_name||''}`.trim(); });
   const name = playerMap[pid] || 'Player';
 
-  // Mark parent messages as read
   msgs.filter(m => m.sender_role === 'parent' && !m.read_at).forEach(m => {
-    aapi(`/items/academy_messages/${m.id}`, { method:'PATCH', body:JSON.stringify({read_at: new Date().toISOString()}) });
+    aapi(`/items/academy_messages/${m.id}`, { method:'PATCH', body:JSON.stringify({read_at:new Date().toISOString()}) });
     m.read_at = new Date().toISOString();
   });
 
-  document.getElementById('thread-detail').innerHTML = `
-<div class="thread-header">
-  <strong>${name}</strong>
-</div>
-<div class="thread-msgs" id="thread-msgs-${pid}">
-  ${msgs.length === 0
-    ? '<p style="color:var(--muted);padding:16px;text-align:center">No messages yet. Send the first message below.</p>'
-    : msgs.sort((a,b)=>new Date(a.date_created)-new Date(b.date_created)).map(m => `
+  const detail = document.getElementById('thread-detail');
+  detail.innerHTML = `
+<div class="thread-header"><strong>${name}</strong></div>
+<div class="thread-msgs" id="tmsg-${pid}">
+  ${msgs.length===0
+    ? '<p class="empty-msg">No messages yet. Send the first message below.</p>'
+    : msgs.sort((a,b)=>new Date(a.date_created)-new Date(b.date_created)).map(m=>`
   <div class="msg msg--${m.sender_role}">
-    <div class="msg-meta">
-      <span class="msg-author">${m.sender_name || (m.sender_role==='coach'?'You':'Parent')}</span>
-      <span class="msg-date">${new Date(m.date_created).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}</span>
-    </div>
+    <div class="msg-meta"><span class="msg-author">${m.sender_name||(m.sender_role==='coach'?'You':'Parent')}</span><span class="msg-date">${new Date(m.date_created).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}</span></div>
     <div class="msg-body">${m.body.replace(/\n/g,'<br>')}</div>
   </div>`).join('')}
 </div>
 <form class="reply-form" data-player="${pid}">
   <textarea class="reply-input" rows="3" placeholder="Write a message to ${name}'s family…"></textarea>
-  <button type="submit" class="btn btn-primary btn-sm">Send →</button>
-  <span class="reply-status" hidden></span>
+  <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+    <button type="submit" class="btn btn-primary btn-sm">Send →</button>
+    <span class="reply-status" hidden style="font-size:12px;color:red"></span>
+  </div>
 </form>`;
 
-  const msgs_el = document.getElementById(`thread-msgs-${pid}`);
-  if (msgs_el) msgs_el.scrollTop = msgs_el.scrollHeight;
+  const msgsEl = document.getElementById(`tmsg-${pid}`);
+  if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
 
   document.querySelector(`.reply-form[data-player="${pid}"]`).addEventListener('submit', async (e) => {
     e.preventDefault();
     const textarea = e.target.querySelector('.reply-input');
-    const statusEl = e.target.querySelector('.reply-status');
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    const body = textarea.value.trim();
+    const status   = e.target.querySelector('.reply-status');
+    const btn      = e.target.querySelector('button[type="submit"]');
+    const body     = textarea.value.trim();
     if (!body) return;
-    submitBtn.disabled = true; submitBtn.textContent = 'Sending…';
+    btn.disabled=true; btn.textContent='Sending…';
     const user = ALS.user;
-    const payload = {
-      player: parseInt(pid) || pid, sender_role: 'coach',
+    const result = await aapi('/items/academy_messages', { method:'POST', body:JSON.stringify({
+      player: parseInt(pid)||pid,
+      sender_role: 'coach',
       sender_name: `${user?.first_name||''} ${user?.last_name||''}`.trim() || 'Technical Director',
       body,
-    };
-    const result = await aapi('/items/academy_messages', { method:'POST', body:JSON.stringify(payload) });
+    })});
     if (result) {
-      allMessages.push({ ...payload, player: pid, id: result.id, date_created: new Date().toISOString(), read_at: null });
+      allMessages.push({ player: pid, sender_role:'coach', sender_name: ALS.user?.first_name||'Coach', body, id:result.id, date_created:new Date().toISOString(), read_at:null });
       textarea.value = '';
+      btn.disabled=false; btn.textContent='Send →';
       openThread(pid);
       renderThreadList(pid);
     } else {
-      statusEl.textContent = 'Failed to send. Try again.';
-      statusEl.hidden = false;
-      submitBtn.disabled = false; submitBtn.textContent = 'Send →';
+      status.textContent='Failed.'; status.hidden=false;
+      btn.disabled=false; btn.textContent='Send →';
     }
   });
 
@@ -614,33 +697,27 @@ document.getElementById('admin-login-form').addEventListener('submit', async (e)
   const errEl = document.getElementById('a-login-error');
   const btn   = document.getElementById('a-login-btn');
   errEl.hidden = true; btn.disabled = true; btn.textContent = 'Signing in…';
-
   try {
-    const res = await fetch(`${DURL}/auth/login`, {
+    const res  = await fetch(`${DURL}/auth/login`, {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ email: document.getElementById('a-email').value.trim(), password: document.getElementById('a-password').value }),
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json?.errors?.[0]?.message || 'Login failed');
-
     ALS.token   = json.data.access_token;
     ALS.refresh = json.data.refresh_token;
-
     const user = await aapi('/users/me?fields=id,email,first_name,last_name,role.name');
     if (!user) throw new Error('Could not load user');
     ALS.user = user;
-
-    // Allow technical_director and administrator only (not plain coach)
     const role = (user?.role?.name||'').toLowerCase();
-    if (!['administrator','admin','technical_director'].some(r => role.includes(r))) {
+    if (!['administrator','admin','technical_director','coach'].some(r => role.includes(r))) {
       ALS.clear();
-      throw new Error('Your account does not have Technical Director access.');
+      throw new Error('Your account does not have admin access.');
     }
-
     showDashboard();
     loadAll();
   } catch (err) {
-    errEl.textContent = err.message;
+    errEl.textContent = err.message.includes('Invalid') ? 'Invalid email or password.' : err.message;
     errEl.hidden = false;
     btn.disabled = false; btn.textContent = 'Sign In →';
   }
@@ -664,6 +741,8 @@ document.getElementById('a-logout-btn').addEventListener('click', () => {
 
 <style>
 .admin-view { min-height:100vh; }
+
+/* ── HERO / LOGIN ── */
 .portal-hero { background:linear-gradient(135deg,var(--green-dark),var(--off-black)); padding:60px 48px 40px; border-bottom:1px solid var(--border); }
 .portal-hero-inner { max-width:600px; margin:0 auto; }
 .portal-hero h1 { font-size:clamp(48px,6vw,72px); margin:10px 0 8px; }
@@ -672,141 +751,140 @@ document.getElementById('a-logout-btn').addEventListener('click', () => {
 .login-card  { width:100%; max-width:440px; padding:40px; }
 .login-card h2 { font-size:36px; margin-bottom:20px; }
 .field { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
-.field label { font-family:var(--font-cond); font-size:14px; font-weight:700; }
-input[type="email"],input[type="password"],input[type="number"],select,textarea {
-  background:var(--black); border:1px solid var(--border); border-radius:var(--radius);
-  color:var(--white); font-family:var(--font-body); font-size:15px; padding:11px 14px; width:100%;
-}
-input:focus,select:focus,textarea:focus { outline:none; border-color:var(--green); }
-.btn-full { width:100%; justify-content:center; margin-top:8px; }
-.form-error { background:rgba(217,48,37,0.1); border:1px solid rgba(217,48,37,0.3); border-radius:var(--radius); padding:12px 14px; font-size:14px; color:#ff6b6b; margin-bottom:12px; }
+.field label { font-family:var(--font-cond); font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+.field input, .field select, .field textarea { background:var(--off-black); border:1px solid var(--border); color:var(--white); padding:10px 14px; border-radius:4px; font-size:15px; font-family:inherit; width:100%; }
+.field input:focus, .field select:focus, .field textarea:focus { outline:none; border-color:var(--green-bright); }
+.form-error { color:#ff6b6b; font-size:13px; margin-bottom:12px; }
+.btn-full { width:100%; justify-content:center; }
 
-/* Topbar */
-.topbar { background:var(--off-black); border-bottom:1px solid var(--border); padding:20px 48px 0; position:sticky; top:68px; z-index:50; }
-.topbar-inner { display:flex; justify-content:space-between; align-items:center; gap:20px; margin-bottom:16px; }
-.topbar-title h1 { font-size:clamp(24px,3vw,40px); }
-.topbar-right { display:flex; align-items:center; gap:16px; }
-.stats-bar { display:flex; gap:8px; }
-.stat-chip { font-family:var(--font-cond); font-size:12px; font-weight:700; letter-spacing:1px; padding:4px 12px; border-radius:20px; border:1px solid var(--border); background:var(--card); }
-.stat-chip--warn { background:rgba(201,160,48,0.15); border-color:rgba(201,160,48,0.3); color:var(--gold); }
-.stat-chip--ok   { background:rgba(37,160,76,0.15); border-color:rgba(37,160,76,0.3); color:var(--green-bright); }
-.btn-sm { padding:8px 16px; font-size:13px; }
-
-/* Tabs */
-.tab-nav { display:flex; gap:0; margin-top:4px; }
-.tab-btn { background:none; border:none; border-bottom:3px solid transparent; color:var(--muted); font-family:var(--font-cond); font-size:15px; font-weight:700; padding:12px 20px; cursor:pointer; transition:all 0.15s; }
+/* ── TOPBAR ── */
+.topbar { background:var(--off-black); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50; }
+.topbar-inner { display:flex; justify-content:space-between; align-items:center; padding:16px 32px; gap:16px; }
+.topbar-title .label { font-size:11px; }
+.topbar-title h1 { font-size:clamp(20px,3vw,28px); margin:0; }
+.topbar-right { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.stats-bar { display:flex; gap:8px; align-items:center; }
+.stat-chip { font-family:var(--font-cond); font-size:13px; font-weight:700; padding:4px 10px; border-radius:20px; background:rgba(255,255,255,0.06); border:1px solid var(--border); }
+.stat-chip--warn { background:rgba(255,180,0,0.12); border-color:rgba(255,180,0,0.3); color:#ffd700; }
+.stat-chip--ok   { background:rgba(37,160,76,0.12); border-color:rgba(37,160,76,0.3); color:var(--green-bright); }
+.tab-nav { display:flex; gap:0; padding:0 32px; border-top:1px solid var(--border); }
+.tab-btn { background:none; border:none; color:var(--muted); font-family:var(--font-cond); font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; padding:14px 20px; cursor:pointer; border-bottom:2px solid transparent; transition:color 0.15s,border-color 0.15s; }
 .tab-btn:hover { color:var(--white); }
 .tab-btn--active { color:var(--green-bright); border-bottom-color:var(--green-bright); }
 
-/* Admin body */
-.admin-body { max-width:1280px; margin:0 auto; padding:32px 48px 80px; }
+/* ── ADMIN BODY ── */
+.admin-body { }
 .center-msg { display:flex; flex-direction:column; align-items:center; justify-content:center; height:160px; gap:12px; color:var(--muted); }
-.spinner { width:28px; height:28px; border:3px solid var(--border); border-top-color:var(--green); border-radius:50%; animation:spin 0.8s linear infinite; }
-@keyframes spin { to{transform:rotate(360deg)} }
+.tab-panel { }
 
-/* Panel header */
-.panel-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
-.panel-header h2 { font-size:clamp(24px,3vw,36px); }
+/* ── SPLIT PANE ── */
+.split-pane { display:grid; grid-template-columns:320px 1fr; min-height:calc(100vh - 130px); }
+.split-list { border-right:1px solid var(--border); overflow-y:auto; }
+.split-detail { overflow-y:auto; }
+.list-header { padding:16px 20px; border-bottom:1px solid var(--border); background:rgba(255,255,255,0.02); font-size:13px; font-weight:700; }
+.list-item { padding:14px 20px; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.1s; }
+.list-item:hover { background:rgba(255,255,255,0.03); }
+.list-item--active { background:rgba(37,160,76,0.07) !important; border-left:3px solid var(--green-bright); }
+.li-name { font-family:var(--font-cond); font-weight:700; font-size:15px; margin-bottom:4px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.li-sub  { font-size:12px; color:var(--muted); display:flex; gap:6px; align-items:center; }
+.empty-msg { padding:32px; color:var(--muted); text-align:center; font-size:14px; }
+.detail-placeholder { display:flex; align-items:center; justify-content:center; height:300px; color:var(--muted); font-size:14px; }
+.search-input { background:var(--off-black); border:none; border-bottom:1px solid var(--border); color:var(--white); padding:14px 20px; font-size:14px; font-family:inherit; width:100%; outline:none; }
+.search-input:focus { border-bottom-color:var(--green-bright); }
+
+/* ── FILTER ROW ── */
 .filter-row { display:flex; gap:6px; flex-wrap:wrap; }
-.filter-btn { font-family:var(--font-cond); font-size:12px; font-weight:700; letter-spacing:1px; padding:6px 14px; border-radius:20px; border:1px solid var(--border); background:var(--card); color:var(--muted); cursor:pointer; transition:all 0.15s; text-transform:uppercase; }
-.filter-btn:hover,.filter-btn--active { border-color:var(--green); color:var(--green-bright); background:rgba(37,160,76,0.1); }
+.filter-btn { background:none; border:1px solid var(--border); color:var(--muted); font-family:var(--font-cond); font-size:12px; font-weight:700; text-transform:uppercase; padding:5px 12px; border-radius:20px; cursor:pointer; transition:all 0.15s; }
+.filter-btn:hover { color:var(--white); border-color:var(--white); }
+.filter-btn--active { background:var(--green-bright); border-color:var(--green-bright); color:var(--off-black); }
 
-/* Search */
-.search-input { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); color:var(--white); font-family:var(--font-body); font-size:14px; padding:9px 14px; width:280px; }
-.search-input:focus { outline:none; border-color:var(--green); }
+/* ── STATUS BADGES ── */
+.status-badge { font-family:var(--font-cond); font-size:11px; font-weight:800; text-transform:uppercase; padding:3px 8px; border-radius:3px; }
+.status-pending  { background:rgba(255,180,0,0.15); color:#ffd700; border:1px solid rgba(255,180,0,0.3); }
+.status-accepted { background:rgba(100,149,237,0.15); color:#6495ed; border:1px solid rgba(100,149,237,0.3); }
+.status-enrolled { background:rgba(37,160,76,0.15); color:var(--green-bright); border:1px solid rgba(37,160,76,0.3); }
+.status-inactive { background:rgba(255,255,255,0.05); color:var(--muted); border:1px solid var(--border); }
+.age-chip  { font-family:var(--font-cond); font-size:11px; font-weight:700; background:rgba(255,255,255,0.06); border:1px solid var(--border); padding:2px 7px; border-radius:3px; }
+.pos-chip  { font-family:var(--font-cond); font-size:11px; font-weight:700; background:rgba(37,160,76,0.1); border:1px solid rgba(37,160,76,0.2); color:var(--green-bright); padding:2px 7px; border-radius:3px; }
+.unread-badge { background:var(--green-bright); color:var(--off-black); font-size:10px; font-weight:800; padding:1px 6px; border-radius:10px; }
 
-/* Enrollment rows */
-.enr-row { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; margin-bottom:8px; gap:16px; flex-wrap:wrap; }
-.enr-player { font-family:var(--font-cond); font-size:17px; font-weight:800; display:flex; align-items:center; gap:8px; }
-.enr-parent { font-size:13px; color:var(--muted); margin-top:3px; }
-.enr-date   { font-size:12px; color:var(--muted); margin-top:2px; }
-.enr-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; flex-shrink:0; }
-.age-chip { font-family:var(--font-cond); font-size:11px; font-weight:700; background:rgba(37,160,76,0.12); color:var(--green-bright); padding:2px 8px; border-radius:3px; letter-spacing:1px; }
-.pos-chip { font-family:var(--font-cond); font-size:11px; font-weight:700; background:rgba(100,149,237,0.12); color:#6495ed; padding:2px 8px; border-radius:3px; letter-spacing:1px; }
-.status-badge { font-family:var(--font-cond); font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; padding:4px 10px; border-radius:4px; }
-.status-pending  { background:rgba(201,160,48,0.15); color:var(--gold); }
-.status-accepted { background:rgba(100,149,237,0.15); color:#6495ed; }
-.status-enrolled { background:rgba(37,160,76,0.15); color:var(--green-bright); }
-.status-inactive { background:rgba(217,48,37,0.12); color:#d93025; }
+/* ── ENROLLMENT DETAIL ── */
+.detail-section { padding:28px 36px; border-bottom:1px solid var(--border); }
+.detail-section:last-child { border-bottom:none; }
+.detail-title-row { display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+.detail-title-row h2 { font-size:32px; margin:0; }
+.detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px 24px; }
+.detail-row { display:flex; flex-direction:column; gap:3px; }
+.detail-row span { font-size:11px; color:var(--muted); font-family:var(--font-cond); text-transform:uppercase; font-weight:700; letter-spacing:.05em; }
+.detail-row strong { font-size:15px; }
+.detail-row p { font-size:14px; color:var(--muted); margin:4px 0 0; line-height:1.5; }
+.detail-row--full { grid-column:1/-1; }
+.medical-row strong, .medical-row p { color:#ff6b6b; }
+.detail-actions-section { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.action-msg { font-size:12px; color:var(--green-bright); font-family:var(--font-cond); font-weight:700; }
+.profile-form .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:12px; }
+.invite-section { }
+.invite-steps { color:var(--muted); font-size:14px; padding-left:20px; line-height:1.8; }
 
-/* Players grid */
-.players-grid-inner { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
-#players-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
-.player-card { padding:16px; display:flex; flex-direction:column; gap:10px; }
-.pc-name { font-family:var(--font-cond); font-size:16px; font-weight:800; }
-.pc-meta { display:flex; gap:6px; }
-.pc-last { font-size:11px; color:var(--muted); margin-bottom:10px; }
-.pc-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+/* ── PLAYER DETAIL ── */
+.player-detail-inner { padding:0; }
+.pd-header { display:flex; justify-content:space-between; align-items:flex-start; padding:28px 36px 20px; border-bottom:1px solid var(--border); gap:16px; flex-wrap:wrap; }
+.pd-header h2 { font-size:32px; margin:0 0 8px; }
+.pd-meta { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.pd-body { display:grid; grid-template-columns:auto 1fr; gap:0; }
+.pd-card-col { padding:28px 28px; border-right:1px solid var(--border); min-width:220px; }
+.pd-msg-col  { padding:28px 36px; }
+.coach-note-box { padding:16px; }
 
-/* Mini cards */
-.mini-card { border-radius:8px; padding:10px 10px 8px; border:1px solid rgba(255,255,255,0.1); }
-.card-bronze { background:linear-gradient(160deg,#cd7f32 0%,#8b4513 100%); }
-.card-silver { background:linear-gradient(160deg,#d0d0d0 0%,#7a8a90 100%); }
-.card-gold   { background:linear-gradient(160deg,#d4a017 0%,#8b6400 100%); }
-.card-elite  { background:linear-gradient(160deg,#00c853 0%,#1d7a3a 100%); }
-.unrated     { background:var(--card) !important; border-color:var(--border); }
-.mc-top { display:flex; margin-bottom:4px; }
-.mc-ov  { font-family:var(--font-display); font-size:28px; color:rgba(255,255,255,0.9); line-height:1; }
-.mc-attrs { display:grid; grid-template-columns:1fr 1fr 1fr; gap:2px; border-top:1px solid rgba(255,255,255,0.15); padding-top:6px; }
-.mc-attrs span { font-family:var(--font-cond); font-size:11px; font-weight:700; color:rgba(255,255,255,0.85); text-align:center; }
-.mc-attrs b { display:block; font-size:8px; color:rgba(255,255,255,0.5); }
-.mc-no-assess { font-size:11px; color:var(--muted); font-style:italic; }
+/* ── FIFA CARD ── */
+.fifa-card { width:160px; border-radius:10px; overflow:hidden; padding:12px 10px 10px; box-shadow:0 4px 20px rgba(0,0,0,0.5); }
+.card-bronze { background:linear-gradient(160deg,#cd7f32,#8b4513); }
+.card-silver { background:linear-gradient(160deg,#d0d0d0,#7a8a90); }
+.card-gold   { background:linear-gradient(160deg,#d4a017,#8b6400); }
+.card-elite  { background:linear-gradient(160deg,#00c853,#1d7a3a); }
+.fc-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
+.fc-left { display:flex; flex-direction:column; }
+.fc-overall { font-size:36px; font-weight:900; line-height:1; color:#fff; font-family:var(--font-cond); }
+.fc-pos  { font-size:12px; font-weight:700; color:rgba(255,255,255,0.85); font-family:var(--font-cond); }
+.fc-tier { font-size:10px; color:rgba(255,255,255,0.6); font-family:var(--font-cond); }
+.fc-photo { display:flex; justify-content:center; margin:4px 0; }
+.fc-name { font-family:var(--font-cond); font-weight:800; font-size:13px; color:#fff; text-align:center; letter-spacing:.05em; }
+.fc-age  { font-size:10px; color:rgba(255,255,255,0.6); text-align:center; margin-bottom:8px; }
+.fc-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; }
+.fc-stat { display:flex; flex-direction:column; align-items:center; background:rgba(0,0,0,0.2); border-radius:3px; padding:3px 2px; }
+.fc-sv { font-size:14px; font-weight:800; color:#fff; font-family:var(--font-cond); line-height:1; }
+.fc-sl { font-size:8px; color:rgba(255,255,255,0.7); font-weight:700; }
+.fc-no-assess { font-size:11px; color:rgba(255,255,255,0.6); text-align:center; padding:8px 0; }
+.unrated { opacity:0.7; }
 
-/* Messages */
-.messages-layout { display:grid; grid-template-columns:280px 1fr; gap:0; border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; min-height:500px; }
-.thread-list { border-right:1px solid var(--border); overflow-y:auto; }
-.thread-list-header { font-family:var(--font-cond); font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); padding:14px 16px; border-bottom:1px solid var(--border); }
-.thread-item { width:100%; background:none; border:none; border-bottom:1px solid var(--border); padding:14px 16px; text-align:left; cursor:pointer; transition:background 0.1s; }
-.thread-item:hover { background:rgba(37,160,76,0.06); }
-.thread-item--active { background:rgba(37,160,76,0.1); border-left:3px solid var(--green-bright); }
-.reply-status { font-size:12px; color:red; margin-left:8px; }
-.ti-name { font-family:var(--font-cond); font-size:14px; font-weight:700; color:var(--white); display:flex; align-items:center; gap:8px; margin-bottom:4px; }
-.ti-preview { font-size:12px; color:var(--muted); }
-.unread-badge { background:var(--green); color:#fff; font-family:var(--font-cond); font-size:10px; font-weight:800; padding:1px 6px; border-radius:10px; }
-.thread-detail { padding:24px; overflow-y:auto; display:flex; flex-direction:column; }
-.thread-header { font-family:var(--font-cond); font-size:16px; font-weight:800; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid var(--border); }
-.thread-msgs { flex:1; overflow-y:auto; max-height:400px; display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
-.msg { padding:10px 14px; border-radius:var(--radius); max-width:85%; }
-.msg--parent { background:var(--card); border:1px solid var(--border); align-self:flex-start; }
-.msg--coach  { background:rgba(37,160,76,0.12); border:1px solid rgba(37,160,76,0.2); align-self:flex-end; }
-.msg-meta { display:flex; gap:10px; align-items:center; margin-bottom:5px; }
-.msg-author { font-family:var(--font-cond); font-size:12px; font-weight:700; }
-.msg-date   { font-size:11px; color:var(--muted); }
-.msg-body   { font-size:14px; color:var(--muted); line-height:1.6; }
-.reply-form { display:flex; flex-direction:column; gap:8px; margin-top:auto; }
-.reply-input { resize:vertical; }
+/* ── MESSAGES ── */
+.thread-header { padding:16px 20px; border-bottom:1px solid var(--border); font-family:var(--font-cond); font-weight:800; font-size:18px; }
+.thread-msgs { max-height:400px; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:12px; }
+.pd-msgs { max-height:360px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; margin-bottom:16px; }
+.msg { max-width:85%; }
+.msg--parent { align-self:flex-start; }
+.msg--coach  { align-self:flex-end; }
+.msg-meta { display:flex; gap:8px; margin-bottom:4px; font-size:11px; color:var(--muted); }
+.msg-author { font-weight:700; color:var(--white); }
+.msg--parent .msg-body { background:rgba(255,255,255,0.06); border-radius:0 10px 10px 10px; padding:10px 14px; font-size:14px; line-height:1.5; }
+.msg--coach  .msg-body { background:rgba(37,160,76,0.15); border:1px solid rgba(37,160,76,0.2); border-radius:10px 0 10px 10px; padding:10px 14px; font-size:14px; line-height:1.5; }
+.reply-form { padding:16px 20px; border-top:1px solid var(--border); }
+.reply-input { width:100%; background:var(--off-black); border:1px solid var(--border); color:var(--white); padding:10px 14px; border-radius:4px; font-size:14px; font-family:inherit; resize:none; }
+.reply-input:focus { outline:none; border-color:var(--green-bright); }
 
-/* Modal */
-.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; z-index:200; padding:20px; }
-.modal-box { width:100%; max-width:600px; max-height:90vh; overflow-y:auto; }
-.modal-header { display:flex; justify-content:space-between; align-items:center; padding:24px 28px 0; }
-.modal-header h3 { font-size:32px; }
-.modal-close { background:none; border:none; font-size:18px; color:var(--muted); cursor:pointer; padding:4px 8px; }
-.modal-close:hover { color:var(--white); }
-.modal-section { padding:20px 28px; border-top:1px solid var(--border); }
-.modal-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:16px; }
-.detail-grid { display:flex; flex-direction:column; gap:8px; }
-.detail-row { display:flex; gap:16px; align-items:baseline; font-size:14px; }
-.detail-row span { color:var(--muted); min-width:90px; font-family:var(--font-cond); font-size:12px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; }
-.detail-row strong { color:var(--white); }
-.detail-row--full { flex-direction:column; gap:4px; }
-.detail-row p { color:var(--muted); font-size:14px; line-height:1.65; margin:0; }
-.medical-note { background:rgba(217,48,37,0.08); border:1px solid rgba(217,48,37,0.2); border-radius:var(--radius); padding:10px 12px; color:#ff9a9a !important; }
-.field-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+/* ── SPINNER ── */
+.spinner { width:28px; height:28px; border:3px solid rgba(255,255,255,0.1); border-top-color:var(--green-bright); border-radius:50%; animation:spin 0.7s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
 
-.invite-instructions { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; margin-top:12px; }
-.invite-instructions ol { list-style:decimal; padding-left:20px; display:flex; flex-direction:column; gap:8px; }
-.invite-instructions li { font-size:14px; color:var(--muted); line-height:1.5; }
-.invite-instructions strong { color:var(--white); }
-.invite-instructions a { color:var(--green-bright); text-decoration:none; }
-.invite-instructions a:hover { text-decoration:underline; }
-
-.empty-msg { color:var(--muted); font-size:14px; font-style:italic; }
-
+/* ── RESPONSIVE ── */
 @media (max-width:900px) {
-  .topbar { padding:16px 20px 0; top:60px; }
-  .admin-body { padding:20px 20px 56px; }
-  .messages-layout { grid-template-columns:1fr; }
-  .thread-list { max-height:200px; }
+  .split-pane { grid-template-columns:1fr; }
+  .split-list { max-height:300px; border-right:none; border-bottom:1px solid var(--border); }
+  .pd-body { grid-template-columns:1fr; }
+  .pd-card-col { border-right:none; border-bottom:1px solid var(--border); display:flex; flex-direction:column; align-items:center; }
+  .topbar-inner { padding:12px 16px; }
+  .tab-nav { padding:0 16px; }
+  .detail-section { padding:20px; }
+  .detail-grid { grid-template-columns:1fr; }
 }
 </style>
