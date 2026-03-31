@@ -608,7 +608,7 @@ document.getElementById('coach-login-form').addEventListener('submit', async (e)
     CLS.user = user;
 
     const role = user?.role?.name?.toLowerCase() || '';
-    if (!['coach','administrator','admin'].some(r => role.includes(r))) {
+    if (!['coach','administrator','admin','technical_director'].some(r => role.includes(r))) {
       CLS.clear();
       document.getElementById('c-access-denied').hidden = false;
       document.getElementById('c-loading').hidden = true;
@@ -646,7 +646,7 @@ document.getElementById('c-back-login')?.addEventListener('click', showCoachLogi
   if (!user) { showCoachLogin(); return; }
   CLS.user = user;
   const role = user?.role?.name?.toLowerCase() || '';
-  if (!['coach','administrator','admin'].some(r => role.includes(r))) {
+  if (!['coach','administrator','admin','technical_director'].some(r => role.includes(r))) {
     CLS.clear(); showCoachLogin(); return;
   }
   showCoachDashboard(user);
