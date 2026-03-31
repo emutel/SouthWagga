@@ -129,13 +129,15 @@ const ALS = {
 };
 
 async function aapi(path, opts = {}) {
-  const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ALS.token}` };
-  const res = await fetch(`${DURL}${path}`, { ...opts, headers: { ...headers, ...(opts.headers||{}) } });
-  if (res.status === 401) { showLogin(); return null; }
-  if (res.status === 204) return { ok: true };
-  if (!res.ok) return null;
-  const json = await res.json();
-  return json.data ?? json;
+  try {
+    const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ALS.token}` };
+    const res = await fetch(`${DURL}${path}`, { ...opts, headers: { ...headers, ...(opts.headers||{}) } });
+    if (res.status === 401) { showLogin(); return null; }
+    if (res.status === 204) return { ok: true };
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data ?? json;
+  } catch(e) { console.error('API error', path, e); return null; }
 }
 
 // ── FIFA CARD UTILS ───────────────────────────────────────────
@@ -169,7 +171,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     activeTab = btn.dataset.tab;
     document.querySelectorAll('.tab-panel').forEach(p => p.hidden = true);
     document.getElementById(`tab-${activeTab}`).hidden = false;
-    if (activeTab === 'messages' && allMessages.length === 0) loadMessages();
+    if (activeTab === 'messages') { ensurePlayersLoaded().then(() => { if (allMessages.length === 0) loadMessages(); else renderThreadList(); }); }
   });
 });
 
@@ -185,21 +187,23 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 
 // ── LOAD DATA ─────────────────────────────────────────────────
 async function loadAll() {
-  document.getElementById('admin-loading').hidden = false;
-
-  const [enrollments, players] = await Promise.all([
-    aapi('/items/academy_enrollments?sort[]=-date_created&limit=200&fields=id,status,date_created,parent_first_name,parent_last_name,parent_email,parent_phone,player_first_name,player_last_name,player_dob,age_group,previous_experience,medical_notes,directus_user_id,program'),
-    aapi('/items/academy_player_profiles?limit=200&fields=id,position,photo,jersey_number,notes,enrollment.id,enrollment.age_group,enrollment.player_first_name,enrollment.player_last_name,enrollment.status'),
-  ]);
-
-  allEnrollments = enrollments || [];
-  allPlayers     = players     || [];
-
-  renderStats();
-  renderEnrollments();
-  renderPlayers();
-
-  document.getElementById('admin-loading').hidden = true;
+  const loadEl = document.getElementById('admin-loading');
+  loadEl.hidden = false;
+  try {
+    const [enrollments, players] = await Promise.all([
+      aapi('/items/academy_enrollments?sort[]=-date_created&limit=200&fields=id,status,date_created,parent_first_name,parent_last_name,parent_email,parent_phone,player_first_name,player_last_name,player_dob,age_group,previous_experience,medical_notes,directus_user_id,program'),
+      aapi('/items/academy_player_profiles?limit=200&fields=id,position,photo,jersey_number,notes,enrollment.id,enrollment.age_group,enrollment.player_first_name,enrollment.player_last_name,enrollment.status'),
+    ]);
+    allEnrollments = enrollments || [];
+    allPlayers     = players     || [];
+    renderStats();
+    renderEnrollments();
+    renderPlayers();
+    loadEl.hidden = true;
+  } catch(err) {
+    console.error('loadAll error:', err);
+    loadEl.innerHTML = '<p style="color:var(--muted);padding:32px;text-align:center">Failed to load data. Please refresh or sign out and back in.</p>';
+  }
 }
 
 // ── STATS BAR ─────────────────────────────────────────────────
@@ -249,7 +253,7 @@ function renderEnrollments() {
 }
 
 async function handleEnrAction(action, id) {
-  const enr = allEnrollments.find(e => e.id === id);
+  const enr = allEnrollments.find(e => String(e.id) === String(id));
   if (!enr) return;
 
   if (action === 'view') {
@@ -447,7 +451,7 @@ async function renderPlayers() {
     }
     const lastAssessed = a ? new Date(a.assessment_date).toLocaleDateString('en-AU',{month:'short',year:'numeric'}) : 'Never';
     return `
-<div class="player-card card">
+<div class="player-card card" data-player-id="${p.id}">
   ${cardHtml}
   <div class="pc-info">
     <div class="pc-name">${name}</div>
@@ -456,9 +460,31 @@ async function renderPlayers() {
       <span class="pos-chip">${(p.position||'MID').slice(0,3).toUpperCase()}</span>
     </div>
     <div class="pc-last">Last assessed: ${lastAssessed}</div>
+    <div class="pc-actions">
+      <button class="btn btn-sm btn-secondary pc-msg-btn" data-player-id="${p.id}">Message</button>
+      <a href="/academy/coach" class="btn btn-sm btn-outline-green">Assess →</a>
+    </div>
   </div>
 </div>`;
   }).join('');
+
+  grid.querySelectorAll('.pc-msg-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const pid = btn.dataset.playerId;
+      // Switch to messages tab and open that player's thread
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-btn--active'));
+      document.querySelector('[data-tab="messages"]').classList.add('tab-btn--active');
+      activeTab = 'messages';
+      document.querySelectorAll('.tab-panel').forEach(p => p.hidden = true);
+      document.getElementById('tab-messages').hidden = false;
+      if (allMessages.length === 0) {
+        loadMessages().then(() => openThread(pid));
+      } else {
+        openThread(pid);
+      }
+    });
+  });
 }
 
 document.getElementById('player-search').addEventListener('input', renderPlayers);
@@ -472,38 +498,42 @@ async function loadMessages() {
   renderThreadList();
 }
 
-function renderThreadList() {
+async function ensurePlayersLoaded() {
+  if (allPlayers.length === 0) {
+    const players = await aapi('/items/academy_player_profiles?limit=200&fields=id,position,enrollment.id,enrollment.player_first_name,enrollment.player_last_name');
+    allPlayers = players || [];
+  }
+}
+
+function renderThreadList(activePlayerId) {
   const list = document.getElementById('thread-list');
-  // Group by player
-  const threads = {};
-  allMessages.forEach(m => {
-    const pid = m.player;
-    if (!threads[pid]) threads[pid] = [];
-    threads[pid].push(m);
-  });
 
   const playerMap = {};
   allPlayers.forEach(p => {
-    playerMap[p.id] = `${p.enrollment?.player_first_name||''} ${p.enrollment?.player_last_name||''}`.trim();
+    playerMap[String(p.id)] = `${p.enrollment?.player_first_name||''} ${p.enrollment?.player_last_name||''}`.trim();
   });
 
-  const threadEntries = Object.entries(threads);
-  if (!threadEntries.length) {
-    list.innerHTML = '<div class="thread-list-header">All Conversations</div><p class="empty-msg" style="padding:16px">No messages yet.</p>';
+  // Show ALL enrolled players, with message preview if they have messages
+  const playerEntries = allPlayers.map(p => {
+    const pid = String(p.id);
+    const msgs = allMessages.filter(m => String(m.player) === pid);
+    const unread = msgs.filter(m => m.sender_role === 'parent' && !m.read_at).length;
+    const latest = msgs.sort((a,b) => new Date(b.date_created)-new Date(a.date_created))[0];
+    const name = playerMap[pid] || 'Unknown Player';
+    const preview = latest ? (latest.body.length > 50 ? latest.body.slice(0,50)+'…' : latest.body) : 'No messages yet';
+    return { pid, name, unread, preview };
+  });
+
+  if (!playerEntries.length) {
+    list.innerHTML = '<div class="thread-list-header">All Conversations</div><p class="empty-msg" style="padding:16px">No players yet.</p>';
     return;
   }
 
-  list.innerHTML = '<div class="thread-list-header">All Conversations</div>' + threadEntries.map(([pid, msgs]) => {
-    const latest = msgs[0];
-    const unread = msgs.filter(m => m.sender_role === 'parent' && !m.read_at).length;
-    const name = playerMap[pid] || 'Unknown Player';
-    const preview = latest.body.length > 50 ? latest.body.slice(0,50)+'…' : latest.body;
-    return `
-<button class="thread-item" data-player-id="${pid}">
+  list.innerHTML = '<div class="thread-list-header">All Conversations</div>' + playerEntries.map(({ pid, name, unread, preview }) => `
+<button class="thread-item ${activePlayerId && String(activePlayerId) === pid ? 'thread-item--active' : ''}" data-player-id="${pid}">
   <div class="ti-name">${name} ${unread ? `<span class="unread-badge">${unread}</span>` : ''}</div>
   <div class="ti-preview">${preview}</div>
-</button>`;
-  }).join('');
+</button>`).join('');
 
   list.querySelectorAll('.thread-item').forEach(btn => {
     btn.addEventListener('click', () => openThread(btn.dataset.playerId));
@@ -511,10 +541,11 @@ function renderThreadList() {
 }
 
 function openThread(playerId) {
-  const msgs = allMessages.filter(m => m.player === playerId);
+  const pid = String(playerId);
+  const msgs = allMessages.filter(m => String(m.player) === pid);
   const playerMap = {};
-  allPlayers.forEach(p => { playerMap[p.id] = `${p.enrollment?.player_first_name||''} ${p.enrollment?.player_last_name||''}`.trim(); });
-  const name = playerMap[playerId] || 'Player';
+  allPlayers.forEach(p => { playerMap[String(p.id)] = `${p.enrollment?.player_first_name||''} ${p.enrollment?.player_last_name||''}`.trim(); });
+  const name = playerMap[pid] || 'Player';
 
   // Mark parent messages as read
   msgs.filter(m => m.sender_role === 'parent' && !m.read_at).forEach(m => {
@@ -526,8 +557,10 @@ function openThread(playerId) {
 <div class="thread-header">
   <strong>${name}</strong>
 </div>
-<div class="thread-msgs" id="thread-msgs-${playerId}">
-  ${msgs.sort((a,b)=>new Date(a.date_created)-new Date(b.date_created)).map(m => `
+<div class="thread-msgs" id="thread-msgs-${pid}">
+  ${msgs.length === 0
+    ? '<p style="color:var(--muted);padding:16px;text-align:center">No messages yet. Send the first message below.</p>'
+    : msgs.sort((a,b)=>new Date(a.date_created)-new Date(b.date_created)).map(m => `
   <div class="msg msg--${m.sender_role}">
     <div class="msg-meta">
       <span class="msg-author">${m.sender_name || (m.sender_role==='coach'?'You':'Parent')}</span>
@@ -536,35 +569,43 @@ function openThread(playerId) {
     <div class="msg-body">${m.body.replace(/\n/g,'<br>')}</div>
   </div>`).join('')}
 </div>
-<form class="reply-form" data-player="${playerId}">
-  <textarea class="reply-input" rows="3" placeholder="Write a reply…"></textarea>
-  <button type="submit" class="btn btn-primary btn-sm">Send Reply →</button>
+<form class="reply-form" data-player="${pid}">
+  <textarea class="reply-input" rows="3" placeholder="Write a message to ${name}'s family…"></textarea>
+  <button type="submit" class="btn btn-primary btn-sm">Send →</button>
+  <span class="reply-status" hidden></span>
 </form>`;
 
-  const msgs_el = document.getElementById(`thread-msgs-${playerId}`);
+  const msgs_el = document.getElementById(`thread-msgs-${pid}`);
   if (msgs_el) msgs_el.scrollTop = msgs_el.scrollHeight;
 
-  document.querySelector(`.reply-form[data-player="${playerId}"]`).addEventListener('submit', async (e) => {
+  document.querySelector(`.reply-form[data-player="${pid}"]`).addEventListener('submit', async (e) => {
     e.preventDefault();
     const textarea = e.target.querySelector('.reply-input');
+    const statusEl = e.target.querySelector('.reply-status');
+    const submitBtn = e.target.querySelector('button[type="submit"]');
     const body = textarea.value.trim();
     if (!body) return;
+    submitBtn.disabled = true; submitBtn.textContent = 'Sending…';
     const user = ALS.user;
     const payload = {
-      player: playerId, sender_role: 'coach',
+      player: parseInt(pid) || pid, sender_role: 'coach',
       sender_name: `${user?.first_name||''} ${user?.last_name||''}`.trim() || 'Technical Director',
       body,
     };
     const result = await aapi('/items/academy_messages', { method:'POST', body:JSON.stringify(payload) });
     if (result) {
-      allMessages.unshift({ ...payload, id: result.id, date_created: new Date().toISOString(), read_at: null });
+      allMessages.push({ ...payload, player: pid, id: result.id, date_created: new Date().toISOString(), read_at: null });
       textarea.value = '';
-      openThread(playerId);
-      renderThreadList();
+      openThread(pid);
+      renderThreadList(pid);
+    } else {
+      statusEl.textContent = 'Failed to send. Try again.';
+      statusEl.hidden = false;
+      submitBtn.disabled = false; submitBtn.textContent = 'Send →';
     }
   });
 
-  renderThreadList();
+  renderThreadList(pid);
 }
 
 // ── LOGIN ─────────────────────────────────────────────────────
@@ -694,7 +735,8 @@ input:focus,select:focus,textarea:focus { outline:none; border-color:var(--green
 .player-card { padding:16px; display:flex; flex-direction:column; gap:10px; }
 .pc-name { font-family:var(--font-cond); font-size:16px; font-weight:800; }
 .pc-meta { display:flex; gap:6px; }
-.pc-last { font-size:11px; color:var(--muted); }
+.pc-last { font-size:11px; color:var(--muted); margin-bottom:10px; }
+.pc-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
 
 /* Mini cards */
 .mini-card { border-radius:8px; padding:10px 10px 8px; border:1px solid rgba(255,255,255,0.1); }
@@ -716,6 +758,8 @@ input:focus,select:focus,textarea:focus { outline:none; border-color:var(--green
 .thread-list-header { font-family:var(--font-cond); font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); padding:14px 16px; border-bottom:1px solid var(--border); }
 .thread-item { width:100%; background:none; border:none; border-bottom:1px solid var(--border); padding:14px 16px; text-align:left; cursor:pointer; transition:background 0.1s; }
 .thread-item:hover { background:rgba(37,160,76,0.06); }
+.thread-item--active { background:rgba(37,160,76,0.1); border-left:3px solid var(--green-bright); }
+.reply-status { font-size:12px; color:red; margin-left:8px; }
 .ti-name { font-family:var(--font-cond); font-size:14px; font-weight:700; color:var(--white); display:flex; align-items:center; gap:8px; margin-bottom:4px; }
 .ti-preview { font-size:12px; color:var(--muted); }
 .unread-badge { background:var(--green); color:#fff; font-family:var(--font-cond); font-size:10px; font-weight:800; padding:1px 6px; border-radius:10px; }
