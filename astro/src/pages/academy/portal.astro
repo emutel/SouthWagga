@@ -430,24 +430,54 @@ async function loadPlayerData(profile) {
 }
 
 async function loadProfiles(user) {
-  // Find enrollments for this user's email
-  const enrollments = await api(
-    `/items/academy_enrollments?filter[directus_user_id][_eq]=${user.id}&filter[status][_in][]=enrolled&filter[status][_in][]=accepted&fields=id,age_group,player_first_name,player_last_name`
+  // Search all statuses so we can show pending/accepted states too
+  const allStatuses = 'pending,accepted,enrolled';
+
+  // Try by directus_user_id first, then fall back to email match
+  let enrollments = await api(
+    `/items/academy_enrollments?filter[directus_user_id][_eq]=${user.id}&filter[status][_in]=${allStatuses}&fields=id,status,age_group,player_first_name,player_last_name`
   );
+
   if (!enrollments || enrollments.length === 0) {
-    // Try email match as fallback
-    const byEmail = await api(
-      `/items/academy_enrollments?filter[parent_email][_eq]=${encodeURIComponent(user.email)}&filter[status][_in][]=enrolled&filter[status][_in][]=accepted&fields=id,age_group,player_first_name,player_last_name`
+    const email = user.email.toLowerCase();
+    enrollments = await api(
+      `/items/academy_enrollments?filter[parent_email][_eq]=${email}&filter[status][_in]=${allStatuses}&fields=id,status,age_group,player_first_name,player_last_name`
     );
-    if (!byEmail || byEmail.length === 0) {
-      setDashLoading(false);
-      document.getElementById('player-content').innerHTML = '<p class="empty-msg" style="padding:40px">No active enrollment found. Please contact the Technical Director.</p>';
-      document.getElementById('player-content').hidden = false;
-      return;
-    }
-    return loadProfilesFromEnrollments(byEmail);
   }
-  return loadProfilesFromEnrollments(enrollments);
+
+  if (!enrollments || enrollments.length === 0) {
+    setDashLoading(false);
+    document.getElementById('player-content').innerHTML = `
+      <div class="pending-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <h3>No enrollment found</h3>
+        <p>We couldn't find a registration matching your account. If you've recently submitted an interest form, the Technical Director may not have linked your account yet.</p>
+        <a href="/about#contact" class="btn btn-secondary" style="margin-top:16px">Contact Us</a>
+      </div>`;
+    document.getElementById('player-content').hidden = false;
+    return;
+  }
+
+  // Check if any are still pending (not yet accepted/enrolled)
+  const pending = enrollments.filter(e => e.status === 'pending');
+  const active  = enrollments.filter(e => e.status === 'accepted' || e.status === 'enrolled');
+
+  if (active.length === 0 && pending.length > 0) {
+    const name = `${pending[0].player_first_name} ${pending[0].player_last_name}`;
+    setDashLoading(false);
+    document.getElementById('player-content').innerHTML = `
+      <div class="pending-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <h3>Application Under Review</h3>
+        <p>Your registration for <strong>${name}</strong> has been received and is being reviewed by the Technical Director. You'll hear back within 3 business days.</p>
+        <p style="margin-top:8px">Once approved, your child's Player Card and portal features will appear here.</p>
+        <a href="/about#contact" class="btn btn-secondary" style="margin-top:16px">Get in Touch</a>
+      </div>`;
+    document.getElementById('player-content').hidden = false;
+    return;
+  }
+
+  return loadProfilesFromEnrollments(active);
 }
 
 async function loadProfilesFromEnrollments(enrollments) {
@@ -458,8 +488,21 @@ async function loadProfilesFromEnrollments(enrollments) {
     );
     if (profileData && profileData.length > 0) {
       const p = profileData[0];
-      p.enrollment = enr; // attach enrollment data
+      p.enrollment = enr;
       profiles.push(p);
+    } else {
+      // Enrolled but profile not created yet — show setup pending state
+      const name = `${enr.player_first_name} ${enr.player_last_name}`;
+      setDashLoading(false);
+      document.getElementById('player-content').innerHTML = `
+        <div class="pending-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--green-bright)" stroke-width="1.2"><polyline points="20 6 9 17 4 12"/></svg>
+          <h3>Accepted — Profile Being Set Up</h3>
+          <p>Great news — <strong>${name}'s</strong> application has been accepted! The Technical Director is setting up the player profile. Check back shortly and your Player Card will be ready.</p>
+          <a href="/about#contact" class="btn btn-secondary" style="margin-top:16px">Contact Us</a>
+        </div>`;
+      document.getElementById('player-content').hidden = false;
+      return;
     }
   }
 
@@ -774,6 +817,14 @@ input:focus { outline: none; border-color: var(--green); }
 .resource-link span { font-size: 12px; color: var(--muted); }
 
 .empty-msg { color: var(--muted); font-size: 14px; font-style: italic; }
+
+.pending-state {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding: 64px 32px; max-width: 480px; margin: 0 auto;
+}
+.pending-state h3 { font-size: 32px; margin: 16px 0 10px; }
+.pending-state p  { color: var(--muted); line-height: 1.65; font-size: 15px; }
+.pending-state strong { color: var(--white); }
 
 @media (max-width: 900px) {
   .dash-header { padding: 16px 20px; }
