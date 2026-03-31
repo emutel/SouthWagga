@@ -2966,6 +2966,95 @@ const sessions_u8u11 = [
       "What is your favourite thing about being a South Wagga Warrior?"
     ],
     fa_principle: "Player Development / Love of the Game / Season Celebration"
+  },
+
+  // ── SUPPLEMENTARY S&C ────────────────────────────────────────────────────────
+  {
+    id: "u8u11-sc-foundations",
+    slug: "youth-sc-foundations",
+    title: "Foundations of Athletic Movement",
+    age_group: "u8-u11",
+    age_label: "MiniRoos 8–11",
+    theme: "Strength & Conditioning",
+    duration: 30,
+    player_numbers: "6–20",
+    objectives: [
+      "Develop fundamental movement patterns: sprinting, jumping, landing and changing direction",
+      "Build core stability and body control without weights or equipment",
+      "Create positive associations with physical effort and competitive challenge",
+    ],
+    equipment: ["Flat disc cones (20–30)", "Coloured bibs (4 sets)", "Whistle"],
+    td_notes: "Standalone 30-min supplementary session — not a technical football session. Use as a pre-session block before normal training, or as a full session on a wet/unavailable-field day. Works for U8–U13. For U14+: increase sprint distances to 20m, add single-leg variations at stations, extend reaction game with coach deception (fake-call a colour before showing the real one).",
+    phases: {
+      welcome: {
+        description: "Gather players in a circle. Ask: \"Who is the fastest player here? Who can jump the highest?\" Build energy. Explain: today has nothing to do with the ball — it is about making their body stronger, faster and more balanced. Tell them: every top professional player in the world does this type of training. \"Today you train like professionals.\""
+      },
+      warmup: {
+        title: "Animal Kingdom",
+        description: "Mark out a 20x20m grid. Players move around the space in different animal movement patterns on the coach's call. No equipment needed except boundary cones. Coach calls each animal 2–3 times, players switch immediately.",
+        setup: "20x20m grid marked with disc cones. Players spread out across the space. Coach stands in the centre or on one side for visibility.",
+        activities: [
+          "Bear crawl — hands and feet, hips low, travel 10m",
+          "Bunny hops — two-footed jumps, stay low between hops",
+          "Crab walk — hands and feet, facing up, sideways 10m",
+          "Frog jumps — deep squat, explosive jump forward",
+          "Cheetah sprint — sprint full length of grid, controlled stop",
+          "Snake shuffle — low lateral shuffle side to side, arms out for balance",
+        ],
+        coaching_points: [
+          "Soft, quiet landings — \"land like a ninja, not an elephant\"",
+          "Keep core braced during bear crawl — no sagging hips",
+          "Full extension through ankles, knees and hips on jumps",
+          "Keep eyes up — aware of other players in the space",
+        ],
+        progressions: [
+          "Add competition: last player to complete an animal movement does 3 extra frog jumps",
+          "Pair up: shadow your partner's movement without touching",
+        ],
+      },
+      positioning_game: {
+        title: "Body Control Circuit",
+        description: "Four stations set up in the corners of the grid. Groups rotate every 3 minutes on the whistle. Each station targets a different physical quality. Coach circulates, watching for movement quality and encouraging effort by name. No weights — bodyweight only.",
+        setup: "4 stations at corners of the 20x20m grid. Groups of 3–5 players at each station. Flat cones mark each station area.\n\nStation 1 — Jump and Stick: Jump forward over a line or flat cone, land with soft bent knees, hold balance for 2 seconds, reset and repeat.\nStation 2 — Lateral Shuffle and Sprint: Shuffle sideways 5m to a cone, sprint forward 5m to another cone, backpedal back to start. Continuous.\nStation 3 — Plank and Balance: Alternate 10-second plank hold with 5-second single-leg balance each side. Coach counts aloud.\nStation 4 — Squat Jump Tower: 5 bodyweight squats then 3 explosive jump-and-reach attempts (reach as high as possible). Continuous rounds.",
+        coaching_points: [
+          "Quality over quantity — a wobbly squat counts for nothing",
+          "Encourage every player by name during their reps",
+          "Modify for less confident players: reduce range of motion, offer a hand-hold for balance",
+          "Watch for early fatigue — allow 10-second rest mid-station if needed",
+        ],
+        progressions: [
+          "Station 1: progress to single-leg landing",
+          "Station 2: increase shuffle distance to 8m",
+          "Station 3: increase plank hold to 20 seconds",
+          "Station 4: add a 180-degree turn on landing",
+        ],
+        rules: [
+          "Count your quality reps each round — try to beat your own score next rotation",
+          "No skipping reps — teammates count each other honestly",
+        ],
+      },
+      game_training: {
+        title: "Reaction Sprint Race",
+        description: "Split players into two teams standing in parallel lines shoulder-to-shoulder, facing the coach 10m away. Coach holds up a coloured bib — each colour signals a different movement. On the whistle after the colour cue, players react and race to a cone 15m behind them. Last player back does a forfeit movement. Fast, loud and competitive.",
+        setup: "Two parallel lines of players, 2m apart, facing coach. Cone 15m behind each line. Coach stands 10m in front with coloured bibs ready.",
+        coaching_points: [
+          "First-step explosion — low body position, lean forward on the start",
+          "React to the signal, not to teammates — watch the coach",
+          "Cheer teammates on after your own run",
+        ],
+        rules: [
+          "Green bib = sprint to cone and back",
+          "Red bib = bear crawl to halfway cone, then sprint the rest",
+          "Yellow bib = two-footed bunny hops to halfway cone, then sprint",
+          "Blue bib = lateral shuffle to halfway cone, then sprint",
+          "Moving before the whistle = sit out for one round",
+        ],
+      },
+      warmdown: {
+        description: "Slow walk around the grid shaking out legs and arms. Hold: quad stretch 30 seconds each leg (balance challenge — no hands), calf stretch leaning on a cone, arm-across-chest shoulder stretch. Quick team circle — ask: which station was hardest? What did you feel? Reinforce: \"This is how we build football fitness. Every session, a little stronger.\""
+      },
+    },
+    fa_principle: "Athletic Development / Fundamental Movement Skills",
   }
 ];
 
