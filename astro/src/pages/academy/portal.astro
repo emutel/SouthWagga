@@ -780,6 +780,7 @@ async function loadPlayerData(profile) {
   document.getElementById('dash-loading').hidden = false;
   document.getElementById('dash-content').hidden = true;
   document.getElementById('dash-error').hidden   = true;
+  document.getElementById('dash-pending').hidden = true;
 
   try {
     // Resolve enrollment if string/number
@@ -869,6 +870,9 @@ async function loadProfilesFromEnrollments(enrollments) {
 
 // ── LOAD PROFILES ─────────────────────────────────────────────
 async function loadProfiles(user) {
+  // Reset all state panels before querying
+  document.getElementById('dash-pending').hidden = true;
+  document.getElementById('dash-error').hidden   = true;
   try {
     const allStatuses = 'pending,accepted,enrolled';
 
