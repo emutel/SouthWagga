@@ -1,9 +1,9 @@
 ---
 // src/pages/academy/admin.astro
 // Technical Director admin portal — full rewrite
-import Base from '../../layouts/Base.astro';
+import PortalBase from '../../layouts/PortalBase.astro';
 ---
-<Base
+<PortalBase
   title="Academy — Technical Director"
   description="Warriors FC Academy administration panel."
 >
@@ -462,6 +462,7 @@ async function aapi(path, opts = {}) {
 // ── Load all data ─────────────────────────────────────────────────────────────
 
 async function loadAll() {
+  try {
   const [enrollRaw, playersRaw, unreadRaw] = await Promise.all([
     aapi('/items/academy_enrollments?sort[]=-date_created&limit=200&fields=id,status,date_created,parent_first_name,parent_last_name,parent_email,parent_phone,player_first_name,player_last_name,player_dob,age_group,previous_experience,medical_notes,directus_user_id,program'),
     aapi('/items/academy_player_profiles?limit=200&fields=id,position,photo,jersey_number,enrollment.id,enrollment.age_group,enrollment.player_first_name,enrollment.player_last_name,enrollment.status'),
@@ -504,6 +505,11 @@ async function loadAll() {
   renderEnrollmentList();
   renderAdminPlayerList();
   updateFilterCounts();
+  } catch(err) {
+    console.error('loadAll error:', err);
+    document.getElementById('admin-loading').hidden = true;
+    document.getElementById('tab-registrations').style.display = 'grid';
+  }
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
@@ -1315,4 +1321,4 @@ async function init() {
 document.addEventListener('DOMContentLoaded', init);
 </script>
 
-</Base>
+</PortalBase>

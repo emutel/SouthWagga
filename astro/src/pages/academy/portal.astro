@@ -1,9 +1,9 @@
 ---
 // src/pages/academy/portal.astro
 // Parent/Player Portal — fully client-side authenticated via Directus JWT
-import Base from '../../layouts/Base.astro';
+import PortalBase from '../../layouts/PortalBase.astro';
 ---
-<Base
+<PortalBase
   title="Academy — Player Portal"
   description="South Wagga Warriors FC Academy parent and player portal. View your child's Player Card, progress, and messages."
 >
@@ -97,7 +97,7 @@ import Base from '../../layouts/Base.astro';
 <!-- Toast -->
 <div id="toast" class="toast" hidden></div>
 
-</Base>
+</PortalBase>
 
 <!-- html2canvas for card download -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
