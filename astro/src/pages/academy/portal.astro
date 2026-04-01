@@ -83,7 +83,10 @@ import PortalBase from '../../layouts/PortalBase.astro';
         </div>
       </div>
       <div class="hero-stats-col">
-        <h2 class="stats-heading">Current Stats</h2>
+        <div class="stats-heading-row">
+          <h2 class="stats-heading">Current Stats</h2>
+          <button id="stats-info-btn" class="stats-info-btn">ⓘ How am I scored?</button>
+        </div>
         <div id="stats-panel"></div>
       </div>
     </div>
@@ -104,6 +107,19 @@ import PortalBase from '../../layouts/PortalBase.astro';
 
 <!-- Toast -->
 <div id="toast" class="toast" hidden></div>
+
+<!-- Stats Info Modal -->
+<div id="stats-modal" class="stats-modal" hidden>
+  <div class="stats-modal-backdrop" id="stats-modal-backdrop"></div>
+  <div class="stats-modal-inner">
+    <div class="stats-modal-hdr">
+      <h2 class="stats-modal-title">How Your Stats Are Measured</h2>
+      <button id="stats-modal-close" class="modal-close-btn">✕</button>
+    </div>
+    <p class="stats-modal-subtitle">Your Warriors FC card is updated at the start of each season and at the end of every term. Here's exactly how each stat is tested — and what you can do to reach the next level.</p>
+    <div id="stats-modal-body" class="stats-modal-body"><!-- Injected by JS --></div>
+  </div>
+</div>
 
 </PortalBase>
 
@@ -260,6 +276,119 @@ const QUOTES = [
   { text: "Ask me to show you poetry in motion and I will show you a footballer.", author: "Paul Gascoigne" },
   { text: "The ball is round. The game lasts ninety minutes. Everything else is pure theory.", author: "Sepp Herberger" },
   { text: "I am not a perfectionist, but I like to feel that things are done with a lot of love and passion.", author: "Ronaldinho" },
+];
+
+// ── STAT INFO DATA ───────────────────────────────────────────
+// Benchmarks map raw score (1–10) to real-world measurements per age group.
+// benchmarks.all = same across all ages; otherwise keyed by age group.
+const STAT_INFO = [
+  {
+    key: 'pace', label: 'PAC — Pace', icon: '⚡',
+    desc: 'How fast you sprint over 20 metres. Quick acceleration and top speed.',
+    test: '20-metre sprint from a standing start. You get 2 attempts — your best time counts.',
+    equipment: 'Cones · Stopwatch',
+    benchmarks: {
+      'u8-u9':   [['9–10','Under 4.0 sec'],['7–8','4.0 – 4.8 sec'],['5–6','4.8 – 5.6 sec'],['3–4','5.6 – 6.4 sec'],['1–2','Over 6.4 sec']],
+      'u10-u11': [['9–10','Under 3.7 sec'],['7–8','3.7 – 4.5 sec'],['5–6','4.5 – 5.3 sec'],['3–4','5.3 – 6.1 sec'],['1–2','Over 6.1 sec']],
+      'u12-u13': [['9–10','Under 3.4 sec'],['7–8','3.4 – 4.2 sec'],['5–6','4.2 – 5.0 sec'],['3–4','5.0 – 5.8 sec'],['1–2','Over 5.8 sec']],
+      'u14-u16': [['9–10','Under 3.2 sec'],['7–8','3.2 – 3.9 sec'],['5–6','3.9 – 4.7 sec'],['3–4','4.7 – 5.5 sec'],['1–2','Over 5.5 sec']],
+    },
+    tips: [
+      'Focus on your first 3 steps — explosive acceleration beats top speed',
+      'Drive your arms hard when sprinting — arms power your legs',
+      'Sprint up slight hills 2–3 times a week to build leg power',
+      'Rest fully between sprint reps — speed training needs quality, not quantity',
+    ],
+  },
+  {
+    key: 'shooting', label: 'SHO — Shooting', icon: '🎯',
+    desc: 'Shooting accuracy and power. How well you can finish on goal.',
+    test: '10 shots from the penalty spot at a standard goal. On target = 1 point, goal scored = 2 points. Maximum 20 points.',
+    equipment: 'Balls · Goal',
+    benchmarks: {
+      all: [['9–10','18–20 points'],['7–8','14–17 points'],['5–6','10–13 points'],['3–4','5–9 points'],['1–2','0–4 points']],
+    },
+    tips: [
+      'Plant your non-kicking foot beside the ball — not behind it',
+      'Strike with your laces for power, inside foot for accuracy',
+      'Follow through toward the target — your leg should end up pointing at the goal',
+      'Aim for the corners. Goalkeepers dive to the middle most often',
+      'Practise against a fence: pick a spot and hit it 50 times each session',
+    ],
+  },
+  {
+    key: 'dribbling', label: 'DRI — Dribbling', icon: '🔄',
+    desc: 'Close ball control and the ability to move with the ball at speed.',
+    test: 'Slalom through 5 cones (1 metre apart) and back. 2 attempts, best time counts. Ball must go around every cone or the attempt is void.',
+    equipment: '5 Cones · Stopwatch',
+    benchmarks: {
+      'u8-u9':   [['9–10','Under 9 sec'],['7–8','9–11 sec'],['5–6','11–14 sec'],['3–4','14–17 sec'],['1–2','Over 17 sec']],
+      'u10-u11': [['9–10','Under 8 sec'],['7–8','8–10 sec'],['5–6','10–13 sec'],['3–4','13–16 sec'],['1–2','Over 16 sec']],
+      'u12-u13': [['9–10','Under 7 sec'],['7–8','7–9 sec'],['5–6','9–12 sec'],['3–4','12–15 sec'],['1–2','Over 15 sec']],
+      'u14-u16': [['9–10','Under 6 sec'],['7–8','6–8 sec'],['5–6','8–11 sec'],['3–4','11–14 sec'],['1–2','Over 14 sec']],
+    },
+    tips: [
+      'Set up cones at home and practise 10 minutes every day — it adds up fast',
+      'Keep the ball no more than one step away — too far and you lose control',
+      'Practise with your weaker foot deliberately. Messi had a weak right for years',
+      'Once you\'re quick, practise looking up — great dribblers see the whole pitch',
+      'Slow through the cones, fast on the straight — change of pace confuses defenders',
+    ],
+  },
+  {
+    key: 'passing', label: 'PAS — Passing', icon: '↗',
+    desc: 'Accuracy and weight of passes. Hitting where you aim, at the right pace.',
+    test: '10 passes through a 1-metre cone gate from age-appropriate distance. Count how many pass cleanly through the gate.',
+    equipment: '2 Cones (gate) · Balls',
+    benchmarks: {
+      'u8-u9':   [['9–10','9–10 (from 8 m)'],['7–8','7–8'],['5–6','5–6'],['3–4','3–4'],['1–2','0–2']],
+      'u10-u11': [['9–10','9–10 (from 12 m)'],['7–8','7–8'],['5–6','5–6'],['3–4','3–4'],['1–2','0–2']],
+      'u12-u13': [['9–10','9–10 (from 15 m)'],['7–8','7–8'],['5–6','5–6'],['3–4','3–4'],['1–2','0–2']],
+      'u14-u16': [['9–10','9–10 (from 18 m)'],['7–8','7–8'],['5–6','5–6'],['3–4','3–4'],['1–2','0–2']],
+    },
+    tips: [
+      'Use the inside of your foot — not your toe — for accurate passes',
+      'Lock your ankle firm when you strike the ball',
+      'Kick a ball against a wall every day — 50 passes per foot',
+      'Weight your pass: too hard is as bad as too soft',
+      'Practise with a friend: 5 passes in a row without missing, then step further back',
+    ],
+  },
+  {
+    key: 'defending', label: 'DEF — Defending', icon: '🛡',
+    desc: 'Stopping attackers, winning the ball, and smart positioning.',
+    test: '5 × 1v1 defending scenarios. Attacker starts 5 m away and tries to pass a cone goal 10 m behind you. Clean stop = 2 pts · Delay only = 1 pt · Beaten = 0 pts. Maximum 10 points.',
+    equipment: '3 Cones · Partner',
+    benchmarks: {
+      all: [['9–10','9–10 points'],['7–8','7–8 points'],['5–6','5–6 points'],['3–4','3–4 points'],['1–2','0–2 points']],
+    },
+    tips: [
+      'Stay goalside — always keep yourself between the attacker and the goal',
+      'Jockey: stay on your toes, knees bent, shuffle sideways — don\'t dive in',
+      'Force the attacker to their weaker foot — usually the left',
+      'Watch their hips, not the ball — hips tell you where they\'re really going',
+      'Only tackle when you\'re 90% sure you\'ll win it — a failed tackle is a gift',
+    ],
+  },
+  {
+    key: 'physical', label: 'PHY — Physical', icon: '💪',
+    desc: 'Stamina, strength and overall fitness. Can you keep going when it\'s hard?',
+    test: 'Multi-stage fitness test (beep test). Run 20 metres to the beat — the beeps speed up each level. Your score is the level you reach before dropping out.',
+    equipment: '2 Cones (20 m apart) · Beep test audio',
+    benchmarks: {
+      'u8-u9':   [['9–10','Level 6+'],['7–8','Level 5'],['5–6','Level 4'],['3–4','Level 3'],['1–2','Below Level 3']],
+      'u10-u11': [['9–10','Level 7+'],['7–8','Level 6'],['5–6','Level 5'],['3–4','Level 4'],['1–2','Below Level 4']],
+      'u12-u13': [['9–10','Level 8+'],['7–8','Level 7'],['5–6','Level 6'],['3–4','Level 5'],['1–2','Below Level 5']],
+      'u14-u16': [['9–10','Level 9+'],['7–8','Level 8'],['5–6','Level 7'],['3–4','Level 6'],['1–2','Below Level 6']],
+    },
+    tips: [
+      'Go for a run 2–3 times a week. Start at 15 minutes and build up by 5 minutes each week',
+      'Park runs are perfect — free, friendly, and you can track your progress',
+      'Interval training: sprint 30 sec, walk 90 sec, repeat 6 times',
+      'You can\'t fake fitness — every training session is an investment in your beep test score',
+      'Swimming and cycling also build fitness without stressing your joints',
+    ],
+  },
 ];
 
 // ── STATE ─────────────────────────────────────────────────────
@@ -941,6 +1070,63 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// ── STATS INFO MODAL ─────────────────────────────────────────
+function agKey(ag) {
+  const s = (ag || '').toLowerCase().replace(/\s/g,'-').replace(/\//g,'-');
+  if (s.includes('8') || s.includes('9')) return 'u8-u9';
+  if (s.includes('10') || s.includes('11')) return 'u10-u11';
+  if (s.includes('12') || s.includes('13')) return 'u12-u13';
+  return 'u14-u16';
+}
+
+function openStatsModal() {
+  const profile = currentProfile();
+  const ak = agKey(profile?.enrollment?.age_group);
+  const body = document.getElementById('stats-modal-body');
+
+  body.innerHTML = STAT_INFO.map(info => {
+    const bmarks = info.benchmarks[ak] || info.benchmarks.all || [];
+    const bmarkRows = bmarks.map(([score, target]) =>
+      `<div class="si-bmark-row"><span class="si-bmark-score">${score}</span><span class="si-bmark-target">${target}</span></div>`
+    ).join('');
+    const tipItems = info.tips.map(t => `<li>${t}</li>`).join('');
+    return `
+<div class="si-card">
+  <div class="si-card-hdr">
+    <span class="si-icon">${info.icon}</span>
+    <h3 class="si-label">${info.label}</h3>
+  </div>
+  <p class="si-desc">${info.desc}</p>
+  <div class="si-section">
+    <p class="si-section-title">The Test</p>
+    <p class="si-test-detail">${info.test}</p>
+    <p class="si-equipment">Equipment: ${info.equipment}</p>
+  </div>
+  <div class="si-section">
+    <p class="si-section-title">Score Benchmarks${info.benchmarks.all ? '' : ` · ${ak.toUpperCase()}`}</p>
+    <div class="si-bmarks">${bmarkRows}</div>
+  </div>
+  <div class="si-section si-tips-section">
+    <p class="si-section-title">How to Improve</p>
+    <ul class="si-tips">${tipItems}</ul>
+  </div>
+</div>`;
+  }).join('');
+
+  document.getElementById('stats-modal').hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeStatsModal() {
+  document.getElementById('stats-modal').hidden = true;
+  document.body.style.overflow = '';
+}
+
+document.getElementById('stats-info-btn').addEventListener('click', openStatsModal);
+document.getElementById('stats-modal-close').addEventListener('click', closeStatsModal);
+document.getElementById('stats-modal-backdrop').addEventListener('click', closeStatsModal);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeStatsModal(); });
+
 // ── INIT ──────────────────────────────────────────────────────
 async function init() {
   // Inject random quote
@@ -1196,7 +1382,40 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
 .hero-stats-col { padding-top: 8px; }
 
 /* ── STATS BARS ──────────────────────────────────────────── */
-.stats-heading { font-family: var(--font-cond); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+.stats-heading-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.stats-heading { font-family: var(--font-cond); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0; }
+.stats-info-btn { background: none; border: 1px solid var(--border); color: var(--green); border-radius: 20px; font-family: var(--font-cond); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; padding: 3px 10px; cursor: pointer; transition: background 0.15s, color 0.15s; white-space: nowrap; }
+.stats-info-btn:hover { background: var(--green-dim); }
+
+/* Stats info modal */
+.stats-modal { position: fixed; inset: 0; z-index: 200; display: flex; align-items: flex-end; }
+.stats-modal[hidden] { display: none !important; }
+.stats-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.7); }
+.stats-modal-inner { position: relative; width: 100%; max-width: 720px; margin: 0 auto; max-height: 90vh; background: #111827; border-radius: 16px 16px 0 0; overflow-y: auto; padding: 0 0 32px; box-shadow: 0 -8px 48px rgba(0,0,0,0.6); }
+@media (min-width: 600px) { .stats-modal { align-items: center; } .stats-modal-inner { border-radius: 16px; max-height: 85vh; } }
+.stats-modal-hdr { position: sticky; top: 0; background: #111827; padding: 20px 20px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); z-index: 1; }
+.stats-modal-title { font-family: var(--font-cond); font-size: 20px; font-weight: 800; letter-spacing: 0.04em; color: var(--text); margin: 0; }
+.modal-close-btn { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 50%; width: 32px; height: 32px; font-size: 14px; cursor: pointer; flex-shrink: 0; transition: color 0.15s, border-color 0.15s; }
+.modal-close-btn:hover { color: var(--text); border-color: var(--text); }
+.stats-modal-subtitle { font-size: 13px; color: var(--muted); padding: 12px 20px 0; margin: 0; line-height: 1.5; }
+.stats-modal-body { display: grid; grid-template-columns: 1fr; gap: 12px; padding: 16px 20px 0; }
+@media (min-width: 520px) { .stats-modal-body { grid-template-columns: 1fr 1fr; } }
+.si-card { background: #1a2035; border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.si-card-hdr { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.si-icon { font-size: 22px; line-height: 1; }
+.si-label { font-family: var(--font-cond); font-size: 17px; font-weight: 800; letter-spacing: 0.05em; color: var(--text); margin: 0; }
+.si-desc { font-size: 13px; color: var(--muted); margin: 0 0 12px; line-height: 1.4; }
+.si-section { margin-bottom: 12px; }
+.si-section-title { font-family: var(--font-cond); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--green); margin: 0 0 6px; }
+.si-test-detail { font-size: 13px; color: var(--text); margin: 0 0 4px; line-height: 1.4; }
+.si-equipment { font-size: 11px; color: var(--muted); margin: 0; }
+.si-bmarks { display: flex; flex-direction: column; gap: 3px; }
+.si-bmark-row { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.si-bmark-score { font-family: var(--font-cond); font-weight: 700; color: var(--green); min-width: 36px; }
+.si-bmark-target { color: var(--text); }
+.si-tips { margin: 0; padding-left: 16px; display: flex; flex-direction: column; gap: 4px; }
+.si-tips li { font-size: 12px; color: var(--muted); line-height: 1.4; }
+.si-tips-section .si-tips li:first-child { color: var(--text); }
 .stat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .stat-label { width: 28px; font-family: var(--font-cond); font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 0.06em; }
 .stat-bar-wrap { flex: 1; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
