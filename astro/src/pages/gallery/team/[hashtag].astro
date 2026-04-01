@@ -10,7 +10,7 @@ export async function getStaticPaths() {
   return teams
     .filter(t => t.hashtag)
     .map(t => ({
-      params: { hashtag: encodeURIComponent(t.hashtag) },
+      params: { hashtag: t.hashtag.replace(/^#/, '') },
       props:  { team: t },
     }));
 }
@@ -18,7 +18,7 @@ export async function getStaticPaths() {
 const { hashtag } = Astro.params;
 const { team }    = Astro.props;
 
-const decodedHashtag = decodeURIComponent(hashtag);
+const decodedHashtag = '#' + hashtag;
 
 // ── INSTAGRAM INTEGRATION SKELETON ──────────────────────────
 // When INSTAGRAM_CONNECTED = true, uncomment and use the following:

@@ -34,11 +34,11 @@ const hashtagTeams = allTeams.filter(t => t.hashtag);
             <div class="hc-team-name">{team.short_name || team.name}</div>
             <div class="hc-hashtag">{team.hashtag}</div>
             {INSTAGRAM_CONNECTED ? (
-              <a href={`/gallery/team/${encodeURIComponent(team.hashtag)}`} class="hc-btn hc-btn-active">
+              <a href={`/gallery/team/${team.hashtag.replace(/^#/, '')}`} class="hc-btn hc-btn-active">
                 View Photos →
               </a>
             ) : (
-              <a href={`/gallery/team/${encodeURIComponent(team.hashtag)}`} class="hc-btn hc-btn-soon">
+              <a href={`/gallery/team/${team.hashtag.replace(/^#/, '')}`} class="hc-btn hc-btn-soon">
                 Coming Soon
               </a>
             )}

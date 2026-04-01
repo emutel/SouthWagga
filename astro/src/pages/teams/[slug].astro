@@ -45,7 +45,7 @@ const otherPlayers = players.filter(p => !p.position);
       <div class="label">{team.division}</div>
       <h1>{team.name}</h1>
       {team.hashtag && (
-        <a href={`/gallery/team/${encodeURIComponent(team.hashtag)}`} class="hashtag-pill">
+        <a href={`/gallery/team/${team.hashtag.replace(/^#/, '')}`} class="hashtag-pill">
           📸 {team.hashtag}
           <span class="hashtag-pill-sub">Tag your photos</span>
         </a>
@@ -265,7 +265,7 @@ const otherPlayers = players.filter(p => !p.position);
                 <span>Your photo joins the team gallery!</span>
               </div>
             </div>
-            <a href={`/gallery/team/${encodeURIComponent(team.hashtag)}`} class="social-share-link">
+            <a href={`/gallery/team/${team.hashtag.replace(/^#/, '')}`} class="social-share-link">
               View {team.short_name || team.name} Gallery →
             </a>
           </div>
