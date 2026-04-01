@@ -205,6 +205,19 @@ input[type=range] { width: 100%; accent-color: var(--green-accent); }
 .btn-outline:hover { border-color: var(--text); }
 .btn-danger { background: none; border: 1px solid var(--red); color: var(--red); border-radius: 7px; padding: 8px 16px; font-family: var(--font-cond); font-size: 13px; font-weight: 700; cursor: pointer; }
 .btn-danger:hover { background: var(--red-light); }
+.accept-pw-panel { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 14px; margin-top: 4px; }
+.accept-pw-desc { font-size: 13px; color: #78350f; margin: 4px 0 12px; line-height: 1.4; }
+.accept-pw-panel .section-heading { color: #92400e; margin: 0 0 8px; }
+.creds-box { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 14px; margin-top: 8px; }
+.creds-box.creds-warn { background: #fffbeb; border-color: #fcd34d; }
+.creds-title { font-family: var(--font-cond); font-weight: 700; font-size: 15px; color: #166534; margin: 0 0 8px; }
+.creds-warn .creds-title { color: #92400e; }
+.cred-row { display: flex; gap: 10px; align-items: center; font-size: 13px; color: #374151; margin-bottom: 4px; }
+.cred-row span { color: #6b7280; min-width: 60px; }
+.cred-row code { background: #fff; border: 1px solid #d1fae5; border-radius: 4px; padding: 2px 8px; font-size: 13px; color: #065f46; user-select: all; }
+.creds-warn .cred-row code { border-color: #fcd34d; color: #92400e; }
+.creds-continue { font-size: 12px; margin-top: 10px; color: var(--green-accent); }
+.pref-note { font-size: 12px; color: #6b7280; margin: 0 0 10px; background: #f9fafb; border-radius: 4px; padding: 6px 10px; }
 .btn-ghost { background: none; border: none; color: var(--muted); cursor: pointer; font-family: var(--font-cond); font-size: 13px; font-weight: 700; padding: 6px 10px; }
 .btn-ghost:hover { color: var(--text); }
 
@@ -466,7 +479,7 @@ async function aapi(path, opts = {}) {
 async function loadAll() {
   try {
   const [enrollRaw, playersRaw, unreadRaw] = await Promise.all([
-    aapi('/items/academy_enrollments?sort[]=-date_created&limit=200&fields=id,status,date_created,parent_first_name,parent_last_name,parent_email,parent_phone,player_first_name,player_last_name,player_dob,age_group,previous_experience,medical_notes,directus_user_id,program'),
+    aapi('/items/academy_enrollments?sort[]=-date_created&limit=200&fields=id,status,date_created,parent_first_name,parent_last_name,parent_email,parent_phone,player_first_name,player_last_name,player_dob,age_group,previous_experience,medical_notes,directus_user_id,program,preferred_position,preferred_jersey_number'),
     aapi('/items/academy_player_profiles?limit=200&fields=id,position,photo,jersey_number,enrollment.id,enrollment.age_group,enrollment.player_first_name,enrollment.player_last_name,enrollment.status'),
     aapi('/items/academy_messages?filter[sender_role][_eq]=parent&filter[read_at][_null]=true&limit=200&fields=player,id'),
   ]);
@@ -603,10 +616,27 @@ function openEnrollmentDetail(enr) {
   let actionHtml = '';
 
   if (enr.status === 'pending') {
-    actionHtml = `<div class="action-row">
+    actionHtml = `
+    <div id="accept-btn-row" class="action-row">
       <button class="btn-green" id="btn-accept">Accept Application &rarr;</button>
       <button class="btn-danger" id="btn-reject">Reject &times;</button>
-    </div>`;
+    </div>
+    <div id="accept-pw-panel" class="accept-pw-panel" hidden>
+      <p class="section-heading">Set Parent Login</p>
+      <p class="accept-pw-desc">Creating account for <strong>${parentName}</strong> (${enr.parent_email || ''}). Set a temporary password — share it with them after accepting.</p>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Temporary Password</label>
+          <input type="text" id="accept-pw" placeholder="Min 8 characters" autocomplete="off">
+        </div>
+      </div>
+      <div class="action-row" style="margin-top:8px">
+        <button class="btn-green" id="btn-accept-confirm">Create Account &amp; Accept &rarr;</button>
+        <button class="btn-ghost" id="btn-accept-cancel">Cancel</button>
+      </div>
+      <p id="accept-pw-error" class="error-msg" hidden></p>
+    </div>
+    <div id="accept-creds" hidden></div>`;
   } else if (enr.status === 'accepted') {
     const existingProfile = allPlayers.find(p => String(p.enrollment?.id) === String(enr.id));
     if (existingProfile) {
@@ -618,19 +648,20 @@ function openEnrollmentDetail(enr) {
       actionHtml = `<div style="margin-top:8px;">
         <p class="section-heading" style="margin-bottom:12px;">Create Player Profile</p>
         <form class="create-profile-form" id="create-profile-form">
+          ${enr.preferred_position || enr.preferred_jersey_number ? `<p class="pref-note">Player preferences: ${enr.preferred_position ? `<strong>${enr.preferred_position}</strong>` : ''}${enr.preferred_jersey_number ? ` · Jersey <strong>#${enr.preferred_jersey_number}</strong>` : ''}</p>` : ''}
           <div class="form-row">
             <div class="form-field">
               <label>Position</label>
               <select id="cp-position">
-                <option value="goalkeeper">Goalkeeper</option>
-                <option value="defender">Defender</option>
-                <option value="midfielder" selected>Midfielder</option>
-                <option value="forward">Forward</option>
+                <option value="goalkeeper"${enr.preferred_position === 'goalkeeper' ? ' selected' : ''}>Goalkeeper</option>
+                <option value="defender"${enr.preferred_position === 'defender' ? ' selected' : ''}>Defender</option>
+                <option value="midfielder"${(!enr.preferred_position || enr.preferred_position === 'midfielder') ? ' selected' : ''}>Midfielder</option>
+                <option value="forward"${enr.preferred_position === 'forward' ? ' selected' : ''}>Forward</option>
               </select>
             </div>
             <div class="form-field">
               <label>Jersey Number</label>
-              <input type="number" id="cp-jersey" min="1" max="99" placeholder="Optional">
+              <input type="number" id="cp-jersey" min="1" max="99" placeholder="Optional" value="${enr.preferred_jersey_number || ''}">
             </div>
           </div>
           <div class="form-field">
@@ -670,20 +701,108 @@ function openEnrollmentDetail(enr) {
   const markBtn   = detail.querySelector('#btn-mark-enrolled');
   const cpForm    = detail.querySelector('#create-profile-form');
 
+  const acceptBtnRow = detail.querySelector('#accept-btn-row');
+  const acceptPwPanel = detail.querySelector('#accept-pw-panel');
+  const acceptCredsEl = detail.querySelector('#accept-creds');
+
   if (acceptBtn) {
-    acceptBtn.addEventListener('click', async () => {
-      acceptBtn.disabled = true; acceptBtn.textContent = 'Accepting\u2026';
+    acceptBtn.addEventListener('click', () => {
+      acceptBtnRow.hidden = true;
+      acceptPwPanel.hidden = false;
+      detail.querySelector('#accept-pw')?.focus();
+    });
+  }
+
+  const cancelAcceptBtn = detail.querySelector('#btn-accept-cancel');
+  if (cancelAcceptBtn) {
+    cancelAcceptBtn.addEventListener('click', () => {
+      acceptPwPanel.hidden = true;
+      acceptBtnRow.hidden = false;
+    });
+  }
+
+  const confirmAcceptBtn = detail.querySelector('#btn-accept-confirm');
+  if (confirmAcceptBtn) {
+    confirmAcceptBtn.addEventListener('click', async () => {
+      const pw = detail.querySelector('#accept-pw').value.trim();
+      const errEl = detail.querySelector('#accept-pw-error');
+      if (!pw || pw.length < 8) {
+        errEl.textContent = 'Password must be at least 8 characters.';
+        errEl.hidden = false;
+        return;
+      }
+      confirmAcceptBtn.disabled = true;
+      confirmAcceptBtn.textContent = 'Creating\u2026';
+      errEl.hidden = true;
+
+      // Check if Directus user already exists for this email
+      let userId = null;
+      let userExisted = false;
+      try {
+        const existingUsers = asArray(await aapi(`/users?filter[email][_eq]=${encodeURIComponent(enr.parent_email)}&fields=id&limit=1`));
+        if (existingUsers.length) {
+          userId = existingUsers[0].id;
+          userExisted = true;
+        } else {
+          // Create new Directus user (admin token has user:create permission)
+          const newUser = await aapi('/users', {
+            method: 'POST',
+            body: JSON.stringify({
+              email:      enr.parent_email,
+              password:   pw,
+              first_name: enr.parent_first_name || '',
+              last_name:  enr.parent_last_name  || '',
+              status:     'active',
+            }),
+          });
+          if (newUser?.id) userId = newUser.id;
+        }
+      } catch (_) { /* user creation non-fatal */ }
+
+      const patchPayload = { status: 'accepted' };
+      if (userId) patchPayload.directus_user_id = userId;
+
       const result = await aapi(`/items/academy_enrollments/${enr.id}`, {
-        method: 'PATCH', body: JSON.stringify({ status: 'accepted' }),
+        method: 'PATCH', body: JSON.stringify(patchPayload),
       });
+
       if (result) {
         enr.status = 'accepted';
+        if (userId) enr.directus_user_id = userId;
         updateFilterCounts();
         renderEnrollmentList();
-        openEnrollmentDetail(enr);
         updateStatsBar();
+        acceptPwPanel.hidden = true;
+
+        if (userId && !userExisted) {
+          acceptCredsEl.innerHTML = `<div class="creds-box">
+            <p class="creds-title">✓ Account created &amp; application accepted!</p>
+            <p>Share these login details with ${enr.parent_first_name}:</p>
+            <div class="cred-row"><span>Portal:</span><code>/academy/portal</code></div>
+            <div class="cred-row"><span>Email:</span><code>${enr.parent_email}</code></div>
+            <div class="cred-row"><span>Password:</span><code>${pw}</code></div>
+            <button class="btn-ghost creds-continue" id="btn-continue">Continue to Player Profile &rarr;</button>
+          </div>`;
+        } else if (userId && userExisted) {
+          acceptCredsEl.innerHTML = `<div class="creds-box">
+            <p class="creds-title">✓ Accepted. Parent account already exists.</p>
+            <p>They can log in to <code>/academy/portal</code> with <code>${enr.parent_email}</code>.</p>
+            <button class="btn-ghost creds-continue" id="btn-continue">Continue to Player Profile &rarr;</button>
+          </div>`;
+        } else {
+          acceptCredsEl.innerHTML = `<div class="creds-box creds-warn">
+            <p class="creds-title">✓ Application accepted.</p>
+            <p>Could not auto-create login (role assignment may be required in Directus admin). Please create the parent account manually with email: <code>${enr.parent_email}</code>, then link their user ID in the enrollment.</p>
+            <button class="btn-ghost creds-continue" id="btn-continue">Continue &rarr;</button>
+          </div>`;
+        }
+        acceptCredsEl.hidden = false;
+        acceptCredsEl.querySelector('#btn-continue')?.addEventListener('click', () => openEnrollmentDetail(enr));
       } else {
-        acceptBtn.disabled = false; acceptBtn.textContent = 'Accept Application \u2192';
+        errEl.textContent = 'Failed to accept. Please try again.';
+        errEl.hidden = false;
+        confirmAcceptBtn.disabled = false;
+        confirmAcceptBtn.textContent = 'Create Account & Accept \u2192';
       }
     });
   }

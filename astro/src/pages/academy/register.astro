@@ -97,6 +97,22 @@ const activePrograms = programs.filter(p => p.status === 'active');
                 </select>
               </div>
             )}
+            <div class="field-row">
+              <div class="field">
+                <label for="preferred_position">Preferred Position</label>
+                <select id="preferred_position" name="preferred_position">
+                  <option value="">— Not sure yet —</option>
+                  <option value="goalkeeper">Goalkeeper</option>
+                  <option value="defender">Defender</option>
+                  <option value="midfielder">Midfielder</option>
+                  <option value="forward">Forward / Striker</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="preferred_jersey_number">Preferred Jersey Number</label>
+                <input type="number" id="preferred_jersey_number" name="preferred_jersey_number" min="1" max="99" placeholder="e.g. 7 (optional)">
+              </div>
+            </div>
           </fieldset>
 
           <fieldset>
@@ -108,6 +124,23 @@ const activePrograms = programs.filter(p => p.status === 'active');
             <div class="field">
               <label for="medical_notes">Medical Notes or Anything Our Coaches Should Know</label>
               <textarea id="medical_notes" name="medical_notes" rows="3" placeholder="Allergies, injuries, conditions, anything relevant to physical activity..."></textarea>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Create Your Login</legend>
+            <p class="fieldset-note">Set a password so you can log in to the Parent Portal after your registration is confirmed.</p>
+            <div class="field-row">
+              <div class="field">
+                <label for="password">Password <span class="req">*</span></label>
+                <input type="password" id="password" name="password" autocomplete="new-password" placeholder="At least 8 characters" required>
+                <span class="field-error" id="err-password"></span>
+              </div>
+              <div class="field">
+                <label for="password_confirm">Confirm Password <span class="req">*</span></label>
+                <input type="password" id="password_confirm" name="password_confirm" autocomplete="new-password" placeholder="Repeat your password" required>
+                <span class="field-error" id="err-password_confirm"></span>
+              </div>
             </div>
           </fieldset>
 
@@ -153,7 +186,7 @@ const activePrograms = programs.filter(p => p.status === 'active');
           <ol class="steps-list">
             <li><span class="step-n">1</span><div><strong>We receive your registration</strong><p>Your application goes to our Technical Director immediately.</p></div></li>
             <li><span class="step-n">2</span><div><strong>We review &amp; confirm</strong><p>We'll match your child to the right tier and confirm a spot is available.</p></div></li>
-            <li><span class="step-n">3</span><div><strong>You get an invite</strong><p>You'll receive login details for the parent portal where you can access resources and track your child's progress.</p></div></li>
+            <li><span class="step-n">3</span><div><strong>Portal access activated</strong><p>Once confirmed, your account is activated. Log in to the parent portal with the email and password you used to register.</p></div></li>
             <li><span class="step-n">4</span><div><strong>First session</strong><p>Bring boots, shin pads, a ball and a water bottle. Come at 5:00pm for a welcome introduction.</p></div></li>
           </ol>
         </div>
@@ -195,7 +228,8 @@ const formError      = document.getElementById('form-error');
 
 const REQUIRED_FIELDS = [
   'parent_first_name', 'parent_last_name', 'parent_email', 'parent_phone',
-  'player_first_name', 'player_last_name', 'player_dob', 'age_group'
+  'player_first_name', 'player_last_name', 'player_dob', 'age_group',
+  'password', 'password_confirm',
 ];
 
 function showError(field, msg) {
@@ -222,6 +256,14 @@ function validateForm(data) {
     showError('parent_email', 'Please enter a valid email address.');
     valid = false;
   }
+  if (data.password && data.password.length < 8) {
+    showError('password', 'Password must be at least 8 characters.');
+    valid = false;
+  }
+  if (data.password && data.password_confirm && data.password !== data.password_confirm) {
+    showError('password_confirm', 'Passwords do not match.');
+    valid = false;
+  }
   const ack = document.getElementById('acknowledge');
   if (ack && !ack.checked) {
     showError('acknowledge', 'Please acknowledge before submitting.');
@@ -243,23 +285,29 @@ form.addEventListener('submit', async (e) => {
   submitBtn.disabled = true;
   submitBtn.textContent = 'Submitting…';
 
-  // Build payload — only fields in the collection
+  const parentEmail = data.parent_email.trim().toLowerCase();
+  const password    = data.password?.trim();
+
+  // Build enrollment payload
   const payload = {
     status: 'pending',
-    parent_first_name:   data.parent_first_name.trim(),
-    parent_last_name:    data.parent_last_name.trim(),
-    parent_email:        data.parent_email.trim().toLowerCase(),
-    parent_phone:        data.parent_phone.trim(),
-    player_first_name:   data.player_first_name.trim(),
-    player_last_name:    data.player_last_name.trim(),
-    player_dob:          data.player_dob,
-    age_group:           data.age_group,
-    previous_experience: data.previous_experience?.trim() || null,
-    medical_notes:       data.medical_notes?.trim() || null,
-    program:             data.program_interest || null,
+    parent_first_name:        data.parent_first_name.trim(),
+    parent_last_name:         data.parent_last_name.trim(),
+    parent_email:             parentEmail,
+    parent_phone:             data.parent_phone.trim(),
+    player_first_name:        data.player_first_name.trim(),
+    player_last_name:         data.player_last_name.trim(),
+    player_dob:               data.player_dob,
+    age_group:                data.age_group,
+    previous_experience:      data.previous_experience?.trim() || null,
+    medical_notes:            data.medical_notes?.trim() || null,
+    program:                  data.program_interest || null,
+    preferred_position:       data.preferred_position || null,
+    preferred_jersey_number:  data.preferred_jersey_number ? parseInt(data.preferred_jersey_number) : null,
   };
 
   try {
+    // 1. Create enrollment
     const res = await fetch(`${DIRECTUS_URL}/items/academy_enrollments`, {
       method: 'POST',
       headers: {
@@ -268,11 +316,46 @@ form.addEventListener('submit', async (e) => {
       },
       body: JSON.stringify(payload),
     });
-
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const enrollJson = await res.json();
+    const enrollmentId = enrollJson?.data?.id;
+
+    // 2. Try to create Directus user account via public registration endpoint
+    if (password && enrollmentId) {
+      try {
+        const regRes = await fetch(`${DIRECTUS_URL}/users/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email:      parentEmail,
+            password:   password,
+            first_name: data.parent_first_name.trim(),
+            last_name:  data.parent_last_name.trim(),
+          }),
+        });
+        // If registration worked, try to link the user ID to the enrollment
+        if (regRes.ok) {
+          const regJson = await regRes.json();
+          const userId = regJson?.data?.id;
+          if (userId) {
+            // Attempt to link — may fail if enrollment token lacks PATCH permission; that's OK
+            await fetch(`${DIRECTUS_URL}/items/academy_enrollments/${enrollmentId}`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${ENROLL_TOKEN}`,
+              },
+              body: JSON.stringify({ directus_user_id: userId }),
+            }).catch(() => {}); // silent — portal can fall back to email matching
+          }
+        }
+      } catch (_) {
+        // User creation failure is non-fatal — TD can create account on acceptance
+      }
+    }
 
     // Show success
-    successEmail.textContent = data.parent_email.trim().toLowerCase();
+    successEmail.textContent = parentEmail;
     formContainer.hidden = true;
     successContainer.hidden = false;
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -333,6 +416,7 @@ select option { background: var(--card); }
 .check-label input[type="checkbox"] { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--green); flex-shrink: 0; }
 .check-label span { font-size: 14px; color: var(--muted); line-height: 1.6; }
 
+.fieldset-note { font-size: 13px; color: var(--muted); margin: -10px 0 16px; line-height: 1.5; }
 .form-actions { display: flex; flex-direction: column; gap: 12px; }
 .btn-submit { align-self: flex-start; }
 .form-note  { font-size: 13px; color: var(--muted); }
