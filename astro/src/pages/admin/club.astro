@@ -675,7 +675,7 @@ async function loadSeasons() {
 
 async function loadTeams() {
   if (!state.activeSeason) { state.teams = []; return; }
-  const res = await api(`/items/teams?filter[season][_eq]=${state.activeSeason.id}&sort=sort_order,name&limit=200`);
+  const res = await api(`/items/teams?filter[season][_eq]=${state.activeSeason.year}&sort=sort_order,name&limit=200`);
   if (!res.ok) throw new Error('Could not load teams');
   const data = await res.json();
   state.teams = asArray(data.data);
@@ -954,7 +954,7 @@ document.getElementById('new-team-btn').addEventListener('click', async () => {
   try {
     const res = await api('/items/teams', {
       method: 'POST',
-      body: JSON.stringify({ name: name.trim(), season: state.activeSeason.id, status: 'active' }),
+      body: JSON.stringify({ name: name.trim(), season: String(state.activeSeason.year), status: 'active' }),
     });
     if (!res.ok) throw new Error('Failed to create team');
     const data = await res.json();

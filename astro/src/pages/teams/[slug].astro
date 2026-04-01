@@ -236,6 +236,43 @@ const otherPlayers = players.filter(p => !p.position);
       </section>
     )}
 
+    <!-- ── SHARE YOUR PHOTOS ── -->
+    {team.hashtag && (
+      <section class="team-section">
+        <div class="social-share-box">
+          <div class="social-share-icon">📸</div>
+          <div class="social-share-content">
+            <h3 class="social-share-title">Share {team.short_name || team.name} Photos</h3>
+            <p class="social-share-desc">
+              Got photos from training or match day? Tag them with <strong>{team.hashtag}</strong> on
+              Instagram or Facebook and they'll appear in the team gallery.
+            </p>
+            <div class="social-share-steps">
+              <div class="step">
+                <span class="step-num">1</span>
+                <span>Take a photo at training or a match</span>
+              </div>
+              <div class="step">
+                <span class="step-num">2</span>
+                <span>Post it to Instagram or Facebook</span>
+              </div>
+              <div class="step">
+                <span class="step-num">3</span>
+                <span>Add <strong>{team.hashtag}</strong> <span class="also-tag">#SouthWaggaWarriors</span> to your caption</span>
+              </div>
+              <div class="step">
+                <span class="step-num">4</span>
+                <span>Your photo joins the team gallery!</span>
+              </div>
+            </div>
+            <a href={`/gallery/team/${encodeURIComponent(team.hashtag)}`} class="social-share-link">
+              View {team.short_name || team.name} Gallery →
+            </a>
+          </div>
+        </div>
+      </section>
+    )}
+
     <!-- SHARE -->
     <ShareBar
       title={`${team.name} — South Wagga Warriors FC`}
@@ -417,6 +454,71 @@ const otherPlayers = players.filter(p => !p.position);
 .reg-gender { font-family: var(--font-cond); font-size: 13px; text-transform: capitalize; }
 
 .empty { color: var(--muted); font-style: italic; padding: 20px 0; }
+
+.social-share-box {
+  display: flex;
+  gap: 24px;
+  background: linear-gradient(135deg, rgba(var(--green-rgb, 29,122,58),0.12) 0%, rgba(var(--green-rgb, 29,122,58),0.04) 100%);
+  border: 1px solid rgba(var(--green-rgb, 29,122,58),0.25);
+  border-radius: 16px;
+  padding: 28px 32px;
+}
+.social-share-icon { font-size: 40px; line-height: 1; flex-shrink: 0; }
+.social-share-content { flex: 1; }
+.social-share-title {
+  font-family: var(--font-cond);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+.social-share-desc {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+.social-share-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.step-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--green-bright);
+  color: var(--black);
+  font-family: var(--font-cond);
+  font-size: 12px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.also-tag { color: var(--green-bright); font-style: italic; }
+.social-share-link {
+  display: inline-block;
+  font-family: var(--font-cond);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--green-bright);
+  text-decoration: none;
+}
+.social-share-link:hover { text-decoration: underline; }
+@media (max-width: 600px) {
+  .social-share-box { flex-direction: column; gap: 16px; padding: 20px; }
+}
 
 @media (max-width: 768px) {
   .team-hero-content { padding: 0 20px 32px; }
