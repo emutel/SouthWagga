@@ -2,6 +2,7 @@
 // src/pages/admin/club.astro
 // Club Administrator portal — team, player, import, and season management
 import PortalBase from '../../layouts/PortalBase.astro';
+const directusUrl = import.meta.env.PUBLIC_DIRECTUS_URL || 'https://directus-production-ebbb.up.railway.app';
 ---
 <PortalBase
   title="Warriors FC — Club Admin"
@@ -439,8 +440,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
   </div>
 </div>
 
-<script>
-const DURL = (import.meta.env.PUBLIC_DIRECTUS_URL || 'https://directus-production-ebbb.up.railway.app').replace(/\/$/, '');
+<script define:vars={{ directusUrl }}>
+const DURL = directusUrl.replace(/\/$/, '');
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -561,8 +562,8 @@ function roleAllowed(roleName) {
   return ALLOWED_ROLES.some(r => lower.includes(r));
 }
 
-document.getElementById('login-btn').addEventListener('click', doLogin);
-document.getElementById('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('login-btn')?.addEventListener('click', doLogin);
+document.getElementById('login-password')?.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 
 async function doLogin() {
   const email    = document.getElementById('login-email').value.trim();
@@ -606,7 +607,7 @@ async function doLogin() {
   }
 }
 
-document.getElementById('logout-btn').addEventListener('click', () => {
+document.getElementById('logout-btn')?.addEventListener('click', () => {
   ALS.clear();
   showLogin();
 });
