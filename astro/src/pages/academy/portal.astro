@@ -72,7 +72,15 @@ import PortalBase from '../../layouts/PortalBase.astro';
     <div class="player-hero">
       <div class="hero-card-col">
         <div id="fifa-card-wrap"></div>
-        <button id="download-btn" class="btn-download">Download Card</button>
+        <div class="card-actions">
+          <button id="download-btn" class="btn-download">Download Card</button>
+          <button id="share-btn" class="btn-share" title="Share to socials">Share</button>
+        </div>
+        <div id="share-menu" class="share-menu" hidden>
+          <a id="share-wa" class="share-option share-wa" target="_blank" rel="noopener">WhatsApp</a>
+          <a id="share-tw" class="share-option share-tw" target="_blank" rel="noopener">Twitter / X</a>
+          <a id="share-fb" class="share-option share-fb" target="_blank" rel="noopener">Facebook</a>
+        </div>
       </div>
       <div class="hero-stats-col">
         <h2 class="stats-heading">Current Stats</h2>
@@ -875,6 +883,64 @@ document.getElementById('download-btn').addEventListener('click', async () => {
   btn.disabled = false;
 });
 
+// ── SHARE CARD ────────────────────────────────────────────────
+async function generateCardDataUrl() {
+  if (typeof html2canvas === 'undefined') return null;
+  const wrap = document.getElementById('fifa-card-wrap');
+  if (!wrap) return null;
+  const canvas = await html2canvas(wrap, { backgroundColor: null, scale: 3, useCORS: true, allowTaint: false });
+  return canvas.toDataURL('image/png');
+}
+
+document.getElementById('share-btn').addEventListener('click', async () => {
+  const shareText = 'Check out my Warriors FC Academy player card! ⚽🏆';
+  const shareUrl = window.location.href;
+
+  // Try native Web Share API first (mobile browsers)
+  if (navigator.share && navigator.canShare) {
+    try {
+      const dataUrl = await generateCardDataUrl();
+      let shareData = { title: 'My Warriors FC Card', text: shareText, url: shareUrl };
+      if (dataUrl) {
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        const file = new File([blob], 'warriors-player-card.png', { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) shareData.files = [file];
+      }
+      await navigator.share(shareData);
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return; // user cancelled
+    }
+  }
+
+  // Fallback: show share menu with platform links
+  const menu = document.getElementById('share-menu');
+  if (!menu.hidden) { menu.hidden = true; return; }
+
+  const profile = currentProfile();
+  const name = profile?.enrollment
+    ? `${profile.enrollment.player_first_name} ${profile.enrollment.player_last_name}`
+    : 'Warriors Player';
+  const text = encodeURIComponent(`Check out ${name}'s Warriors FC Academy card! ⚽🏆`);
+  const url = encodeURIComponent(shareUrl);
+
+  document.getElementById('share-wa').href = `https://wa.me/?text=${text}%20${url}`;
+  document.getElementById('share-tw').href = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
+  document.getElementById('share-fb').href = `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`;
+
+  menu.hidden = false;
+});
+
+// Close share menu on outside click
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('share-menu');
+  const btn = document.getElementById('share-btn');
+  if (!menu.hidden && !menu.contains(e.target) && e.target !== btn) {
+    menu.hidden = true;
+  }
+});
+
 // ── INIT ──────────────────────────────────────────────────────
 async function init() {
   // Inject random quote
@@ -904,6 +970,8 @@ document.addEventListener('DOMContentLoaded', init);
 </script>
 
 <style is:global>
+[hidden] { display: none !important; }
+
 /* ── DESIGN SYSTEM ───────────────────────────────────────── */
 :root {
   --bg:         #0a0e1a;
@@ -1320,6 +1388,51 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
   transition: background 0.2s;
 }
 .btn-download:hover { background: var(--green-dim); }
+.card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  position: relative;
+}
+.btn-share {
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 8px;
+  font-family: var(--font-cond);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-share:hover { border-color: var(--text); color: var(--text); }
+.share-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: #1a1f2e;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 50;
+  min-width: 180px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+.share-option {
+  display: block;
+  padding: 10px 16px;
+  font-family: var(--font-cond);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--text);
+  transition: background 0.15s;
+}
+.share-option:hover { background: rgba(255,255,255,0.08); }
+.share-wa { border-left: 3px solid #25D366; }
+.share-tw { border-left: 3px solid #1DA1F2; }
+.share-fb { border-left: 3px solid #1877F2; }
 .btn-send {
   align-self: flex-end;
   padding: 10px 20px;
