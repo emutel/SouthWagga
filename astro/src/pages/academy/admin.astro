@@ -479,7 +479,7 @@ async function aapi(path, opts = {}) {
 async function loadAll() {
   try {
   const [enrollRaw, playersRaw, unreadRaw] = await Promise.all([
-    aapi('/items/academy_enrollments?sort[]=-date_created&limit=200&fields=id,status,date_created,parent_first_name,parent_last_name,parent_email,parent_phone,player_first_name,player_last_name,player_dob,age_group,previous_experience,medical_notes,directus_user_id,program,preferred_position,preferred_jersey_number'),
+    aapi('/items/academy_enrollments?sort[]=-date_created&limit=200&fields=id,status,date_created,parent_first_name,parent_last_name,parent_email,parent_phone,player_first_name,player_last_name,player_dob,age_group,previous_experience,medical_notes,directus_user_id,program'),
     aapi('/items/academy_player_profiles?limit=200&fields=id,position,photo,jersey_number,enrollment.id,enrollment.age_group,enrollment.player_first_name,enrollment.player_last_name,enrollment.status'),
     aapi('/items/academy_messages?filter[sender_role][_eq]=parent&filter[read_at][_null]=true&limit=200&fields=player,id'),
   ]);
@@ -648,20 +648,19 @@ function openEnrollmentDetail(enr) {
       actionHtml = `<div style="margin-top:8px;">
         <p class="section-heading" style="margin-bottom:12px;">Create Player Profile</p>
         <form class="create-profile-form" id="create-profile-form">
-          ${enr.preferred_position || enr.preferred_jersey_number ? `<p class="pref-note">Player preferences: ${enr.preferred_position ? `<strong>${enr.preferred_position}</strong>` : ''}${enr.preferred_jersey_number ? ` · Jersey <strong>#${enr.preferred_jersey_number}</strong>` : ''}</p>` : ''}
           <div class="form-row">
             <div class="form-field">
               <label>Position</label>
               <select id="cp-position">
-                <option value="goalkeeper"${enr.preferred_position === 'goalkeeper' ? ' selected' : ''}>Goalkeeper</option>
-                <option value="defender"${enr.preferred_position === 'defender' ? ' selected' : ''}>Defender</option>
-                <option value="midfielder"${(!enr.preferred_position || enr.preferred_position === 'midfielder') ? ' selected' : ''}>Midfielder</option>
-                <option value="forward"${enr.preferred_position === 'forward' ? ' selected' : ''}>Forward</option>
+                <option value="goalkeeper">Goalkeeper</option>
+                <option value="defender">Defender</option>
+                <option value="midfielder" selected>Midfielder</option>
+                <option value="forward">Forward</option>
               </select>
             </div>
             <div class="form-field">
               <label>Jersey Number</label>
-              <input type="number" id="cp-jersey" min="1" max="99" placeholder="Optional" value="${enr.preferred_jersey_number || ''}">
+              <input type="number" id="cp-jersey" min="1" max="99" placeholder="Optional">
             </div>
           </div>
           <div class="form-field">

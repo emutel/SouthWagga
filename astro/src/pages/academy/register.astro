@@ -288,22 +288,30 @@ form.addEventListener('submit', async (e) => {
   const parentEmail = data.parent_email.trim().toLowerCase();
   const password    = data.password?.trim();
 
-  // Build enrollment payload
+  // Encode player preferences into previous_experience so they reach the TD
+  // (Directus enrollment schema doesn't have dedicated preference fields)
+  const prefParts = [];
+  if (data.preferred_position)       prefParts.push(`Preferred position: ${data.preferred_position}`);
+  if (data.preferred_jersey_number)  prefParts.push(`Preferred jersey: #${data.preferred_jersey_number}`);
+  const experienceBase = data.previous_experience?.trim() || '';
+  const experienceFull = prefParts.length
+    ? `[${prefParts.join(' · ')}]\n\n${experienceBase}`.trim()
+    : experienceBase || null;
+
+  // Build enrollment payload — only known fields
   const payload = {
     status: 'pending',
-    parent_first_name:        data.parent_first_name.trim(),
-    parent_last_name:         data.parent_last_name.trim(),
-    parent_email:             parentEmail,
-    parent_phone:             data.parent_phone.trim(),
-    player_first_name:        data.player_first_name.trim(),
-    player_last_name:         data.player_last_name.trim(),
-    player_dob:               data.player_dob,
-    age_group:                data.age_group,
-    previous_experience:      data.previous_experience?.trim() || null,
-    medical_notes:            data.medical_notes?.trim() || null,
-    program:                  data.program_interest || null,
-    preferred_position:       data.preferred_position || null,
-    preferred_jersey_number:  data.preferred_jersey_number ? parseInt(data.preferred_jersey_number) : null,
+    parent_first_name:   data.parent_first_name.trim(),
+    parent_last_name:    data.parent_last_name.trim(),
+    parent_email:        parentEmail,
+    parent_phone:        data.parent_phone.trim(),
+    player_first_name:   data.player_first_name.trim(),
+    player_last_name:    data.player_last_name.trim(),
+    player_dob:          data.player_dob,
+    age_group:           data.age_group,
+    previous_experience: experienceFull,
+    medical_notes:       data.medical_notes?.trim() || null,
+    program:             data.program_interest || null,
   };
 
   try {
@@ -411,6 +419,18 @@ textarea {
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--green); }
 input.input-error, select.input-error, textarea.input-error { border-color: #d93025; }
 select option { background: var(--card); }
+/* Override browser autofill on dark background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--white);
+  -webkit-box-shadow: 0 0 0px 1000px var(--black) inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+/* Remove number input spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
 
 .field-error { font-size: 12px; color: #d93025; display: none; }
 .field--check { margin-bottom: 24px; }
