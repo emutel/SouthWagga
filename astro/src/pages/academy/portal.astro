@@ -71,7 +71,11 @@ import PortalBase from '../../layouts/PortalBase.astro';
     <!-- Hero: card + stats -->
     <div class="player-hero">
       <div class="hero-card-col">
-        <div id="fifa-card-wrap"></div>
+        <div class="card-wrap-outer">
+          <div id="fifa-card-wrap"></div>
+          <button id="photo-upload-btn" class="photo-upload-btn" title="Update your photo">📷 Update Photo</button>
+          <input id="photo-file-input" type="file" accept="image/*" style="display:none">
+        </div>
         <div class="card-actions">
           <button id="download-btn" class="btn-download">Download Card</button>
           <button id="share-btn" class="btn-share" title="Share to socials">Share</button>
@@ -1070,6 +1074,66 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// ── PHOTO UPLOAD ─────────────────────────────────────────────
+document.getElementById('photo-upload-btn').addEventListener('click', () => {
+  document.getElementById('photo-file-input').click();
+});
+
+document.getElementById('photo-file-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const profile = currentProfile();
+  if (!profile?.id) { showToast('No profile loaded.'); return; }
+
+  // Validate: image, max 8MB
+  if (!file.type.startsWith('image/')) { showToast('Please select an image file.'); return; }
+  if (file.size > 8 * 1024 * 1024) { showToast('Image must be under 8 MB.'); return; }
+
+  const btn = document.getElementById('photo-upload-btn');
+  btn.textContent = 'Uploading…';
+  btn.disabled = true;
+
+  try {
+    // 1. Upload file to Directus /files
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    const uploadRes = await fetch(`${DURL}/files`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${LS.token}` },
+      body: formData,
+    });
+    if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.status}`);
+    const uploadJson = await uploadRes.json();
+    const fileId = uploadJson.data?.id;
+    if (!fileId) throw new Error('No file ID returned');
+
+    // 2. Update player profile with new photo ID
+    const patchRes = await api(`/items/academy_player_profiles/${profile.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ photo: fileId }),
+    });
+    if (!patchRes) throw new Error('Profile update failed');
+
+    // 3. Reflect in current state and refresh card
+    profile.photo = fileId;
+    const wrap = document.getElementById('fifa-card-wrap');
+    const enr = profile.enrollment?.id ? profile.enrollment : await api(`/items/academy_enrollments/${profile.enrollment}?fields=id,age_group,player_first_name,player_last_name,parent_email`);
+    const latestAssessment = (asArray(await api(`/items/academy_assessments?filter[player][_eq]=${profile.id}&filter[is_latest][_eq]=true&limit=1&fields=*`))[0]) || null;
+    wrap.innerHTML = buildFIFACard(enr, profile, latestAssessment);
+    setTimeout(() => { wrap.querySelector('.fifa-card')?.classList.add('card-animate'); }, 50);
+
+    showToast('Photo updated!');
+  } catch (err) {
+    console.error('Photo upload error:', err);
+    showToast('Upload failed. Please try again.');
+  }
+
+  btn.textContent = '📷 Update Photo';
+  btn.disabled = false;
+  e.target.value = ''; // reset so same file can be re-selected
+});
+
 // ── STATS INFO MODAL ─────────────────────────────────────────
 function agKey(ag) {
   const s = (ag || '').toLowerCase().replace(/\s/g,'-').replace(/\//g,'-');
@@ -1607,6 +1671,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
   transition: background 0.2s;
 }
 .btn-download:hover { background: var(--green-dim); }
+.card-wrap-outer { position: relative; display: inline-block; }
+.photo-upload-btn { display: block; width: 100%; margin-top: 6px; padding: 6px 12px; background: rgba(255,255,255,0.07); border: 1px dashed rgba(255,255,255,0.2); color: var(--muted); border-radius: 6px; font-family: var(--font-cond); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer; transition: background 0.15s, color 0.15s; text-align: center; }
+.photo-upload-btn:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+.photo-upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .card-actions {
   display: flex;
   gap: 8px;

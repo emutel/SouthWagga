@@ -43,7 +43,8 @@ import PortalBase from '../../layouts/PortalBase.astro';
         <span class="brand-title">Coach Dashboard</span>
       </div>
       <div class="topbar-actions">
-        <a href="/coaching/sessions" target="_blank" class="btn-outline-green">Session Plans ↗</a>
+        <button id="view-players-btn" class="topbar-view-btn topbar-view-btn--active">Players</button>
+        <button id="view-sessions-btn" class="topbar-view-btn">Sessions</button>
         <span id="coach-badge" class="coach-badge"></span>
         <button id="logout-btn" class="btn-ghost">Sign Out</button>
       </div>
@@ -154,6 +155,31 @@ import PortalBase from '../../layouts/PortalBase.astro';
       </div><!-- /detail-panel -->
     </div><!-- /detail-col -->
   </div><!-- /coach-body -->
+
+  <!-- Sessions panel -->
+  <div id="sessions-panel" class="sessions-panel" hidden>
+    <div class="sess-filters">
+      <div class="sess-filter-row">
+        <div id="sess-age-filters" class="sess-age-btns">
+          <button class="sess-age-btn sess-age-btn--active" data-age="">All Groups</button>
+          <button class="sess-age-btn" data-age="u5-u7">MiniRoos 5–7</button>
+          <button class="sess-age-btn" data-age="u8-u11">MiniRoos 8–11</button>
+          <button class="sess-age-btn" data-age="u12-u13">Youth U12–U13</button>
+          <button class="sess-age-btn" data-age="u14-u16">Youth U14–U16</button>
+          <button class="sess-age-btn" data-age="senior">Senior</button>
+        </div>
+        <input id="sess-search" type="search" placeholder="Search sessions…" class="sess-search">
+      </div>
+      <div class="sess-filter-row sess-filter-row--meta">
+        <select id="sess-theme-filter" class="sess-theme-select"><option value="">All Themes</option></select>
+        <span id="sess-count" class="sess-count"></span>
+      </div>
+    </div>
+    <div id="sess-loading" class="sess-state">Loading sessions…</div>
+    <div id="sess-empty" class="sess-state" hidden>No sessions match your filters.</div>
+    <div id="sess-grid" class="sess-grid" hidden></div>
+  </div>
+
 </div><!-- /view-dashboard -->
 
 <style is:global>
@@ -338,6 +364,34 @@ input[type=range]::-webkit-slider-thumb { width: 22px; height: 22px; }
 .btn-save { width: 100%; }
 .btn-outline-green { background: none; border: 1px solid var(--green-accent); color: var(--green-accent); border-radius: 6px; padding: 7px 14px; font-family: var(--font-cond); font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; }
 .btn-outline-green:hover { background: var(--green-light); }
+.topbar-view-btn { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 6px; padding: 6px 14px; font-family: var(--font-cond); font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s; }
+.topbar-view-btn--active { background: var(--green-accent); border-color: var(--green-accent); color: #fff; }
+.topbar-view-btn:not(.topbar-view-btn--active):hover { border-color: var(--green-accent); color: var(--green-accent); }
+
+/* Sessions panel */
+.sessions-panel { padding: 0 24px 48px; max-width: 1200px; margin: 0 auto; }
+.sess-filters { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
+.sess-filter-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.sess-filter-row--meta { justify-content: space-between; }
+.sess-age-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.sess-age-btn { padding: 5px 12px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); border-radius: 20px; font-family: var(--font-cond); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.sess-age-btn--active { background: var(--green-accent); border-color: var(--green-accent); color: #fff; }
+.sess-age-btn:not(.sess-age-btn--active):hover { border-color: var(--green-accent); color: var(--green-accent); }
+.sess-search { flex: 1; min-width: 160px; border: 1px solid var(--border); border-radius: 6px; padding: 7px 12px; font-size: 13px; color: var(--text); background: var(--bg); }
+.sess-theme-select { border: 1px solid var(--border); border-radius: 6px; padding: 7px 12px; font-size: 13px; color: var(--text); background: var(--bg); }
+.sess-count { font-size: 12px; color: var(--muted); font-family: var(--font-cond); font-weight: 700; }
+.sess-state { padding: 60px; text-align: center; color: var(--muted); font-size: 14px; }
+.sess-group { margin-bottom: 28px; }
+.sess-group-heading { font-family: var(--font-cond); font-size: 14px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+.sess-group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.sess-card { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; text-decoration: none; color: inherit; transition: box-shadow 0.15s, transform 0.15s; }
+.sess-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); transform: translateY(-1px); }
+.sess-card-theme { padding: 6px 12px; font-family: var(--font-cond); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: #fff; text-transform: uppercase; }
+.sess-card-body { padding: 12px; flex: 1; }
+.sess-card-title { font-family: var(--font-cond); font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 6px; line-height: 1.3; }
+.sess-card-meta { display: flex; gap: 10px; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.sess-card-obj { font-size: 12px; color: var(--muted); margin: 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.sess-card-foot { padding: 8px 12px; font-family: var(--font-cond); font-size: 12px; font-weight: 700; color: var(--green-accent); border-top: 1px solid var(--border); }
 .btn-ghost { background: none; border: none; color: var(--muted); font-family: var(--font-cond); font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px 10px; }
 .btn-ghost:hover { color: var(--text); }
 
@@ -1096,6 +1150,158 @@ async function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+// ── Sessions panel ──────────────────────────────────────────
+let sessionsLoaded = false;
+let allSessions = [];
+let sessAgeFilter = '';
+let sessThemeFilter = '';
+let sessSearchFilter = '';
+
+// Map player academy age group → session age group key
+function playerAgToSessionAg(ag) {
+  const s = (ag || '').toLowerCase().replace(/[\s/]/g, '-');
+  if (s.includes('5') || s.includes('6') || s.includes('7')) return 'u5-u7';
+  if (s.includes('8') || s.includes('9') || s.includes('10') || s.includes('11')) return 'u8-u11';
+  if (s.includes('12') || s.includes('13')) return 'u12-u13';
+  if (s.includes('14') || s.includes('15') || s.includes('16')) return 'u14-u16';
+  return '';
+}
+
+const AGE_DISPLAY = { 'u5-u7':'MiniRoos 5–7', 'u8-u11':'MiniRoos 8–11', 'u12-u13':'Youth U12–U13', 'u14-u16':'Youth U14–U16', 'senior':'Senior' };
+const THEME_COLORS = {
+  'Passing': '#3b82f6', 'Dribbling': '#8b5cf6', 'Shooting': '#ef4444',
+  'Defending': '#f59e0b', 'Possession': '#10b981', 'Crossing & Finishing': '#f97316',
+  'Set Pieces': '#06b6d4', 'Small-Sided Games': '#84cc16', 'Strength & Conditioning': '#e11d48',
+  'Goalkeeping': '#64748b',
+};
+
+async function loadSessions() {
+  if (sessionsLoaded) return;
+  try {
+    const data = asArray(await capi(
+      '/items/session_plans?filter[status][_eq]=published&limit=400&sort[]=age_group&sort[]=week' +
+      '&fields=id,title,slug,theme,age_group,duration,week,objectives'
+    ));
+    allSessions = data;
+    sessionsLoaded = true;
+
+    // Populate theme dropdown
+    const themes = [...new Set(data.map(s => s.theme).filter(Boolean))].sort();
+    const sel = document.getElementById('sess-theme-filter');
+    themes.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t; o.textContent = t;
+      sel.appendChild(o);
+    });
+    renderSessions();
+  } catch (err) {
+    document.getElementById('sess-loading').textContent = 'Could not load sessions. Please try again.';
+  }
+}
+
+function renderSessions() {
+  const grid = document.getElementById('sess-grid');
+  const empty = document.getElementById('sess-empty');
+  const loading = document.getElementById('sess-loading');
+  const count = document.getElementById('sess-count');
+
+  const search = sessSearchFilter.toLowerCase();
+  const filtered = allSessions.filter(s => {
+    if (sessAgeFilter && s.age_group !== sessAgeFilter) return false;
+    if (sessThemeFilter && s.theme !== sessThemeFilter) return false;
+    if (search && !s.title?.toLowerCase().includes(search) && !s.objectives?.toLowerCase().includes(search) && !s.theme?.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  loading.hidden = true;
+  count.textContent = `${filtered.length} session${filtered.length !== 1 ? 's' : ''}`;
+
+  if (!filtered.length) {
+    grid.hidden = true;
+    empty.hidden = false;
+    return;
+  }
+  empty.hidden = true;
+  grid.hidden = false;
+
+  // Group by age_group for display
+  const groups = {};
+  filtered.forEach(s => {
+    const k = s.age_group || 'other';
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(s);
+  });
+
+  const groupOrder = ['u5-u7','u8-u11','u12-u13','u14-u16','senior','other'];
+  grid.innerHTML = groupOrder.filter(k => groups[k]).map(k => {
+    const cards = groups[k].map(s => {
+      const tc = THEME_COLORS[s.theme] || '#6b7280';
+      return `<a href="/coaching/sessions/${s.slug}" target="_blank" rel="noopener" class="sess-card">
+  <div class="sess-card-theme" style="background:${tc}">${s.theme || 'General'}</div>
+  <div class="sess-card-body">
+    <h4 class="sess-card-title">${s.title}</h4>
+    <div class="sess-card-meta">
+      ${s.duration ? `<span>⏱ ${s.duration} min</span>` : ''}
+      <span>Week ${s.week ?? '—'}</span>
+    </div>
+    ${s.objectives ? `<p class="sess-card-obj">${s.objectives}</p>` : ''}
+  </div>
+  <div class="sess-card-foot">View Plan →</div>
+</a>`;
+    }).join('');
+    const showHeading = !sessAgeFilter;
+    return showHeading
+      ? `<div class="sess-group"><h3 class="sess-group-heading">${AGE_DISPLAY[k] || k}</h3><div class="sess-group-grid">${cards}</div></div>`
+      : `<div class="sess-group-grid">${cards}</div>`;
+  }).join('');
+}
+
+// View toggle
+document.getElementById('view-players-btn').addEventListener('click', () => {
+  document.getElementById('coach-body').hidden = false;
+  document.getElementById('sessions-panel').hidden = true;
+  document.getElementById('view-players-btn').classList.add('topbar-view-btn--active');
+  document.getElementById('view-sessions-btn').classList.remove('topbar-view-btn--active');
+});
+
+document.getElementById('view-sessions-btn').addEventListener('click', () => {
+  document.getElementById('coach-body').hidden = true;
+  document.getElementById('sessions-panel').hidden = false;
+  document.getElementById('view-players-btn').classList.remove('topbar-view-btn--active');
+  document.getElementById('view-sessions-btn').classList.add('topbar-view-btn--active');
+  // Pre-filter to selected player's age group if one is selected
+  if (selectedPlayer) {
+    const sAg = playerAgToSessionAg(selectedPlayer.enrollment?.age_group);
+    if (sAg) {
+      sessAgeFilter = sAg;
+      document.querySelectorAll('.sess-age-btn').forEach(b => {
+        b.classList.toggle('sess-age-btn--active', b.dataset.age === sAg);
+      });
+    }
+  }
+  loadSessions();
+});
+
+// Age group filter buttons
+document.getElementById('sess-age-filters').addEventListener('click', (e) => {
+  const btn = e.target.closest('.sess-age-btn');
+  if (!btn) return;
+  sessAgeFilter = btn.dataset.age;
+  document.querySelectorAll('.sess-age-btn').forEach(b => b.classList.remove('sess-age-btn--active'));
+  btn.classList.add('sess-age-btn--active');
+  if (sessionsLoaded) renderSessions();
+});
+
+document.getElementById('sess-theme-filter').addEventListener('change', (e) => {
+  sessThemeFilter = e.target.value;
+  if (sessionsLoaded) renderSessions();
+});
+
+document.getElementById('sess-search').addEventListener('input', (e) => {
+  sessSearchFilter = e.target.value;
+  if (sessionsLoaded) renderSessions();
+});
 </script>
 
 </PortalBase>
