@@ -65,7 +65,7 @@ export async function getTeams() {
   return fetchDirectus('/items/teams', {
     filter: JSON.stringify({ status: { _eq: 'active' } }),
     sort:   'sort_order',
-    fields: 'id,name,short_name,slug,division,season,team_photo,coach,manager,description,color_accent',
+    fields: 'id,name,short_name,slug,division,season,team_photo,coach,manager,description,color_accent,hashtag',
   });
 }
 
@@ -229,6 +229,31 @@ export async function submitEnrollment(data) {
   if (!res.ok) return null;
   const json = await res.json();
   return json.data ?? null;
+}
+
+// ── CLUB REGISTRATIONS ───────────────────────────────────────
+
+// Get active club season
+export async function getActiveClubSeason() {
+  try {
+    const res = await fetch(`${BASE}/items/club_seasons?filter[status][_eq]=active&limit=1`, {
+      headers: { 'Authorization': `Bearer ${TOKEN}` }
+    });
+    const json = await res.json();
+    return json.data?.[0] ?? null;
+  } catch { return null; }
+}
+
+// Get registered players for a team
+export async function getTeamRegistrations(teamId) {
+  try {
+    const res = await fetch(
+      `${BASE}/items/club_registrations?filter[team][_eq]=${teamId}&filter[role_type][_neq]=Coach&fields=id,first_name,last_name,age_years,gender,product_name,payment_status,photo_consent&sort[]=last_name&limit=200`,
+      { headers: { 'Authorization': `Bearer ${TOKEN}` } }
+    );
+    const json = await res.json();
+    return json.data ?? [];
+  } catch { return []; }
 }
 
 // ── DIRECTUS FILE URL ────────────────────────────────────────

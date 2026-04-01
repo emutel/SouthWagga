@@ -1,21 +1,28 @@
 ---
 // src/pages/teams/index.astro
 import Base from '../../layouts/Base.astro';
-import { getTeams, fileUrl } from '../../lib/directus.js';
+import { getTeams, getActiveClubSeason, fileUrl } from '../../lib/directus.js';
 
-const teams = await getTeams() || [];
+const teams       = await getTeams() || [];
+const activeSeason = await getActiveClubSeason();
+const seasonLabel  = activeSeason?.name || activeSeason?.year?.toString() || '2026';
 ---
 <Base title="Our Teams" description="All South Wagga Warriors FC teams — from Mini Roos to Men's Premier.">
 
   <div class="page-hero">
     <div class="page-hero-inner">
-      <div class="label">2025 Season</div>
+      <div class="label">2026 Season</div>
       <h1>Our Teams</h1>
       <p>From Mini Roos to Men's Premier — Warriors football for every age and ability.</p>
     </div>
   </div>
 
   <section class="section">
+
+    <div class="season-badge-row">
+      <span class="season-badge">Season {seasonLabel}</span>
+    </div>
+
     <div class="teams-grid">
       {teams.map(team => (
         <a href={`/teams/${team.slug}`} class="team-card card">
@@ -34,6 +41,9 @@ const teams = await getTeams() || [];
           <div class="team-body">
             <div class="team-division">{team.division}</div>
             <h2>{team.name}</h2>
+            {team.hashtag && (
+              <span class="hashtag-chip">{team.hashtag}</span>
+            )}
             {team.coach && <p class="team-coach">Coach: {team.coach}</p>}
           </div>
           <div class="team-footer">
@@ -55,6 +65,22 @@ const teams = await getTeams() || [];
 .page-hero h1 { font-size: clamp(48px, 6vw, 80px); margin: 10px 0 8px; }
 .page-hero p  { color: var(--muted); }
 .section      { padding: 60px 48px; max-width: 1280px; margin: 0 auto; }
+
+.season-badge-row { margin-bottom: 28px; }
+.season-badge {
+  display: inline-block;
+  font-family: var(--font-cond);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--green-bright);
+  border: 1px solid var(--green);
+  border-radius: 20px;
+  padding: 5px 14px;
+  background: rgba(var(--green-rgb, 0,128,0), 0.08);
+}
+
 .teams-grid   { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
 .team-card    { text-decoration: none; display: flex; flex-direction: column; transition: transform 0.2s, border-color 0.2s; }
 .team-card:hover { transform: translateY(-4px); border-color: var(--green); }
@@ -62,7 +88,19 @@ const teams = await getTeams() || [];
 .team-img-placeholder { width: 100%; aspect-ratio: 16/9; background: var(--green-dark); display: flex; align-items: center; justify-content: center; font-size: 48px; }
 .team-body    { padding: 20px; flex: 1; }
 .team-division { font-family: var(--font-cond); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--green-bright); margin-bottom: 6px; }
-.team-body h2 { font-family: var(--font-cond); font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+.team-body h2 { font-family: var(--font-cond); font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+.hashtag-chip {
+  display: inline-block;
+  font-family: var(--font-cond);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green-bright);
+  border: 1px solid rgba(var(--green-rgb, 0,128,0), 0.4);
+  border-radius: 12px;
+  padding: 3px 10px;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
 .team-coach   { font-size: 13px; color: var(--muted); }
 .team-footer  { padding: 14px 20px; border-top: 1px solid var(--border); font-family: var(--font-cond); font-size: 13px; font-weight: 600; letter-spacing: 1px; color: var(--green-bright); }
 .empty { color: var(--muted); font-style: italic; }

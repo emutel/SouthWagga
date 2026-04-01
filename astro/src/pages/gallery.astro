@@ -1,9 +1,13 @@
 ---
 // src/pages/gallery.astro
 import Base from '../layouts/Base.astro';
-import { getGalleryAlbums, getAlbumPhotos, fileUrl } from '../lib/directus.js';
+import { getGalleryAlbums, getTeams, fileUrl } from '../lib/directus.js';
+
+const INSTAGRAM_CONNECTED = false;
 
 const albums = await getGalleryAlbums({ limit: 24 }) || [];
+const allTeams = await getTeams() || [];
+const hashtagTeams = allTeams.filter(t => t.hashtag);
 ---
 <Base title="Gallery" description="Photo galleries from South Wagga Warriors FC — match photography, events and club life.">
 
@@ -16,6 +20,41 @@ const albums = await getGalleryAlbums({ limit: 24 }) || [];
   </div>
 
   <div class="page-inner">
+
+    <!-- ── TEAM GALLERIES ── -->
+    <div class="section-heading">
+      <h2>Team Galleries</h2>
+      <p class="section-subtext">Follow your team's journey — tag your match day photos with your team's hashtag to contribute to the gallery.</p>
+    </div>
+
+    {hashtagTeams.length > 0 ? (
+      <div class="hashtag-grid">
+        {hashtagTeams.map(team => (
+          <div class="hashtag-card card">
+            <div class="hc-team-name">{team.short_name || team.name}</div>
+            <div class="hc-hashtag">{team.hashtag}</div>
+            {INSTAGRAM_CONNECTED ? (
+              <a href={`/gallery/team/${encodeURIComponent(team.hashtag)}`} class="hc-btn hc-btn-active">
+                View Photos →
+              </a>
+            ) : (
+              <a href={`/gallery/team/${encodeURIComponent(team.hashtag)}`} class="hc-btn hc-btn-soon">
+                Coming Soon
+              </a>
+            )}
+          </div>
+        ))}
+      </div>
+    ) : (
+      <p class="empty-state-sm">Team hashtag galleries will appear here once teams are set up.</p>
+    )}
+
+    <div class="divider"></div>
+
+    <!-- ── PHOTO ALBUMS ── -->
+    <div class="section-heading">
+      <h2>Photo Albums</h2>
+    </div>
 
     {albums.length > 0 ? (
       <div class="albums-grid">
@@ -60,6 +99,24 @@ const albums = await getGalleryAlbums({ limit: 24 }) || [];
 
 .page-inner { max-width:1280px; margin:0 auto; padding:48px; }
 
+.section-heading { margin-bottom:24px; }
+.section-heading h2 { font-family:var(--font-cond); font-size:clamp(24px,3vw,36px); font-weight:800; margin-bottom:8px; }
+.section-subtext { font-size:14px; color:var(--muted); max-width:600px; }
+
+.divider { border:none; border-top:1px solid var(--border); margin:48px 0; }
+
+/* Hashtag team cards */
+.hashtag-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; margin-bottom:0; }
+.hashtag-card { padding:24px; display:flex; flex-direction:column; align-items:flex-start; gap:12px; }
+.hc-team-name { font-family:var(--font-cond); font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); }
+.hc-hashtag { font-family:var(--font-cond); font-size:22px; font-weight:800; color:var(--green-bright); line-height:1.2; }
+.hc-btn { display:inline-block; font-family:var(--font-cond); font-size:13px; font-weight:700; letter-spacing:1px; text-transform:uppercase; border-radius:20px; padding:7px 16px; text-decoration:none; transition:all 0.2s; margin-top:auto; }
+.hc-btn-active { background:var(--green); color:white; }
+.hc-btn-active:hover { background:var(--green-bright); color:var(--black); }
+.hc-btn-soon { background:transparent; color:var(--muted); border:1px solid var(--border); cursor:default; pointer-events:none; }
+.empty-state-sm { color:var(--muted); font-style:italic; padding:20px 0 40px; }
+
+/* Photo albums */
 .albums-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
 
 .album-card { text-decoration:none; border-radius:var(--radius-lg); overflow:hidden; transition:transform 0.2s; }
@@ -81,5 +138,6 @@ const albums = await getGalleryAlbums({ limit: 24 }) || [];
 @media (max-width:768px) {
   .page-hero { padding:40px 20px 32px; }
   .page-inner { padding:24px 20px; }
+  .hashtag-grid { grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); }
 }
 </style>

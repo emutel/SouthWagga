@@ -2,7 +2,7 @@
 // src/pages/teams/[slug].astro
 import Base             from '../../layouts/Base.astro';
 import ShareBar         from '../../components/ShareBar.astro';
-import { getTeam, getAllTeamSlugs, getPlayersByTeam, getTeamSponsors, fileUrl } from '../../lib/directus.js';
+import { getTeam, getAllTeamSlugs, getPlayersByTeam, getTeamSponsors, getTeamRegistrations, fileUrl } from '../../lib/directus.js';
 import { getResults, getFixtures } from '../../lib/dribl.js';
 
 export async function getStaticPaths() {
@@ -14,8 +14,9 @@ const { slug }    = Astro.params;
 const team        = await getTeam(slug);
 if (!team) return Astro.redirect('/teams');
 
-const players     = await getPlayersByTeam(team.id) || [];
-const sponsors    = await getTeamSponsors(team.id)   || [];
+const players       = await getPlayersByTeam(team.id)    || [];
+const sponsors      = await getTeamSponsors(team.id)     || [];
+const registrations = await getTeamRegistrations(team.id) || [];
 const { data: results  } = getResults({ limit: 8,  division: team.division });
 const { data: fixtures } = getFixtures({ limit: 5, division: team.division });
 
@@ -43,6 +44,12 @@ const otherPlayers = players.filter(p => !p.position);
     <div class="team-hero-content">
       <div class="label">{team.division}</div>
       <h1>{team.name}</h1>
+      {team.hashtag && (
+        <a href={`/gallery/team/${encodeURIComponent(team.hashtag)}`} class="hashtag-pill">
+          📸 {team.hashtag}
+          <span class="hashtag-pill-sub">Tag your photos</span>
+        </a>
+      )}
       <div class="team-meta">
         {team.coach   && <span>⚽ Coach: {team.coach}</span>}
         {team.manager && <span>📋 Manager: {team.manager}</span>}
@@ -100,61 +107,99 @@ const otherPlayers = players.filter(p => !p.position);
     <section class="team-section">
       <div class="label" style="margin-bottom:24px">Squad</div>
 
-      {positions.map(pos => byPosition[pos]?.length > 0 && (
-        <div class="position-group">
-          <h3 class="position-title">{pos.charAt(0).toUpperCase() + pos.slice(1)}s</h3>
-          <div class="players-grid">
-            {byPosition[pos].map(p => (
-              <div class="player-card">
-                <div class="player-photo">
-                  {p.photo ? (
-                    <img
-                      src={fileUrl(p.photo, { width: 200, height: 200 })}
-                      alt={`${p.first_name} ${p.last_name}`}
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div class="player-avatar">
-                      {p.first_name?.[0]}{p.last_name?.[0]}
-                    </div>
-                  )}
-                  {p.jersey_number && (
-                    <span class="jersey-number">#{p.jersey_number}</span>
-                  )}
-                  {p.is_captain && <span class="captain-badge">C</span>}
-                </div>
-                <div class="player-name">
-                  {p.first_name} <strong>{p.last_name}</strong>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-
-      {otherPlayers.length > 0 && (
-        <div class="position-group">
-          <div class="players-grid">
-            {otherPlayers.map(p => (
-              <div class="player-card">
-                <div class="player-photo">
-                  {p.photo ? (
-                    <img src={fileUrl(p.photo, { width: 200, height: 200 })} alt={`${p.first_name} ${p.last_name}`} loading="lazy" />
-                  ) : (
-                    <div class="player-avatar">{p.first_name?.[0]}{p.last_name?.[0]}</div>
-                  )}
-                  {p.jersey_number && <span class="jersey-number">#{p.jersey_number}</span>}
-                  {p.is_captain && <span class="captain-badge">C</span>}
-                </div>
-                <div class="player-name">{p.first_name} <strong>{p.last_name}</strong></div>
-              </div>
-            ))}
+      {/* Registered players from club_registrations — shown first if available */}
+      {registrations.length > 0 && (
+        <div class="registrations-block">
+          <div class="reg-count">{registrations.length} Registered Player{registrations.length !== 1 ? 's' : ''}</div>
+          <div class="reg-table-wrap">
+            <table class="reg-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Age Group</th>
+                  <th>Gender</th>
+                </tr>
+              </thead>
+              <tbody>
+                {registrations.map((r, i) => (
+                  <tr>
+                    <td class="reg-num">{i + 1}</td>
+                    <td class="reg-name">{r.first_name} <strong>{r.last_name}</strong></td>
+                    <td class="reg-age">{r.product_name || r.age_years || '—'}</td>
+                    <td class="reg-gender">{r.gender || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
-      {players.length === 0 && (
-        <p class="empty">Squad will be listed here once the season begins.</p>
+      {/* Manually curated players (players collection) — shown if no registrations, or always if both exist */}
+      {(registrations.length === 0 || players.length > 0) && (
+        <>
+          {registrations.length > 0 && players.length > 0 && (
+            <div class="label" style="margin-top:40px; margin-bottom:20px">Team Cards</div>
+          )}
+
+          {positions.map(pos => byPosition[pos]?.length > 0 && (
+            <div class="position-group">
+              <h3 class="position-title">{pos.charAt(0).toUpperCase() + pos.slice(1)}s</h3>
+              <div class="players-grid">
+                {byPosition[pos].map(p => (
+                  <div class="player-card">
+                    <div class="player-photo">
+                      {p.photo ? (
+                        <img
+                          src={fileUrl(p.photo, { width: 200, height: 200 })}
+                          alt={`${p.first_name} ${p.last_name}`}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div class="player-avatar">
+                          {p.first_name?.[0]}{p.last_name?.[0]}
+                        </div>
+                      )}
+                      {p.jersey_number && (
+                        <span class="jersey-number">#{p.jersey_number}</span>
+                      )}
+                      {p.is_captain && <span class="captain-badge">C</span>}
+                    </div>
+                    <div class="player-name">
+                      {p.first_name} <strong>{p.last_name}</strong>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {otherPlayers.length > 0 && (
+            <div class="position-group">
+              <div class="players-grid">
+                {otherPlayers.map(p => (
+                  <div class="player-card">
+                    <div class="player-photo">
+                      {p.photo ? (
+                        <img src={fileUrl(p.photo, { width: 200, height: 200 })} alt={`${p.first_name} ${p.last_name}`} loading="lazy" />
+                      ) : (
+                        <div class="player-avatar">{p.first_name?.[0]}{p.last_name?.[0]}</div>
+                      )}
+                      {p.jersey_number && <span class="jersey-number">#{p.jersey_number}</span>}
+                      {p.is_captain && <span class="captain-badge">C</span>}
+                    </div>
+                    <div class="player-name">{p.first_name} <strong>{p.last_name}</strong></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {registrations.length === 0 && players.length === 0 && (
+            <p class="empty">Squad will be listed here once the season begins.</p>
+          )}
+        </>
       )}
     </section>
 
@@ -233,7 +278,31 @@ const otherPlayers = players.filter(p => !p.position);
   width: 100%;
   margin: 0 auto;
 }
-.team-hero-content h1 { font-size: clamp(40px, 6vw, 80px); margin: 12px 0 16px; }
+.team-hero-content h1 { font-size: clamp(40px, 6vw, 80px); margin: 12px 0 14px; }
+.hashtag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--green);
+  color: white;
+  font-family: var(--font-cond);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border-radius: 28px;
+  padding: 8px 20px;
+  margin-bottom: 16px;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.hashtag-pill:hover { background: var(--green-bright); color: var(--black); }
+.hashtag-pill-sub {
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.75;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
 .team-meta { display: flex; flex-wrap: wrap; gap: 20px; font-size: 14px; color: var(--muted); }
 
 .page-inner { max-width: 1280px; margin: 0 auto; padding: 40px 48px 60px; }
@@ -305,6 +374,47 @@ const otherPlayers = players.filter(p => !p.position);
 .sponsor-name-text { font-family: var(--font-cond); font-size: 15px; font-weight: 700; color: var(--white); }
 .sponsor-cta { font-size: 13px; color: var(--muted); margin-top: 20px; }
 .sponsor-cta a { color: var(--green-bright); text-decoration: none; }
+
+.registrations-block { margin-bottom: 32px; }
+.reg-count {
+  font-family: var(--font-cond);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--green-bright);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.reg-table-wrap { overflow-x: auto; }
+.reg-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.reg-table thead tr {
+  border-bottom: 1px solid var(--border);
+}
+.reg-table th {
+  font-family: var(--font-cond);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: left;
+  padding: 8px 12px;
+}
+.reg-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+.reg-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+.reg-table td { padding: 10px 12px; color: var(--muted); vertical-align: middle; }
+.reg-num { color: rgba(255,255,255,0.25); font-family: var(--font-display); font-size: 16px; width: 40px; }
+.reg-name { color: var(--white); }
+.reg-name strong { font-weight: 700; }
+.reg-age { font-family: var(--font-cond); font-size: 13px; }
+.reg-gender { font-family: var(--font-cond); font-size: 13px; text-transform: capitalize; }
 
 .empty { color: var(--muted); font-style: italic; padding: 20px 0; }
 

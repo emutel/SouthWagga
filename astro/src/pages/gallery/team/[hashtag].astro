@@ -1,0 +1,318 @@
+---
+// src/pages/gallery/team/[hashtag].astro
+import Base from '../../../layouts/Base.astro';
+import { getTeams } from '../../../lib/directus.js';
+
+const INSTAGRAM_CONNECTED = false;
+
+export async function getStaticPaths() {
+  const teams = await getTeams() || [];
+  return teams
+    .filter(t => t.hashtag)
+    .map(t => ({
+      params: { hashtag: encodeURIComponent(t.hashtag) },
+      props:  { team: t },
+    }));
+}
+
+const { hashtag } = Astro.params;
+const { team }    = Astro.props;
+
+const decodedHashtag = decodeURIComponent(hashtag);
+
+// ── INSTAGRAM INTEGRATION SKELETON ──────────────────────────
+// When INSTAGRAM_CONNECTED = true, uncomment and use the following:
+//
+// const IG_USER_ID    = import.meta.env.IG_USER_ID;
+// const IG_TOKEN      = import.meta.env.IG_ACCESS_TOKEN;
+//
+// Step 1 — Find the hashtag ID:
+// GET https://graph.instagram.com/v18.0/ig_hashtag_search?q={decodedHashtag}&user_id={IG_USER_ID}&access_token={IG_TOKEN}
+// → returns { data: [{ id: "..." }] }
+//
+// Step 2 — Fetch recent media for that hashtag:
+// GET https://graph.instagram.com/v18.0/{hashtag_id}/recent_media?fields=id,media_url,permalink,timestamp,caption&user_id={IG_USER_ID}&access_token={IG_TOKEN}
+// → returns { data: [ { id, media_url, permalink, timestamp, caption }, ... ] }
+//
+// Step 3 — Filter results where caption contains "@southwaggawarriorsfc" or decodedHashtag
+// const photos = rawMedia.filter(p =>
+//   p.caption?.toLowerCase().includes(decodedHashtag.toLowerCase()) ||
+//   p.caption?.toLowerCase().includes('@southwaggawarriorsfc')
+// );
+---
+<Base
+  title={`${team?.name ?? decodedHashtag} Gallery — ${decodedHashtag}`}
+  description={`Photos tagged ${decodedHashtag} from South Wagga Warriors FC. Share your match day photos on Instagram using ${decodedHashtag}.`}
+>
+
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <a href="/gallery" class="back-link">← Gallery</a>
+      <div class="label">{team?.division || 'Team Gallery'}</div>
+      <h1>{team?.name || decodedHashtag}</h1>
+      <div class="hero-hashtag">{decodedHashtag}</div>
+    </div>
+  </div>
+
+  <div class="page-inner">
+
+    {INSTAGRAM_CONNECTED ? (
+      // ── CONNECTED: show photos ──
+      // (Uncomment when INSTAGRAM_CONNECTED = true and Instagram fetch is implemented)
+      <div class="empty-state">
+        <p>Instagram integration active — photos would appear here.</p>
+      </div>
+    ) : (
+      // ── NOT CONNECTED: beautiful placeholder ──
+      <div class="coming-soon-wrap">
+
+        <div class="coming-soon-card">
+          <div class="cs-icon">📸</div>
+          <h2>This gallery is coming soon</h2>
+          <p class="cs-body">
+            In the meantime, share your photos on Instagram using
+            <strong class="cs-hashtag">{decodedHashtag}</strong>
+            and tag <strong>@southwaggawarriorsfc</strong> — your shots
+            will appear here once the gallery goes live.
+          </p>
+
+          <!-- Example Instagram post mockup -->
+          <div class="ig-mockup">
+            <div class="ig-post">
+              <div class="ig-post-header">
+                <div class="ig-avatar">SW</div>
+                <div class="ig-username">
+                  <strong>@southwaggawarriorsfc</strong>
+                  <span>South Wagga, NSW</span>
+                </div>
+              </div>
+              <div class="ig-post-image">
+                <div class="ig-image-placeholder">
+                  <span>⚽</span>
+                </div>
+              </div>
+              <div class="ig-post-caption">
+                <strong>@southwaggawarriorsfc</strong>
+                {' '}Match day! Another great performance from the squad.
+                {' '}<span class="ig-tag">{decodedHashtag}</span>
+                {' '}<span class="ig-tag">#SWFC</span>
+                {' '}<span class="ig-tag">#Warriors</span>
+              </div>
+              <div class="ig-post-likes">❤️ 47 likes</div>
+            </div>
+          </div>
+
+          <div class="cs-steps">
+            <div class="cs-step">
+              <span class="cs-step-num">1</span>
+              <span>Take a great match day photo</span>
+            </div>
+            <div class="cs-step">
+              <span class="cs-step-num">2</span>
+              <span>Post it on Instagram</span>
+            </div>
+            <div class="cs-step">
+              <span class="cs-step-num">3</span>
+              <span>Tag it with <strong>{decodedHashtag}</strong> and <strong>@southwaggawarriorsfc</strong></span>
+            </div>
+            <div class="cs-step">
+              <span class="cs-step-num">4</span>
+              <span>It will appear here when the gallery goes live!</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="back-row">
+          <a href="/gallery" class="btn-back">← Browse All Photos</a>
+        </div>
+
+      </div>
+    )}
+
+  </div>
+
+</Base>
+
+<style>
+.page-hero {
+  background: linear-gradient(135deg, var(--green-dark), var(--off-black));
+  border-bottom: 1px solid var(--border);
+  padding: 60px 48px 48px;
+}
+.page-hero-inner { max-width: 1280px; margin: 0 auto; }
+.page-hero h1 { font-size: clamp(36px, 5vw, 64px); margin: 10px 0 10px; }
+.hero-hashtag {
+  font-family: var(--font-cond);
+  font-size: clamp(20px, 3vw, 32px);
+  font-weight: 800;
+  color: var(--green-bright);
+  letter-spacing: 1px;
+}
+.back-link {
+  font-family: var(--font-cond);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--green-bright);
+  text-decoration: none;
+  display: inline-block;
+  margin-bottom: 16px;
+}
+
+.page-inner { max-width: 1280px; margin: 0 auto; padding: 48px; }
+
+/* Coming soon layout */
+.coming-soon-wrap { max-width: 640px; margin: 0 auto; }
+
+.coming-soon-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 48px 40px;
+  text-align: center;
+}
+
+.cs-icon { font-size: 56px; margin-bottom: 20px; line-height: 1; }
+
+.coming-soon-card h2 {
+  font-family: var(--font-cond);
+  font-size: clamp(24px, 3vw, 36px);
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+
+.cs-body {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 36px;
+}
+
+.cs-hashtag {
+  color: var(--green-bright);
+  font-family: var(--font-cond);
+  font-size: 17px;
+}
+
+/* Instagram post mockup */
+.ig-mockup {
+  margin: 0 auto 36px;
+  max-width: 320px;
+  text-align: left;
+}
+
+.ig-post {
+  background: #1a1f1a;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 13px;
+}
+
+.ig-post-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+.ig-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-cond);
+  font-size: 12px;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+}
+
+.ig-username strong { display: block; font-size: 13px; color: var(--white); }
+.ig-username span   { font-size: 11px; color: var(--muted); }
+
+.ig-post-image { aspect-ratio: 1; background: var(--green-dark); }
+.ig-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+  opacity: 0.4;
+}
+
+.ig-post-caption {
+  padding: 10px 14px 6px;
+  color: rgba(238,245,239,0.75);
+  line-height: 1.5;
+}
+
+.ig-tag { color: #4da6ff; }
+
+.ig-post-likes {
+  padding: 6px 14px 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Step list */
+.cs-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  margin-top: 8px;
+}
+
+.cs-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.cs-step-num {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--green-dark);
+  border: 1px solid var(--green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-cond);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--green-bright);
+}
+
+.back-row { text-align: center; margin-top: 32px; }
+.btn-back {
+  display: inline-block;
+  font-family: var(--font-cond);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--green-bright);
+  text-decoration: none;
+  border: 1px solid var(--green);
+  border-radius: 24px;
+  padding: 10px 24px;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-back:hover { background: var(--green); color: white; }
+
+.empty-state { text-align: center; padding: 80px 0; color: var(--muted); }
+
+@media (max-width: 768px) {
+  .page-hero { padding: 40px 20px 32px; }
+  .page-inner { padding: 24px 20px; }
+  .coming-soon-card { padding: 32px 20px; }
+}
+</style>
