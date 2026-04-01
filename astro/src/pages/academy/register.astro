@@ -320,6 +320,7 @@ form.addEventListener('submit', async (e) => {
 
   try {
     // 1. Create enrollment
+    console.log('[register] POST to:', `${DIRECTUS_URL}/items/academy_enrollments`);
     const res = await fetch(`${DIRECTUS_URL}/items/academy_enrollments`, {
       method: 'POST',
       headers: {
@@ -328,7 +329,11 @@ form.addEventListener('submit', async (e) => {
       },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      console.error('[register] Enrollment failed:', res.status, body);
+      throw new Error(`HTTP ${res.status}: ${body.slice(0, 200)}`);
+    }
     const enrollJson = await res.json();
     const enrollmentId = enrollJson?.data?.id;
 
@@ -373,8 +378,9 @@ form.addEventListener('submit', async (e) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
   } catch (err) {
-    console.error('Enrollment submission failed:', err);
+    console.error('[register] Enrollment submission failed:', err);
     formError.hidden = false;
+    formError.innerHTML = `Something went wrong. <small style="opacity:0.6">(${String(err.message).slice(0,120)})</small> Please try again or <a href="/about#contact">contact us directly</a>.`;
     submitBtn.disabled = false;
     submitBtn.textContent = 'Submit Registration →';
   }
