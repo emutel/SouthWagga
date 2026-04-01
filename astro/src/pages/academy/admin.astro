@@ -752,6 +752,7 @@ function openEnrollmentDetail(enr) {
               first_name: enr.parent_first_name || '',
               last_name:  enr.parent_last_name  || '',
               status:     'active',
+              role:       '546e9eba-1285-47dd-a881-731581b7acfb', // parent role
             }),
           });
           if (newUser?.id) userId = newUser.id;
