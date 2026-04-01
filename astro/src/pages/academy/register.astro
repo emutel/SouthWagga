@@ -127,23 +127,6 @@ const activePrograms = programs.filter(p => p.status === 'active');
             </div>
           </fieldset>
 
-          <fieldset>
-            <legend>Create Your Login</legend>
-            <p class="fieldset-note">Set a password so you can log in to the Parent Portal after your registration is confirmed.</p>
-            <div class="field-row">
-              <div class="field">
-                <label for="password">Password <span class="req">*</span></label>
-                <input type="password" id="password" name="password" autocomplete="new-password" placeholder="At least 8 characters" required>
-                <span class="field-error" id="err-password"></span>
-              </div>
-              <div class="field">
-                <label for="password_confirm">Confirm Password <span class="req">*</span></label>
-                <input type="password" id="password_confirm" name="password_confirm" autocomplete="new-password" placeholder="Repeat your password" required>
-                <span class="field-error" id="err-password_confirm"></span>
-              </div>
-            </div>
-          </fieldset>
-
           <div class="field field--check">
             <label class="check-label">
               <input type="checkbox" id="acknowledge" name="acknowledge" required>
@@ -186,7 +169,7 @@ const activePrograms = programs.filter(p => p.status === 'active');
           <ol class="steps-list">
             <li><span class="step-n">1</span><div><strong>We receive your registration</strong><p>Your application goes to our Technical Director immediately.</p></div></li>
             <li><span class="step-n">2</span><div><strong>We review &amp; confirm</strong><p>We'll match your child to the right tier and confirm a spot is available.</p></div></li>
-            <li><span class="step-n">3</span><div><strong>Portal access activated</strong><p>Once confirmed, your account is activated. Log in to the parent portal with the email and password you used to register.</p></div></li>
+            <li><span class="step-n">3</span><div><strong>Portal access activated</strong><p>Once confirmed, you'll receive your login details by email. Use them to access the parent portal and track your child's progress.</p></div></li>
             <li><span class="step-n">4</span><div><strong>First session</strong><p>Bring boots, shin pads, a ball and a water bottle. Come at 5:00pm for a welcome introduction.</p></div></li>
           </ol>
         </div>
@@ -222,7 +205,6 @@ const ENROLL_TOKEN = import.meta.env.PUBLIC_ACADEMY_ENROLLMENT_TOKEN || '';
 const REQUIRED_FIELDS = [
   'parent_first_name', 'parent_last_name', 'parent_email', 'parent_phone',
   'player_first_name', 'player_last_name', 'player_dob', 'age_group',
-  'password', 'password_confirm',
 ];
 
 function showError(field, msg) {
@@ -250,12 +232,6 @@ function validateForm(data) {
   }
   if (data.parent_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.parent_email)) {
     markError('parent_email', 'Please enter a valid email address.');
-  }
-  if (data.password && data.password.length < 8) {
-    markError('password', 'Password must be at least 8 characters.');
-  }
-  if (data.password && data.password_confirm && data.password !== data.password_confirm) {
-    markError('password_confirm', 'Passwords do not match.');
   }
   if (!document.getElementById('acknowledge')?.checked) {
     markError('acknowledge', 'Please tick the box before submitting.');
@@ -290,7 +266,6 @@ form.addEventListener('submit', async (e) => {
   submitBtn.textContent = 'Submitting…';
 
   const parentEmail = data.parent_email.trim().toLowerCase();
-  const password    = data.password?.trim();
 
   // Encode player preferences into previous_experience so they reach the TD
   // (Directus enrollment schema doesn't have dedicated preference fields)
@@ -337,39 +312,8 @@ form.addEventListener('submit', async (e) => {
     const enrollJson = res.status !== 204 ? await res.json().catch(() => ({})) : {};
     const enrollmentId = enrollJson?.data?.id;
 
-    // 2. Try to create Directus user account via public registration endpoint
-    if (password && enrollmentId) {
-      try {
-        const regRes = await fetch(`${DIRECTUS_URL}/users/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email:      parentEmail,
-            password:   password,
-            first_name: data.parent_first_name.trim(),
-            last_name:  data.parent_last_name.trim(),
-          }),
-        });
-        // If registration worked, try to link the user ID to the enrollment
-        if (regRes.ok) {
-          const regJson = await regRes.json();
-          const userId = regJson?.data?.id;
-          if (userId) {
-            // Attempt to link — may fail if enrollment token lacks PATCH permission; that's OK
-            await fetch(`${DIRECTUS_URL}/items/academy_enrollments/${enrollmentId}`, {
-              method: 'PATCH',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${ENROLL_TOKEN}`,
-              },
-              body: JSON.stringify({ directus_user_id: userId }),
-            }).catch(() => {}); // silent — portal can fall back to email matching
-          }
-        }
-      } catch (_) {
-        // User creation failure is non-fatal — TD can create account on acceptance
-      }
-    }
+    // Note: parent account creation happens when the TD accepts the enrollment
+    // via the admin portal — that flow assigns the correct role and password.
 
     // Show success
     successEmail.textContent = parentEmail;
