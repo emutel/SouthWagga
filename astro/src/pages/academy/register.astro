@@ -334,7 +334,7 @@ form.addEventListener('submit', async (e) => {
       console.error('[register] Enrollment failed:', res.status, body);
       throw new Error(`HTTP ${res.status}: ${body.slice(0, 200)}`);
     }
-    const enrollJson = await res.json();
+    const enrollJson = res.status !== 204 ? await res.json().catch(() => ({})) : {};
     const enrollmentId = enrollJson?.data?.id;
 
     // 2. Try to create Directus user account via public registration endpoint
