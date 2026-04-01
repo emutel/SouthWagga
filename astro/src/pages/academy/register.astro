@@ -216,15 +216,8 @@ const activePrograms = programs.filter(p => p.status === 'active');
 </Base>
 
 <script>
-const DIRECTUS_URL  = import.meta.env.PUBLIC_DIRECTUS_URL  || '';
-const ENROLL_TOKEN  = import.meta.env.PUBLIC_ACADEMY_ENROLLMENT_TOKEN || '';
-
-const form           = document.getElementById('register-form');
-const submitBtn      = document.getElementById('submit-btn');
-const formContainer  = document.getElementById('form-container');
-const successContainer = document.getElementById('success-container');
-const successEmail   = document.getElementById('success-email');
-const formError      = document.getElementById('form-error');
+const DIRECTUS_URL = import.meta.env.PUBLIC_DIRECTUS_URL  || '';
+const ENROLL_TOKEN = import.meta.env.PUBLIC_ACADEMY_ENROLLMENT_TOKEN || '';
 
 const REQUIRED_FIELDS = [
   'parent_first_name', 'parent_last_name', 'parent_email', 'parent_phone',
@@ -246,31 +239,42 @@ function clearErrors() {
 
 function validateForm(data) {
   let valid = true;
+  let firstErrorEl = null;
+  function markError(field, msg) {
+    showError(field, msg);
+    if (!firstErrorEl) firstErrorEl = document.getElementById(`err-${field}`);
+    valid = false;
+  }
   for (const f of REQUIRED_FIELDS) {
-    if (!data[f] || !data[f].toString().trim()) {
-      showError(f, 'This field is required.');
-      valid = false;
-    }
+    if (!data[f] || !String(data[f]).trim()) markError(f, 'This field is required.');
   }
   if (data.parent_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.parent_email)) {
-    showError('parent_email', 'Please enter a valid email address.');
-    valid = false;
+    markError('parent_email', 'Please enter a valid email address.');
   }
   if (data.password && data.password.length < 8) {
-    showError('password', 'Password must be at least 8 characters.');
-    valid = false;
+    markError('password', 'Password must be at least 8 characters.');
   }
   if (data.password && data.password_confirm && data.password !== data.password_confirm) {
-    showError('password_confirm', 'Passwords do not match.');
-    valid = false;
+    markError('password_confirm', 'Passwords do not match.');
   }
-  const ack = document.getElementById('acknowledge');
-  if (ack && !ack.checked) {
-    showError('acknowledge', 'Please acknowledge before submitting.');
-    valid = false;
+  if (!document.getElementById('acknowledge')?.checked) {
+    markError('acknowledge', 'Please tick the box before submitting.');
+  }
+  if (!valid && firstErrorEl) {
+    firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
   return valid;
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const form            = document.getElementById('register-form');
+  const submitBtn       = document.getElementById('submit-btn');
+  const formContainer   = document.getElementById('form-container');
+  const successContainer = document.getElementById('success-container');
+  const successEmail    = document.getElementById('success-email');
+  const formError       = document.getElementById('form-error');
+
+  if (!form) return; // safety guard
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -375,6 +379,7 @@ form.addEventListener('submit', async (e) => {
     submitBtn.textContent = 'Submit Registration →';
   }
 });
+}); // DOMContentLoaded
 </script>
 
 <style>
