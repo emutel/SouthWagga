@@ -3,7 +3,6 @@
 // Technical Director admin portal — full rewrite
 import PortalBase from '../../layouts/PortalBase.astro';
 import { CLUB } from '../../club.config.js';
-const demoToken = import.meta.env.PUBLIC_DEMO_TOKEN || '';
 ---
 <PortalBase
   title="Academy — Technical Director"
@@ -247,9 +246,6 @@ input[type=range] { width: 100%; accent-color: var(--green-accent); }
   .sliders-grid { grid-template-columns: 1fr; }
 }
 </style>
-
-<!-- Demo mode marker (hidden, read by JS) -->
-{CLUB.demoMode && <div id="demo-mode" data-token={demoToken} hidden></div>}
 
 <!-- View: Login -->
 <div id="view-login" class="view">
@@ -1369,12 +1365,6 @@ function showDashboard() {
   document.getElementById('view-dashboard').hidden = false;
 }
 
-// ── Demo mode ──────────────────────────────────────────────────────────────────
-
-const DEMO_EL    = document.getElementById('demo-mode');
-const DEMO_MODE  = !!DEMO_EL;
-const DEMO_TOKEN = DEMO_EL?.dataset.token || '';
-
 // ── Login button ──────────────────────────────────────────────────────────────
 
 document.getElementById('login-btn').addEventListener('click', async () => {
@@ -1382,20 +1372,10 @@ document.getElementById('login-btn').addEventListener('click', async () => {
   const password = document.getElementById('login-password').value;
   const errEl    = document.getElementById('login-error');
   const btn      = document.getElementById('login-btn');
-  if (!DEMO_MODE && (!email || !password)) return;
+  if (!email || !password) return;
 
   btn.disabled = true; btn.textContent = 'Signing in\u2026';
   errEl.hidden = true;
-
-  if (DEMO_MODE) {
-    ALS.token   = DEMO_TOKEN;
-    ALS.refresh = '';
-    ALS.user    = { id: 'demo', email: 'demo@demo.com', first_name: 'Demo', last_name: 'User', role: { name: 'technical director' } };
-    showDashboard();
-    await loadAll();
-    btn.disabled = false; btn.textContent = 'Sign In \u2192';
-    return;
-  }
 
   try {
     const res = await fetch(`${DURL}/auth/login`, {

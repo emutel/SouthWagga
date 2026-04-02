@@ -3,15 +3,11 @@
 // Coach Dashboard — full rewrite, clipboard-style UI
 import PortalBase from '../../layouts/PortalBase.astro';
 import { CLUB } from '../../club.config.js';
-const demoToken = import.meta.env.PUBLIC_DEMO_TOKEN || '';
 ---
 <PortalBase
   title="Academy Coach Dashboard"
   description={`${CLUB.shortName} Academy coach dashboard — manage player assessments and messages.`}
 >
-
-<!-- Demo mode marker (hidden, read by JS) -->
-{CLUB.demoMode && <div id="demo-mode" data-token={demoToken} hidden></div>}
 
 <!-- View: Login -->
 <div id="view-login" class="view">
@@ -1078,33 +1074,15 @@ document.getElementById('player-search').addEventListener('input', e => {
   renderPlayerList(filtered, q);
 });
 
-// ── Demo mode ──
-const DEMO_EL    = document.getElementById('demo-mode');
-const DEMO_MODE  = !!DEMO_EL;
-const DEMO_TOKEN = DEMO_EL?.dataset.token || '';
-
 // ── Login ──
 document.getElementById('login-btn').addEventListener('click', async () => {
   const email    = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
   const errEl    = document.getElementById('login-error');
   const btn      = document.getElementById('login-btn');
-  if (!DEMO_MODE && (!email || !password)) return;
+  if (!email || !password) return;
   btn.disabled = true; btn.textContent = 'Signing in…';
   errEl.hidden = true;
-
-  if (DEMO_MODE) {
-    CLS.token   = DEMO_TOKEN;
-    CLS.refresh = '';
-    const demoUser = { id: 'demo', email: 'demo@demo.com', first_name: 'Demo', last_name: 'User', role: { name: 'coach' } };
-    CLS.user = demoUser;
-    showDashboard();
-    const badge = document.getElementById('coach-badge');
-    badge.textContent = 'Demo';
-    await loadAllPlayers();
-    btn.disabled = false; btn.textContent = 'Sign In →';
-    return;
-  }
 
   try {
     const res = await fetch(`${DURL}/auth/login`, {
