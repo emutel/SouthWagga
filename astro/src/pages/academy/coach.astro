@@ -24,20 +24,21 @@ const demoToken = import.meta.env.PUBLIC_DEMO_TOKEN || '';
     <div class="login-card">
       {CLUB.demoMode && (
         <div class="demo-info-banner">
-          <span style="font-size:18px">ℹ️</span>
+          <span style="font-size:20px;flex-shrink:0">ℹ️</span>
           <div>
-            <strong>Demo Mode</strong><br>
-            Sign in with any credentials — or leave the fields blank. This is a live demo site.
+            <strong>Demo login</strong>
+            <span class="demo-cred"><span class="demo-cred-label">Email</span> coach@riverside-demo.com</span>
+            <span class="demo-cred"><span class="demo-cred-label">Password</span> Demo1234!</span>
           </div>
         </div>
       )}
       <div class="field-group">
         <label>Email</label>
-        <input id="login-email" type="email" autocomplete="email">
+        <input id="login-email" type="email" autocomplete="email" value={CLUB.demoMode ? 'coach@riverside-demo.com' : ''}>
       </div>
       <div class="field-group">
         <label>Password</label>
-        <input id="login-password" type="password" autocomplete="current-password">
+        <input id="login-password" type="password" autocomplete="current-password" value={CLUB.demoMode ? 'Demo1234!' : ''}>
       </div>
       <button id="login-btn" class="btn-green">Sign In →</button>
       <p id="login-error" class="error-msg" hidden></p>
@@ -226,8 +227,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
 .login-sub { color: rgba(255,255,255,0.5); font-size: 14px; margin-top: 8px; }
 .login-outer { display: flex; justify-content: center; padding: 32px 24px 48px; }
 .login-card { width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 28px; display: flex; flex-direction: column; gap: 16px; }
-.demo-info-banner { display:flex; gap:12px; align-items:flex-start; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:8px; padding:12px 14px; font-size:13px; line-height:1.5; color:#93c5fd; }
-.demo-info-banner strong { color:#bfdbfe; }
+.demo-info-banner { display:flex; gap:12px; align-items:flex-start; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:8px; padding:12px 14px; font-size:13px; line-height:1.8; color:#93c5fd; }
+.demo-info-banner strong { display:block; color:#bfdbfe; margin-bottom:4px; }
+.demo-cred { display:block; font-family:monospace; font-size:12px; color:#bfdbfe; }
+.demo-cred-label { display:inline-block; width:60px; font-family:sans-serif; text-transform:uppercase; font-size:10px; letter-spacing:1px; color:#7ca8d4; }
 .field-group { display: flex; flex-direction: column; gap: 6px; }
 .field-group label { font-size: 13px; font-weight: 600; color: var(--text); }
 .field-group input { padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background: var(--bg); color: var(--text); }

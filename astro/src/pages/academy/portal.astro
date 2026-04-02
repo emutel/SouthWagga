@@ -29,21 +29,22 @@ const demoToken = import.meta.env.PUBLIC_DEMO_TOKEN || '';
     <div class="login-card">
       {CLUB.demoMode && (
         <div class="demo-info-banner">
-          <span style="font-size:18px">ℹ️</span>
+          <span style="font-size:20px;flex-shrink:0">ℹ️</span>
           <div>
-            <strong>Demo Mode</strong><br>
-            Sign in with any credentials — or leave the fields blank. This is a live demo site.
+            <strong>Demo login</strong><br>
+            <span class="demo-cred"><span class="demo-cred-label">Email</span> parent@riverside-demo.com</span>
+            <span class="demo-cred"><span class="demo-cred-label">Password</span> Demo1234!</span>
           </div>
         </div>
       )}
       <div id="session-expired-msg" hidden style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:12px 14px;font-size:14px;color:#f59e0b;margin-bottom:16px;">Your session expired. Please sign in again.</div>
       <div class="login-field-group">
         <label for="login-email">Email</label>
-        <input id="login-email" type="email" autocomplete="email" placeholder="your@email.com">
+        <input id="login-email" type="email" autocomplete="email" placeholder="your@email.com" value={CLUB.demoMode ? 'parent@riverside-demo.com' : ''}>
       </div>
       <div class="login-field-group">
         <label for="login-password">Password</label>
-        <input id="login-password" type="password" autocomplete="current-password" placeholder="••••••••">
+        <input id="login-password" type="password" autocomplete="current-password" placeholder="••••••••" value={CLUB.demoMode ? 'Demo1234!' : ''}>
       </div>
       <button id="login-btn" class="btn-primary">Sign In →</button>
       <div id="login-error" class="form-msg form-msg--error" hidden></div>
@@ -1324,8 +1325,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
 .login-sub { color: var(--muted); font-size: 16px; line-height: 1.5; }
 .login-outer { display: flex; justify-content: center; padding: 56px 20px; }
 .login-card { width: 100%; max-width: 440px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 36px; }
-.demo-info-banner { display:flex; gap:12px; align-items:flex-start; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:10px; padding:14px 16px; margin-bottom:20px; font-size:13px; line-height:1.5; color:#93c5fd; }
-.demo-info-banner strong { color:#bfdbfe; }
+.demo-info-banner { display:flex; gap:12px; align-items:flex-start; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:10px; padding:14px 16px; margin-bottom:20px; font-size:13px; line-height:1.8; color:#93c5fd; }
+.demo-info-banner strong { display:block; color:#bfdbfe; margin-bottom:4px; }
+.demo-cred { display:block; font-family:monospace; font-size:12px; color:#bfdbfe; }
+.demo-cred-label { display:inline-block; width:60px; font-family:var(--font-cond); text-transform:uppercase; font-size:10px; letter-spacing:1px; color:#7ca8d4; }
 .login-field-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
 .login-field-group label { font-family: var(--font-cond); font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 .login-field-group input {
