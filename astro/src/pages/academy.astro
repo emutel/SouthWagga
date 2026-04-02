@@ -9,7 +9,7 @@ const active   = programs.filter(p => p.status === 'active');
 const full     = programs.filter(p => p.status === 'full');
 ---
 <Base
-  title="Warriors Academy"
+  title={`${CLUB.shortName} Academy`}
   description={`${CLUB.name} Academy — structured player development for ages 8–16. Tuesday & Thursday evenings. Structured technical development for every player.`}
 >
 
@@ -17,7 +17,7 @@ const full     = programs.filter(p => p.status === 'full');
   <div class="academy-hero">
     <div class="academy-hero-inner">
       <div class="label">Player Development</div>
-      <h1>Warriors Academy</h1>
+      <h1>{CLUB.shortName} Academy</h1>
       <p class="hero-sub">Technical excellence. Community values. Every player's potential, developed.</p>
       <div class="hero-badge">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -76,7 +76,7 @@ const full     = programs.filter(p => p.status === 'full');
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green-bright)" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
           <h3>Community-Rooted</h3>
-          <p>Run by the Warriors for the Warriors. Sessions at {CLUB.academyVenue} — our home ground, nicknamed Wagga Wembley — fitting around family schedules with Tuesday and Thursday evening sessions.</p>
+          <p>Run by {CLUB.shortName} for {CLUB.shortName}. Sessions at {CLUB.academyVenue} — our home ground — fitting around family schedules with Tuesday and Thursday evening sessions.</p>
         </div>
       </div>
     </div>
@@ -209,7 +209,7 @@ const full     = programs.filter(p => p.status === 'full');
   <!-- ── SAP COMPARISON ───────────────────────────────────── -->
   <section class="section section--card">
     <div class="section-inner">
-      <div class="label">Why Warriors Academy?</div>
+      <div class="label">Why {CLUB.shortName} Academy?</div>
       <h2>A Different Kind of Development</h2>
       <p class="section-sub">Football Australia's SAP program is excellent — but it's not for everyone. Here's how we compare.</p>
       <div class="compare-grid">
@@ -225,7 +225,7 @@ const full     = programs.filter(p => p.status === 'full');
         </div>
         <div class="compare-vs">VS</div>
         <div class="compare-col compare-col--warriors">
-          <h3>Warriors Academy</h3>
+          <h3>{CLUB.shortName} Academy</h3>
           <ul>
             <li class="compare-good">Open to all — no selection process</li>
             <li class="compare-good">Ages 8–16, three progressive tiers</li>
@@ -235,7 +235,7 @@ const full     = programs.filter(p => p.status === 'full');
           </ul>
         </div>
       </div>
-      <p class="compare-note">Warriors Academy is a complement to club competition, not a replacement. Many of our players also participate in SAP. We welcome all.</p>
+      <p class="compare-note">{CLUB.shortName} Academy is a complement to club competition, not a replacement. Many of our players also participate in SAP. We welcome all.</p>
     </div>
   </section>
 

@@ -2,10 +2,12 @@
 // src/pages/academy/admin.astro
 // Technical Director admin portal — full rewrite
 import PortalBase from '../../layouts/PortalBase.astro';
+import { CLUB } from '../../club.config.js';
+const demoToken = import.meta.env.PUBLIC_DEMO_TOKEN || '';
 ---
 <PortalBase
   title="Academy — Technical Director"
-  description="Warriors FC Academy administration panel."
+  description={`${CLUB.shortName} Academy administration panel.`}
 >
 
 <style is:global>
@@ -42,6 +44,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
 .login-sub { color: #6e7681; font-size: 14px; margin-top: 8px; }
 .login-outer { display: flex; justify-content: center; padding: 32px 24px 48px; }
 .login-card { width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+.demo-info-banner { display:flex; gap:12px; align-items:flex-start; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:8px; padding:12px 14px; font-size:13px; line-height:1.5; color:#1d4ed8; }
+.demo-info-banner strong { color:#1e40af; }
 .field-group { display: flex; flex-direction: column; gap: 5px; }
 .field-group label { font-size: 13px; font-weight: 600; }
 .field-group input { padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background: var(--card); }
@@ -242,15 +246,27 @@ input[type=range] { width: 100%; accent-color: var(--green-accent); }
 }
 </style>
 
+<!-- Demo mode marker (hidden, read by JS) -->
+{CLUB.demoMode && <div id="demo-mode" data-token={demoToken} hidden></div>}
+
 <!-- View: Login -->
 <div id="view-login" class="view">
   <div class="login-hero">
-    <span class="login-label">Warriors Academy</span>
+    <span class="login-label">{CLUB.shortName} Academy</span>
     <h1 class="login-title">Technical Director Portal</h1>
     <p class="login-sub">Manage enrollments, players, and communications</p>
   </div>
   <div class="login-outer">
     <div class="login-card">
+      {CLUB.demoMode && (
+        <div class="demo-info-banner">
+          <span style="font-size:18px">ℹ️</span>
+          <div>
+            <strong>Demo Mode</strong><br>
+            Sign in with any credentials — or leave the fields blank. This is a live demo site.
+          </div>
+        </div>
+      )}
       <div class="field-group">
         <label>Email</label>
         <input id="login-email" type="email" autocomplete="email">
@@ -272,7 +288,7 @@ input[type=range] { width: 100%; accent-color: var(--green-accent); }
   <div class="topbar">
     <div class="topbar-row1">
       <div class="topbar-left">
-        <span class="topbar-label">Warriors Academy</span>
+        <span class="topbar-label">{CLUB.shortName} Academy</span>
         <h1 class="topbar-title">Technical Director</h1>
       </div>
       <div class="topbar-right">
@@ -343,7 +359,7 @@ input[type=range] { width: 100%; accent-color: var(--green-accent); }
 
 </div><!-- /view-dashboard -->
 
-<script>
+<script define:vars={{ clubShortName: CLUB.shortName, clubAbbr: CLUB.abbreviation }}>
 const DURL = import.meta.env.PUBLIC_DIRECTUS_URL || 'https://directus-production-ebbb.up.railway.app';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -413,7 +429,7 @@ function buildFIFACard(profile, assessment) {
       <div class="fc-header"><div><div class="fc-overall">&mdash;</div><div class="fc-pos">${posLabel(pos)}</div><div class="fc-tier">Unrated</div></div></div>
       <div class="fc-photo">${photoHtml}</div>
       <div class="fc-name">${name.toUpperCase()}</div>
-      <div class="fc-age">${agLabel} &middot; Warriors FC</div>
+      <div class="fc-age">${agLabel} &middot; ${clubShortName}</div>
       <div class="fc-no-assess">Not yet assessed</div>
     </div>`;
   }
@@ -427,7 +443,7 @@ function buildFIFACard(profile, assessment) {
     </div>
     <div class="fc-photo">${photoHtml}</div>
     <div class="fc-name">${name.toUpperCase()}</div>
-    <div class="fc-age">${agLabel} &middot; Warriors FC</div>
+    <div class="fc-age">${agLabel} &middot; ${clubShortName}</div>
     <div class="fc-stats">
       ${[['PAC', attrs.pac], ['SHO', attrs.sho], ['PAS', attrs.pas], ['DRI', attrs.dri], ['DEF', attrs.def], ['PHY', attrs.phy]]
         .map(([l, v]) => `<div class="fc-stat"><span class="fc-sv">${v}</span><span class="fc-sl">${l}</span></div>`).join('')}
@@ -1350,6 +1366,12 @@ function showDashboard() {
   document.getElementById('view-dashboard').hidden = false;
 }
 
+// ── Demo mode ──────────────────────────────────────────────────────────────────
+
+const DEMO_EL    = document.getElementById('demo-mode');
+const DEMO_MODE  = !!DEMO_EL;
+const DEMO_TOKEN = DEMO_EL?.dataset.token || '';
+
 // ── Login button ──────────────────────────────────────────────────────────────
 
 document.getElementById('login-btn').addEventListener('click', async () => {
@@ -1357,10 +1379,20 @@ document.getElementById('login-btn').addEventListener('click', async () => {
   const password = document.getElementById('login-password').value;
   const errEl    = document.getElementById('login-error');
   const btn      = document.getElementById('login-btn');
-  if (!email || !password) return;
+  if (!DEMO_MODE && (!email || !password)) return;
 
   btn.disabled = true; btn.textContent = 'Signing in\u2026';
   errEl.hidden = true;
+
+  if (DEMO_MODE) {
+    ALS.token   = DEMO_TOKEN;
+    ALS.refresh = '';
+    ALS.user    = { id: 'demo', email: 'demo@demo.com', first_name: 'Demo', last_name: 'User', role: { name: 'technical director' } };
+    showDashboard();
+    await loadAll();
+    btn.disabled = false; btn.textContent = 'Sign In \u2192';
+    return;
+  }
 
   try {
     const res = await fetch(`${DURL}/auth/login`, {

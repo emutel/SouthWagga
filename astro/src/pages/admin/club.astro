@@ -2,11 +2,12 @@
 // src/pages/admin/club.astro
 // Club Administrator portal — team, player, import, and season management
 import PortalBase from '../../layouts/PortalBase.astro';
+import { CLUB } from '../../club.config.js';
 const directusUrl = import.meta.env.PUBLIC_DIRECTUS_URL || 'https://directus-production-ebbb.up.railway.app';
 ---
 <PortalBase
-  title="Warriors FC — Club Admin"
-  description="Warriors FC club administration panel."
+  title={`${CLUB.shortName} — Club Admin`}
+  description={`${CLUB.shortName} club administration panel.`}
 >
 
 <style is:global>
@@ -245,7 +246,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
 <!-- ── View: Login ──────────────────────────────────────────────────────── -->
 <div id="view-login" class="view">
   <div class="login-hero">
-    <span class="login-label">Warriors FC</span>
+    <span class="login-label">{CLUB.shortName}</span>
     <h1 class="login-title">Club Admin Portal</h1>
     <p class="login-sub">Team and player management</p>
   </div>
@@ -253,7 +254,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
     <div class="login-card">
       <div class="field-group">
         <label for="login-email">Email</label>
-        <input id="login-email" type="email" autocomplete="email" placeholder="admin@warriorsfc.com.au">
+        <input id="login-email" type="email" autocomplete="email" placeholder={`admin@${CLUB.email.split('@')[1]}`}>
       </div>
       <div class="field-group">
         <label for="login-password">Password</label>
@@ -272,7 +273,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
   <div class="topbar">
     <div class="topbar-row1">
       <div>
-        <span class="topbar-label">Warriors FC</span>
+        <span class="topbar-label">{CLUB.shortName}</span>
         <h1 class="topbar-title">Club Admin</h1>
       </div>
       <div class="topbar-right">

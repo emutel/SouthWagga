@@ -16,6 +16,7 @@ export const CLUB = {
   abbreviation: 'RFC',
   tagline:      "Grassroots football in Riverside. From Mini Roos to Seniors.",
   description:  "Grassroots football for the Riverside community. Juniors, Seniors, Women's and Social football for all.",
+  heroLines:    ['Riverside', 'FC.'],
 
   // ── Location ───────────────────────────────────────────────────────────────
   location:          'Riverside NSW',
@@ -41,6 +42,15 @@ export const CLUB = {
 
   // ── Contact ────────────────────────────────────────────────────────────────
   email: 'info@riverside-fc.com.au',
+
+  // ── Logo ───────────────────────────────────────────────────────────────────
+  // Path to the club logo file in /public. Swap file + update this path to rebrand.
+  logo: '/logo.svg',
+
+  // ── Demo mode ──────────────────────────────────────────────────────────────
+  // When true, academy portals accept any credentials (blank or otherwise).
+  // Set to true for demo/showcase deployments only.
+  demoMode: true,
 
   // ── Brand colours ──────────────────────────────────────────────────────────
   // These drive CSS custom properties injected on <html> in the layouts.
