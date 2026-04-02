@@ -2,9 +2,12 @@
 // src/pages/about.astro
 import Base from '../layouts/Base.astro';
 import { getSiteSettings, getGlobalSponsors, fileUrl } from '../lib/directus.js';
+import { CLUB } from '../club.config.js';
 
 const settings = await getSiteSettings() || {};
 const sponsors = await getGlobalSponsors() || [];
+
+const contactEmail = settings.contact_email || CLUB.email;
 
 const tiers    = ['platinum','gold','silver','bronze'];
 const tierLabels = { platinum:'Platinum Sponsors', gold:'Gold Sponsors', silver:'Silver Sponsors', bronze:'Bronze Sponsors' };
@@ -13,7 +16,7 @@ const bySponsorTier = tiers.reduce((acc, t) => {
   return acc;
 }, {});
 ---
-<Base title="About Us" description="South Wagga Warriors FC — club history, contact details and sponsors.">
+<Base title="About Us" description={`${CLUB.name} — club history, contact details and sponsors.`}>
 
   <div class="page-hero">
     <div class="page-hero-inner">
@@ -29,9 +32,9 @@ const bySponsorTier = tiers.reduce((acc, t) => {
       <div class="about-grid">
         <div class="about-text">
           <div class="label" style="margin-bottom:16px">Our Story</div>
-          <p>South Wagga Warriors FC has been part of the South Wagga community for decades, providing football for players of all ages and abilities — from Mini Roos right through to competitive senior football.</p>
-          <p>We are proud members of Football Wagga Wiradjuri (FWW) and compete across multiple divisions in the greater Wagga region.</p>
-          <p>Our home ground is Rawlings Park, South Wagga, where we host home games, training sessions, and community events throughout the season.</p>
+          <p>{CLUB.name} has been part of the {CLUB.location} community for decades, providing football for players of all ages and abilities — from Mini Roos right through to competitive senior football.</p>
+          <p>We are proud members of {CLUB.competition} and compete across multiple divisions in the region.</p>
+          <p>Our home ground is {CLUB.homeGround}, where we host home games, training sessions, and community events throughout the season.</p>
         </div>
         <div class="about-stats">
           <div class="stat-card">
@@ -59,8 +62,8 @@ const bySponsorTier = tiers.reduce((acc, t) => {
       <div class="label" style="margin-bottom:20px">Our Ground</div>
       <div class="ground-grid">
         <div>
-          <h3>Rawlings Park</h3>
-          <p class="ground-address">{settings.address || 'Rawlings Park, South Wagga NSW 2650'}</p>
+          <h3>{CLUB.homeGround}</h3>
+          <p class="ground-address">{settings.address || CLUB.homeGroundAddress}</p>
           <div class="ground-details">
             <div class="ground-detail">📅 Home games: Saturdays & Sundays during season</div>
             <div class="ground-detail">🚗 Parking available on site</div>
@@ -70,14 +73,14 @@ const bySponsorTier = tiers.reduce((acc, t) => {
         <!-- Google Maps embed -->
         <div class="map-embed">
           <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3!2d147.36!3d-35.12!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sRawlings+Park+South+Wagga!5e0!3m2!1sen!2sau!4v1"
+            src={CLUB.geo.mapEmbed}
             width="100%"
             height="280"
             style="border:0;border-radius:var(--radius);filter:grayscale(30%) invert(90%) hue-rotate(160deg)"
             allowfullscreen=""
             loading="lazy"
             referrerpolicy="no-referrer-when-downgrade"
-            title="Rawlings Park location"
+            title={`${CLUB.homeGround} location`}
           ></iframe>
         </div>
       </div>
@@ -141,7 +144,7 @@ const bySponsorTier = tiers.reduce((acc, t) => {
     {sponsors.length > 0 && (
       <section class="section-block" id="sponsors">
         <div class="label" style="margin-bottom:28px">Our Sponsors</div>
-        <p class="sponsors-intro">We thank our sponsors for their continued support of South Wagga Warriors FC.</p>
+        <p class="sponsors-intro">We thank our sponsors for their continued support of {CLUB.name}.</p>
         {tiers.filter(t => bySponsorTier[t]?.length > 0).map(tier => (
           <div class="sponsor-tier">
             <h3 class="tier-title">{tierLabels[tier]}</h3>
@@ -175,7 +178,7 @@ const bySponsorTier = tiers.reduce((acc, t) => {
 
 </Base>
 
-<script>
+<script define:vars={{ contactEmail }}>
   document.getElementById('cf-submit')?.addEventListener('click', async () => {
     const name    = (document.getElementById('cf-name') as HTMLInputElement)?.value;
     const email   = (document.getElementById('cf-email') as HTMLInputElement)?.value;
@@ -186,7 +189,7 @@ const bySponsorTier = tiers.reduce((acc, t) => {
       return;
     }
     // Send to mailto as fallback (replace with actual form handler if needed)
-    const mailto = `mailto:${document.querySelector('meta[name="contact-email"]')?.getAttribute('content') || 'info@southwagga.com.au'}?subject=Website Enquiry from ${encodeURIComponent(name)}&body=${encodeURIComponent(message)}%0A%0AFrom: ${encodeURIComponent(email)}`;
+    const mailto = `mailto:${contactEmail}?subject=Website Enquiry from ${encodeURIComponent(name)}&body=${encodeURIComponent(message)}%0A%0AFrom: ${encodeURIComponent(email)}`;
     window.location.href = mailto;
     if (status) status.textContent = 'Opening your email app...';
   });

@@ -2,6 +2,7 @@
 // src/pages/shop.astro
 import Base from '../layouts/Base.astro';
 import { getShopItems, fileUrl } from '../lib/directus.js';
+import { CLUB } from '../club.config.js';
 
 const items = await getShopItems() || [];
 const categories = ['kit', 'merch', 'training', 'other'];
@@ -12,7 +13,7 @@ const byCat = categories.reduce((acc, cat) => {
   return acc;
 }, {});
 ---
-<Base title="Warriors Shop" description="Official South Wagga Warriors FC merchandise, jerseys and training gear. Secure checkout via Square.">
+<Base title="Warriors Shop" description={`Official ${CLUB.name} merchandise, jerseys and training gear. Secure checkout via Square.`}>
 
   <div class="page-hero">
     <div class="page-hero-inner">

@@ -1,10 +1,11 @@
 ---
 // src/pages/coaching/index.astro
 import Base from '../../layouts/Base.astro';
+import { CLUB } from '../../club.config.js';
 
 const PIN = import.meta.env.PUBLIC_COACHING_PIN || process.env.PUBLIC_COACHING_PIN || '';
 ---
-<Base title="Coaches Hub" description="South Wagga Warriors FC coaching portal for session plans and resources.">
+<Base title="Coaches Hub" description={`${CLUB.name} coaching portal for session plans and resources.`}>
 
   <!-- PIN gate — client-side, good enough for club coaching resources -->
   {PIN && (
@@ -65,7 +66,7 @@ const PIN = import.meta.env.PUBLIC_COACHING_PIN || process.env.PUBLIC_COACHING_P
           <div class="hub-body">
             <h2>Contact Technical Director</h2>
             <p>Questions about session delivery, player development or the coaching program? Reach out via the club email.</p>
-            <a href="mailto:info@southwagga.com.au" class="ext-link">info@southwagga.com.au</a>
+            <a href={`mailto:${CLUB.email}`} class="ext-link">{CLUB.email}</a>
           </div>
         </div>
 

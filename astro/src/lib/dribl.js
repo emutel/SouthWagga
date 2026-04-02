@@ -5,6 +5,7 @@
 
 import fs   from 'fs';
 import path from 'path';
+import { CLUB } from '../club.config.js';
 
 const CACHE_DIR = process.env.DRIBL_CACHE_DIR || './scraper/cache';
 
@@ -31,16 +32,18 @@ export function getResults({ limit = 20, division } = {}) {
 
 // Derive a short Warriors team label from a fixture (e.g. "Warriors", "Vikings", "Women's 1st Grade")
 function getWarriorsTeamLabel(fixture) {
+  const patterns = CLUB.dribl.teamPatterns;  // e.g. ['south wagga', 'warriors', 'vikings']
+  const clubPattern = CLUB.dribl.clubPattern; // e.g. 'south wagga'
   const candidates = [
     { name: fixture.home_team, id: fixture.home_team_id },
     { name: fixture.away_team, id: fixture.away_team_id },
   ];
   for (const { name } of candidates) {
     const n = (name || '').toLowerCase();
-    if (!n.includes('south wagga') && !n.includes('warriors') && !n.includes('vikings')) continue;
-    if (n.includes('south wagga')) {
+    if (!patterns.some(p => n.includes(p))) continue;
+    if (n.includes(clubPattern)) {
       const suffix = (name || '')
-        .replace(/south wagga football club\s*/i, '')
+        .replace(new RegExp(`${clubPattern} football club\\s*`, 'i'), '')
         .trim();
       if (suffix.toLowerCase().includes('women') || suffix.toLowerCase().includes('female')) {
         if (suffix.toLowerCase().includes('1st') || suffix.toLowerCase().includes('leonard')) return "Women's 1st Grade";
@@ -48,7 +51,7 @@ function getWarriorsTeamLabel(fixture) {
         return "Women's Team";
       }
       if (suffix) return suffix;  // e.g. "Warriors", "Vikings"
-      return 'South Wagga FC';    // bare club name
+      return CLUB.dribl.teamLabel;  // bare club name
     }
   }
   return null;

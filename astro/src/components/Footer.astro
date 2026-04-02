@@ -1,5 +1,6 @@
 ---
 // src/components/Footer.astro
+import { CLUB } from '../club.config.js';
 const { settings = {} } = Astro.props;
 const year = new Date().getFullYear();
 ---
@@ -7,9 +8,9 @@ const year = new Date().getFullYear();
   <div class="footer-inner">
 
     <div class="footer-brand">
-      <div class="footer-club-name">South Wagga Warriors FC</div>
+      <div class="footer-club-name">{CLUB.name}</div>
       <p class="footer-tagline">
-        {settings.tagline || 'Serving the South Wagga community. Juniors, Seniors, Women\'s and Social football for all abilities.'}
+        {settings.tagline || CLUB.tagline}
       </p>
       <div class="footer-socials">
         {settings.facebook_url && (
@@ -75,7 +76,7 @@ const year = new Date().getFullYear();
           <li><a href="/news">News</a></li>
           <li><a href="/shop">Shop</a></li>
           <li><a href="/events">Events</a></li>
-          <li><a href="https://fww.dribl.com" target="_blank" rel="noopener">Dribl ↗</a></li>
+          <li><a href={CLUB.dribl.baseUrl} target="_blank" rel="noopener">Dribl ↗</a></li>
         </ul>
       </div>
     </nav>
@@ -83,7 +84,7 @@ const year = new Date().getFullYear();
   </div>
 
   <div class="footer-bottom">
-    <span>© {year} South Wagga Warriors FC · Rawlings Park, South Wagga NSW</span>
+    <span>© {year} {CLUB.name} · {CLUB.homeGround}, {CLUB.location}</span>
     <span class="footer-powered">
       Payments <span class="badge">■ SQUARE</span>
       · Results <span class="badge">DRIBL</span>

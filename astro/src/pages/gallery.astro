@@ -2,6 +2,7 @@
 // src/pages/gallery.astro
 import Base from '../layouts/Base.astro';
 import { getGalleryAlbums, getTeams, fileUrl } from '../lib/directus.js';
+import { CLUB } from '../club.config.js';
 
 const INSTAGRAM_CONNECTED = false;
 
@@ -9,7 +10,7 @@ const albums = await getGalleryAlbums({ limit: 24 }) || [];
 const allTeams = await getTeams() || [];
 const hashtagTeams = allTeams.filter(t => t.hashtag);
 ---
-<Base title="Gallery" description="Photo galleries from South Wagga Warriors FC — match photography, events and club life.">
+<Base title="Gallery" description={`Photo galleries from ${CLUB.name} — match photography, events and club life.`}>
 
   <div class="page-hero">
     <div class="page-hero-inner">

@@ -1,13 +1,17 @@
 ---
 // src/layouts/PortalBase.astro
 // Minimal layout for academy portals — no site nav/footer
+import { CLUB } from '../club.config.js';
+
 const {
-  title = 'Warriors Academy',
-  description = 'Warriors FC Academy Portal',
+  title       = `${CLUB.shortName} Academy`,
+  description = `${CLUB.shortName} Academy Portal`,
 } = Astro.props;
+
+const colorVars = `--green:${CLUB.colors.primary};--green-bright:${CLUB.colors.primaryBright};--green-dark:${CLUB.colors.primaryDark};--gold:${CLUB.colors.gold};`;
 ---
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style={colorVars}>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">

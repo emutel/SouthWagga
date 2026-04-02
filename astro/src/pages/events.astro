@@ -2,12 +2,13 @@
 // src/pages/events.astro
 import Base from '../layouts/Base.astro';
 import { getEvents, fileUrl } from '../lib/directus.js';
+import { CLUB } from '../club.config.js';
 
 const upcoming = await getEvents({ upcomingOnly: true  }) || [];
 const past     = await getEvents({ upcomingOnly: false }) || [];
 const pastOnly  = past.filter(e => !upcoming.find(u => u.id === e.id)).slice(0, 6);
 ---
-<Base title="Events & Tickets" description="South Wagga Warriors FC events — presentation nights, Twilight League registrations and more.">
+<Base title="Events & Tickets" description={`${CLUB.name} events — presentation nights, Twilight League registrations and more.`}>
 
   <div class="page-hero">
     <div class="page-hero-inner">

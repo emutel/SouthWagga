@@ -4,6 +4,7 @@ import Base          from '../layouts/Base.astro';
 import ShareBar      from '../components/ShareBar.astro';
 import { getNews, getAcademyPrograms, getEvents, fileUrl } from '../lib/directus.js';
 import { getResults, getFixtures }                          from '../lib/dribl.js';
+import { CLUB } from '../club.config.js';
 
 const news        = await getNews({ limit: 3, featured: true }) || [];
 const programs    = await getAcademyPrograms() || [];
@@ -14,7 +15,7 @@ const { data: fixtures }          = getFixtures({ limit: 3 });
 // Group results by division for ticker
 const tickerItems = results.slice(0, 6);
 ---
-<Base title="South Wagga Warriors FC">
+<Base title={CLUB.name}>
 
   <!-- ── TICKER ── -->
   <div class="ticker">
@@ -31,7 +32,7 @@ const tickerItems = results.slice(0, 6);
         </Fragment>
       ))}
       {tickerItems.length === 0 && (
-        <span class="ticker-item">Welcome to South Wagga Warriors FC — 2025 Season</span>
+        <span class="ticker-item">Welcome to {CLUB.name}</span>
       )}
     </div>
   </div>
@@ -43,7 +44,7 @@ const tickerItems = results.slice(0, 6);
       <div class="hero-content">
         <div class="label">2025 Season · Greater Wagga Football</div>
         <h1 class="hero-title">South<br>Wagga<br><span>Warriors.</span></h1>
-        <p class="hero-sub">Grassroots football in South Wagga. From Mini Roos to Seniors — we play for the love of the game.</p>
+        <p class="hero-sub">{CLUB.tagline}</p>
         <div class="hero-actions">
           <a href="/results" class="btn btn-primary">⚽ Latest Results</a>
           <a href="/academy" class="btn btn-secondary">Academy →</a>

@@ -2,10 +2,11 @@
 // src/pages/academy/portal.astro
 // Parent/Player Portal — fully client-side authenticated via Directus JWT
 import PortalBase from '../../layouts/PortalBase.astro';
+import { CLUB } from '../../club.config.js';
 ---
 <PortalBase
   title="Academy — Player Portal"
-  description="South Wagga Warriors FC Academy parent and player portal. View your child's Player Card, progress, and messages."
+  description={`${CLUB.name} Academy parent and player portal. View your child's Player Card, progress, and messages.`}
 >
 
 <!-- Quote band — always visible, above everything -->

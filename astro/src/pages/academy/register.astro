@@ -2,13 +2,14 @@
 // src/pages/academy/register.astro
 import Base from '../../layouts/Base.astro';
 import { getAcademyPrograms } from '../../lib/directus.js';
+import { CLUB } from '../../club.config.js';
 
 const programs = await getAcademyPrograms() || [];
 const activePrograms = programs.filter(p => p.status === 'active');
 ---
 <Base
   title="Academy — Register Interest"
-  description="Register your child's interest in the South Wagga Warriors FC Academy development program."
+  description={`Register your child's interest in the ${CLUB.name} Academy development program.`}
 >
 
   <div class="page-hero">

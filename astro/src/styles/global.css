@@ -1,5 +1,8 @@
 /* ═══════════════════════════════════════════════════
-   SOUTH WAGGA WARRIORS FC — Global Styles
+   Global Styles
+   Club identity (--green, --green-bright, --green-dark, --gold)
+   is injected via style attribute on <html> in Base.astro
+   from club.config.js — values here are defaults only.
    ═══════════════════════════════════════════════════ */
 
 :root {

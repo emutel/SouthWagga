@@ -2,12 +2,13 @@
 // src/pages/teams/index.astro
 import Base from '../../layouts/Base.astro';
 import { getTeams, getActiveClubSeason, fileUrl } from '../../lib/directus.js';
+import { CLUB } from '../../club.config.js';
 
 const teams       = await getTeams() || [];
 const activeSeason = await getActiveClubSeason();
 const seasonLabel  = activeSeason?.name || activeSeason?.year?.toString() || '2026';
 ---
-<Base title="Our Teams" description="All South Wagga Warriors FC teams — from Mini Roos to Men's Premier.">
+<Base title="Our Teams" description={`All ${CLUB.name} teams — from Mini Roos to Men's Premier.`}>
 
   <div class="page-hero">
     <div class="page-hero-inner">

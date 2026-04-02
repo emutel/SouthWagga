@@ -4,19 +4,24 @@ import '../styles/global.css';
 import Nav       from '../components/Nav.astro';
 import Footer    from '../components/Footer.astro';
 import { getSiteSettings } from '../lib/directus.js';
+import { CLUB } from '../club.config.js';
 
 const settings = await getSiteSettings() || {};
 
 const {
-  title = 'South Wagga Warriors FC',
-  description = 'Grassroots football in South Wagga. Juniors, Seniors, Women\'s and Social football for all.',
+  title       = CLUB.name,
+  description = CLUB.description,
   ogImage,
 } = Astro.props;
 
-const siteTitle = title.includes('Warriors') ? title : `${title} | Warriors FC`;
+const siteTitle = title.includes(CLUB.seo.titleSuffix) ? title : `${title} | ${CLUB.seo.titleSuffix}`;
+
+// Inject club brand colours as CSS custom properties on <html>,
+// overriding the fallback values in global.css. Change CLUB.colors to retheme.
+const colorVars = `--green:${CLUB.colors.primary};--green-bright:${CLUB.colors.primaryBright};--green-dark:${CLUB.colors.primaryDark};--gold:${CLUB.colors.gold};--win:${CLUB.colors.primaryBright};--draw:${CLUB.colors.gold};`;
 ---
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style={colorVars}>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">

@@ -2,12 +2,13 @@
 // src/pages/news/index.astro
 import Base from '../../layouts/Base.astro';
 import { getNews, fileUrl } from '../../lib/directus.js';
+import { CLUB } from '../../club.config.js';
 
 const news = await getNews({ limit: 50 }) || [];
 const featured = news.filter(n => n.featured).slice(0, 1)[0];
 const rest = news.filter(n => !featured || n.id !== featured.id);
 ---
-<Base title="News" description="Latest news and announcements from South Wagga Warriors FC.">
+<Base title="News" description={`Latest news and announcements from ${CLUB.name}.`}>
 
   <div class="page-hero">
     <div class="page-hero-inner">

@@ -2,6 +2,7 @@
 // src/pages/gallery/team/[hashtag].astro
 import Base from '../../../layouts/Base.astro';
 import { getTeams } from '../../../lib/directus.js';
+import { CLUB } from '../../../club.config.js';
 
 const INSTAGRAM_CONNECTED = false;
 
@@ -34,15 +35,15 @@ const decodedHashtag = '#' + hashtag;
 // GET https://graph.instagram.com/v18.0/{hashtag_id}/recent_media?fields=id,media_url,permalink,timestamp,caption&user_id={IG_USER_ID}&access_token={IG_TOKEN}
 // → returns { data: [ { id, media_url, permalink, timestamp, caption }, ... ] }
 //
-// Step 3 — Filter results where caption contains "@southwaggawarriorsfc" or decodedHashtag
+// Step 3 — Filter results where caption contains CLUB.social.instagram or decodedHashtag
 // const photos = rawMedia.filter(p =>
 //   p.caption?.toLowerCase().includes(decodedHashtag.toLowerCase()) ||
-//   p.caption?.toLowerCase().includes('@southwaggawarriorsfc')
+//   p.caption?.toLowerCase().includes(CLUB.social.instagram.toLowerCase())
 // );
 ---
 <Base
   title={`${team?.name ?? decodedHashtag} Gallery — ${decodedHashtag}`}
-  description={`Photos tagged ${decodedHashtag} from South Wagga Warriors FC. Share your match day photos on Instagram using ${decodedHashtag}.`}
+  description={`Photos tagged ${decodedHashtag} from ${CLUB.name}. Share your match day photos on Instagram using ${decodedHashtag}.`}
 >
 
   <div class="page-hero">
@@ -72,7 +73,7 @@ const decodedHashtag = '#' + hashtag;
           <p class="cs-body">
             In the meantime, share your photos on Instagram using
             <strong class="cs-hashtag">{decodedHashtag}</strong>
-            and tag <strong>@southwaggawarriorsfc</strong> — your shots
+            and tag <strong>{CLUB.social.instagram}</strong> — your shots
             will appear here once the gallery goes live.
           </p>
 
@@ -80,10 +81,10 @@ const decodedHashtag = '#' + hashtag;
           <div class="ig-mockup">
             <div class="ig-post">
               <div class="ig-post-header">
-                <div class="ig-avatar">SW</div>
+                <div class="ig-avatar">{CLUB.abbreviation.slice(0,2)}</div>
                 <div class="ig-username">
-                  <strong>@southwaggawarriorsfc</strong>
-                  <span>South Wagga, NSW</span>
+                  <strong>{CLUB.social.instagram}</strong>
+                  <span>{CLUB.location}</span>
                 </div>
               </div>
               <div class="ig-post-image">
@@ -92,7 +93,7 @@ const decodedHashtag = '#' + hashtag;
                 </div>
               </div>
               <div class="ig-post-caption">
-                <strong>@southwaggawarriorsfc</strong>
+                <strong>{CLUB.social.instagram}</strong>
                 {' '}Match day! Another great performance from the squad.
                 {' '}<span class="ig-tag">{decodedHashtag}</span>
                 {' '}<span class="ig-tag">#SWFC</span>
@@ -113,7 +114,7 @@ const decodedHashtag = '#' + hashtag;
             </div>
             <div class="cs-step">
               <span class="cs-step-num">3</span>
-              <span>Tag it with <strong>{decodedHashtag}</strong> and <strong>@southwaggawarriorsfc</strong></span>
+              <span>Tag it with <strong>{decodedHashtag}</strong> and <strong>{CLUB.social.instagram}</strong></span>
             </div>
             <div class="cs-step">
               <span class="cs-step-num">4</span>

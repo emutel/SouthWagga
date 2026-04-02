@@ -4,6 +4,7 @@ import Base             from '../../layouts/Base.astro';
 import ShareBar         from '../../components/ShareBar.astro';
 import { getTeam, getAllTeamSlugs, getPlayersByTeam, getTeamSponsors, getTeamRegistrations, fileUrl } from '../../lib/directus.js';
 import { getResults, getFixtures } from '../../lib/dribl.js';
+import { CLUB } from '../../club.config.js';
 
 export async function getStaticPaths() {
   const slugs = await getAllTeamSlugs();
@@ -30,7 +31,7 @@ const otherPlayers = players.filter(p => !p.position);
 ---
 <Base
   title={team.name}
-  description={team.description || `${team.name} — South Wagga Warriors FC`}
+  description={team.description || `${team.name} — ${CLUB.name}`}
   ogImage={team.team_photo ? fileUrl(team.team_photo, { width: 1200, height: 630 }) : undefined}
 >
 
@@ -275,7 +276,7 @@ const otherPlayers = players.filter(p => !p.position);
 
     <!-- SHARE -->
     <ShareBar
-      title={`${team.name} — South Wagga Warriors FC`}
+      title={`${team.name} — ${CLUB.name}`}
       url={Astro.url.href}
     />
 

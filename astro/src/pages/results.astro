@@ -2,6 +2,7 @@
 // src/pages/results.astro
 import Base from '../layouts/Base.astro';
 import { getResults, getFixtures, getStandings } from '../lib/dribl.js';
+import { CLUB } from '../club.config.js';
 
 const { data: allResults, cachedAt } = getResults({ limit: 100 });
 const { data: fixtures, cachedAt: fxCachedAt } = getFixtures({ limit: 300 });
@@ -21,11 +22,11 @@ fixtures.forEach(f => {
 });
 const effectiveCachedAt = cachedAt || fxCachedAt;
 ---
-<Base title="Results & Fixtures" description="Latest match results, upcoming fixtures and league tables for South Wagga Warriors FC.">
+<Base title="Results & Fixtures" description={`Latest match results, upcoming fixtures and league tables for ${CLUB.name}.`}>
 
   <div class="page-hero">
     <div class="page-hero-inner">
-      <div class="label">fww.dribl.com</div>
+      <div class="label">{CLUB.dribl.label}</div>
       <h1>Results &amp; Fixtures</h1>
       <p>All Warriors teams · Updated automatically from Dribl{effectiveCachedAt ? ` · ${new Date(effectiveCachedAt).toLocaleString('en-AU')}` : ''}</p>
     </div>
@@ -98,7 +99,7 @@ const effectiveCachedAt = cachedAt || fxCachedAt;
             <div class="fixtures-list">
               {fixturesByTeam[team].map(f => {
                 const d = f.date ? new Date(f.date) : null;
-                const isHome = (f.home_team || '').toLowerCase().includes('south wagga');
+                const isHome = (f.home_team || '').toLowerCase().includes(CLUB.dribl.clubPattern);
                 return (
                   <div class="fixture-card" data-div={team}>
                     <div class="fx-date">
@@ -107,9 +108,9 @@ const effectiveCachedAt = cachedAt || fxCachedAt;
                     </div>
                     <div class="fx-info">
                       <div class="fx-matchup">
-                        <span class={isHome ? 'fx-us' : 'fx-them'}>{f.home_team?.replace(/south wagga football club\s*/i,'').trim() || f.home_team}</span>
+                        <span class={isHome ? 'fx-us' : 'fx-them'}>{f.home_team?.replace(new RegExp(CLUB.dribl.clubPattern + ' football club\\s*', 'i'),'').trim() || f.home_team}</span>
                         <span class="fx-vs">vs</span>
-                        <span class={!isHome ? 'fx-us' : 'fx-them'}>{f.away_team?.replace(/south wagga football club\s*/i,'').trim() || f.away_team}</span>
+                        <span class={!isHome ? 'fx-us' : 'fx-them'}>{f.away_team?.replace(new RegExp(CLUB.dribl.clubPattern + ' football club\\s*', 'i'),'').trim() || f.away_team}</span>
                       </div>
                       <div class="fx-detail">
                         {f.venue && <span>📍 {f.venue}{f.field ? ` · ${f.field}` : ''}</span>}
@@ -156,7 +157,7 @@ const effectiveCachedAt = cachedAt || fxCachedAt;
                   <tbody>
                     {rows.map((row, i) => {
                       const teamName = row.team?.name || row.team_name || row.name || '';
-                      const isWarriors = teamName.toLowerCase().includes('warriors') || teamName.toLowerCase().includes('south wagga');
+                      const isWarriors = CLUB.dribl.teamPatterns.some(p => teamName.toLowerCase().includes(p));
                       const gf = parseInt(row.goals_for || row.gf || 0);
                       const ga = parseInt(row.goals_against || row.ga || 0);
                       const gd = gf - ga;
