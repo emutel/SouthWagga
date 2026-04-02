@@ -185,7 +185,7 @@ const effectiveCachedAt = cachedAt || fxCachedAt;
       </div>
 
       <p class="dribl-credit">
-        Data sourced from <a href="https://fww.dribl.com" target="_blank" rel="noopener">fww.dribl.com</a>
+        Data sourced from <a href={CLUB.dribl.baseUrl} target="_blank" rel="noopener">{CLUB.dribl.label}</a>
         {effectiveCachedAt && ` · Last synced ${new Date(effectiveCachedAt).toLocaleString('en-AU')}`}
       </p>
     </div>
