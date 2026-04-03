@@ -29,6 +29,17 @@ export const CLUB = {
   },
   academyVenue: 'The Showgrounds, Wagga Wagga',
 
+  // ── Hero title lines ───────────────────────────────────────────────────────
+  heroLines: ['South', 'Wagga', 'Warriors.'],
+
+  // ── Logo ───────────────────────────────────────────────────────────────────
+  // Path to the club logo in /public. Swap file + update path to rebrand.
+  logo: '/logo.png',
+
+  // ── Demo mode ──────────────────────────────────────────────────────────────
+  // Set true only for demo/showcase deployments.
+  demoMode: false,
+
   // ── Contact ────────────────────────────────────────────────────────────────
   email: 'info@southwagga.com.au',
 
