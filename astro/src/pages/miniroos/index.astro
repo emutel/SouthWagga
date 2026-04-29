@@ -245,18 +245,120 @@ const ageGroups = [
   },
 ];
 
-const drawSchedule = [
-  { group: 'U/5',        time: '1:15pm',  gender: 'Mixed' },
-  { group: 'U/6',        time: '9:15am & 10:15am', gender: 'Mixed' },
-  { group: 'U5/6 Girls', time: '1:15pm',  gender: 'Girls' },
-  { group: 'U/7',        time: '11:15am & 12:15pm', gender: 'Mixed' },
-  { group: 'U7/8 Girls', time: '1:15pm',  gender: 'Girls' },
-  { group: 'U/8',        time: '11:15am & 12:15pm', gender: 'Mixed' },
-  { group: 'U/9',        time: '9:15am & 10:15am', gender: 'Mixed' },
-  { group: 'U9/10 Girls',time: '8:15am',  gender: 'Girls' },
-  { group: 'U/10',       time: '9:15am & 10:15am', gender: 'Mixed' },
-  { group: 'U11/12',     time: '11:15am, 12:15pm & 1:15pm', gender: 'Mixed' },
-  { group: 'U11/12 Girls',time: '1:15pm', gender: 'Girls' },
+const groundMaps = [
+  {
+    name: 'D.O.K Ground',
+    driveId: '1oMA0ybg2J2i0XdfmoVFF0tvUznrUXDTY',
+    link: 'https://drive.google.com/file/d/1oMA0ybg2J2i0XdfmoVFF0tvUznrUXDTY/view?usp=drive_link',
+  },
+  {
+    name: 'Bolton Park Ground',
+    driveId: '1Hbl_bj9MXhg-8iO2qa4YpnUl-xkfJYID',
+    link: 'https://drive.google.com/file/d/1Hbl_bj9MXhg-8iO2qa4YpnUl-xkfJYID/view?usp=sharing',
+  },
+];
+
+const drawGroups = [
+  {
+    id: 'dg-u5',
+    label: 'Under 5',
+    gender: 'mixed',
+    time: '1:15pm Saturdays',
+    draws: [
+      { name: 'U/5 Mixed Draw', driveId: '1lo347toC13bRZWP-zqngEAS76YKtj1y2' },
+    ],
+  },
+  {
+    id: 'dg-u56g',
+    label: 'Under 5/6 Girls',
+    gender: 'girls',
+    time: '1:15pm Saturdays',
+    draws: [
+      { name: 'U5/6 Girls Draw', driveId: '1lhRsAcQIhfZIllWTLtzywUwsZzPUTWGt' },
+    ],
+  },
+  {
+    id: 'dg-u6',
+    label: 'Under 6',
+    gender: 'mixed',
+    time: '9:15am & 10:15am Saturdays',
+    draws: [
+      { name: 'U/6 Black — 9:15am',  driveId: '11-817WZ-LjUjmo8oO1RjgysEO5LmT8DD' },
+      { name: 'U/6 White — 10:15am', driveId: '1KOIhO6Nbf2u_GyLVHCrBeaTE4hLoPtFY' },
+    ],
+  },
+  {
+    id: 'dg-u7',
+    label: 'Under 7',
+    gender: 'mixed',
+    time: '11:15am & 12:15pm Saturdays',
+    draws: [
+      { name: 'U/7 Black — 11:15am', driveId: '1qF0k_LKvmQHG6LkqA-G6EjbHSWDIGuCa' },
+      { name: 'U/7 White — 12:15pm', driveId: '1XJpIhNMsUuoIMa0lmXibjblf1O2-SiaE' },
+    ],
+  },
+  {
+    id: 'dg-u78g',
+    label: 'Under 7/8 Girls',
+    gender: 'girls',
+    time: '1:15pm Saturdays',
+    draws: [
+      { name: 'U7/8 Girls Draw', driveId: '1zqa3zZTJhIytM-P3QfKXqieGIhjmVdAW' },
+    ],
+  },
+  {
+    id: 'dg-u8',
+    label: 'Under 8',
+    gender: 'mixed',
+    time: '11:15am & 12:15pm Saturdays',
+    draws: [
+      { name: 'U/8 Black — 11:15am', driveId: '17wYbkK0UFNMakkgyKZk0n7meX35_56zd' },
+      { name: 'U/8 White — 12:15pm', driveId: '1Vrsi1AvT_Xg4QZ0WUxzhIq9HXsSIK1-Y' },
+    ],
+  },
+  {
+    id: 'dg-u9',
+    label: 'Under 9',
+    gender: 'mixed',
+    time: '9:15am & 10:15am Saturdays',
+    draws: [
+      { name: 'U/9 Black — 9:15am',  driveId: '1CXHyL7sFjeLcei_yZLQGlTE3zLfXRDWg' },
+      { name: 'U/9 White — 10:15am', driveId: '1QlBSuwni0UfxP-Fb-aHOm0qc3TF53YzN' },
+    ],
+  },
+  {
+    id: 'dg-u910g',
+    label: 'Under 9/10 Girls',
+    gender: 'girls',
+    time: '8:15am Saturdays',
+    draws: [
+      { name: 'U9/10 Girls Draw', driveId: '1P8UO7LojD8Y0EN7b4wrbHks4xCDuUxvV' },
+    ],
+  },
+  {
+    id: 'dg-u10',
+    label: 'Under 10',
+    gender: 'mixed',
+    time: '9:15am & 10:15am Saturdays',
+    draws: [
+      { name: 'U/10 Black — 9:15am',  driveId: '1wPpc9oIbKWG7zpX3-XPPxB5-Rre4p563' },
+      { name: 'U/10 White — 10:15am', driveId: '12nrA0VwXasU0MtTYfhip-Dpn-sTUcFhc' },
+    ],
+  },
+  {
+    id: 'dg-u1112',
+    label: 'Under 11/12',
+    gender: 'mixed',
+    time: '11:15am, 12:15pm & 1:15pm Saturdays',
+    dribl: true,
+  },
+  {
+    id: 'dg-u1112g',
+    label: 'Under 11/12 Girls',
+    gender: 'girls',
+    time: '1:15pm Saturdays',
+    dribl: true,
+  },
 ];
 ---
 <Base title="MiniRoos 2026" description={`2026 MiniRoos teams and draw schedule for ${CLUB.name}.`}>
@@ -329,52 +431,94 @@ const drawSchedule = [
 
       <div class="draws-intro">
         <p>MiniRoos games are played every Saturday morning at <strong>Rawlings Park</strong>. Games run approximately 40 minutes. No ladders or scores are recorded — just fun, development football for all kids.</p>
-        <a
-          href="https://www.footballwagga.com.au/competitions/miniroos/draws-2026"
-          target="_blank"
-          rel="noopener"
-          class="btn btn-primary draw-btn"
-        >
-          View Full 2026 Draw on Football Wagga ↗
-        </a>
       </div>
 
-      <h3 class="schedule-heading">Saturday Start Times by Age Group</h3>
-      <div class="schedule-table-wrap">
-        <table class="schedule-table">
-          <thead>
-            <tr>
-              <th>Age Group</th>
-              <th>Start Time(s)</th>
-              <th>Gender</th>
-            </tr>
-          </thead>
-          <tbody>
-            {drawSchedule.map(row => (
-              <tr>
-                <td><strong>{row.group}</strong></td>
-                <td>{row.time}</td>
-                <td>
-                  <span class={`gender-pill ${row.gender === 'Girls' ? 'girls' : 'mixed'}`}>
-                    {row.gender}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <!-- Ground maps -->
+      <h3 class="section-heading">Ground Maps</h3>
+      <p class="section-sub">Know which field your team is on before you arrive.</p>
+      <div class="maps-grid">
+        {groundMaps.map(m => (
+          <div class="map-card">
+            <div class="map-card-header">
+              <span class="map-title">{m.name}</span>
+              <a href={m.link} target="_blank" rel="noopener" class="map-open-link">Open full size ↗</a>
+            </div>
+            <div class="map-embed-wrap">
+              <img
+                src={`https://drive.google.com/uc?export=view&id=${m.driveId}`}
+                alt={`${m.name} field layout`}
+                class="map-img"
+                loading="lazy"
+                onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+              />
+              <div class="map-fallback" style="display:none">
+                <p>Map preview unavailable.</p>
+                <a href={m.link} target="_blank" rel="noopener" class="btn btn-primary" style="font-size:13px;padding:8px 18px">Open in Google Drive ↗</a>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
-      <div class="iframe-section">
-        <h3 class="schedule-heading">Draw Documents</h3>
-        <p class="iframe-note">The full draw (including round-by-round fixture details) is hosted on Football Wagga. You can view it directly below or <a href="https://www.footballwagga.com.au/competitions/miniroos/draws-2026" target="_blank" rel="noopener">open it in a new tab ↗</a>.</p>
-        <div class="iframe-wrap">
-          <iframe
-            src="https://www.footballwagga.com.au/competitions/miniroos/draws-2026"
-            title="Football Wagga MiniRoos 2026 Draws"
-            loading="lazy"
-            class="draws-iframe"
-          ></iframe>
+      <!-- Draw documents by age group -->
+      <h3 class="section-heading" style="margin-top:56px">Round-by-Round Draws</h3>
+      <p class="section-sub">Select your age group to see the full fixture draw. Each draw shows all rounds for the season.</p>
+
+      <div class="draw-age-pills">
+        {drawGroups.map(g => (
+          <button class="draw-age-pill" data-draw={g.id}>
+            {g.label}
+            {g.gender === 'girls' && <span class="girls-dot"></span>}
+          </button>
+        ))}
+      </div>
+
+      <div class="draw-sections">
+        {drawGroups.map(g => (
+          <div class="draw-section" data-draw-section={g.id} style="display:none">
+            <div class="draw-section-header">
+              <div class="draw-section-title">
+                <h3>{g.label}</h3>
+                {g.gender === 'girls' && <span class="gender-badge girls">Girls</span>}
+              </div>
+              <span class="draw-time">{g.time}</span>
+            </div>
+
+            {g.dribl ? (
+              <div class="dribl-note">
+                <p>U11/12 fixtures are managed through Dribl. View your team's schedule on the <a href="/results">Results &amp; Fixtures</a> page.</p>
+              </div>
+            ) : (
+              <div class={`draw-docs draw-docs-${g.draws?.length}`}>
+                {g.draws?.map(d => (
+                  <div class="draw-doc-card">
+                    <div class="draw-doc-header">
+                      <span class="draw-doc-name">{d.name}</span>
+                      <a
+                        href={`https://drive.google.com/file/d/${d.driveId}/view`}
+                        target="_blank"
+                        rel="noopener"
+                        class="draw-doc-link"
+                      >Open full size ↗</a>
+                    </div>
+                    <div class="draw-iframe-wrap">
+                      <iframe
+                        src={`https://drive.google.com/file/d/${d.driveId}/preview`}
+                        title={d.name}
+                        loading="lazy"
+                        class="draw-iframe"
+                        allowfullscreen
+                      ></iframe>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+
+        <div class="draw-placeholder" id="draw-placeholder">
+          <p>Select an age group above to view the draw.</p>
         </div>
       </div>
 
@@ -395,7 +539,7 @@ const drawSchedule = [
     });
   });
 
-  // Age group filter
+  // Age group filter (teams tab)
   document.querySelectorAll('.age-pill').forEach(pill => {
     pill.addEventListener('click', () => {
       document.querySelectorAll('.age-pill').forEach(p => p.classList.remove('active'));
@@ -404,6 +548,27 @@ const drawSchedule = [
       document.querySelectorAll('.age-section').forEach(sec => {
         (sec as HTMLElement).style.display = (age === 'all' || (sec as HTMLElement).dataset.age === age) ? '' : 'none';
       });
+    });
+  });
+
+  // Draw age group selector (draws tab)
+  document.querySelectorAll('.draw-age-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const id = (pill as HTMLElement).dataset.draw;
+      const alreadyActive = pill.classList.contains('active');
+
+      document.querySelectorAll('.draw-age-pill').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.draw-section').forEach(s => (s as HTMLElement).style.display = 'none');
+      const placeholder = document.getElementById('draw-placeholder');
+
+      if (alreadyActive) {
+        if (placeholder) placeholder.style.display = '';
+      } else {
+        pill.classList.add('active');
+        if (placeholder) placeholder.style.display = 'none';
+        const target = document.querySelector(`[data-draw-section="${id}"]`) as HTMLElement;
+        if (target) target.style.display = '';
+      }
     });
   });
 </script>
@@ -534,51 +699,99 @@ const drawSchedule = [
 }
 
 /* Draws panel */
-.draws-intro { margin-bottom: 32px; }
-.draws-intro p { color: var(--muted); font-size: 15px; line-height: 1.6; margin-bottom: 18px; }
-.draw-btn { display: inline-block; text-decoration: none; }
+.draws-intro { margin-bottom: 36px; }
+.draws-intro p { color: var(--muted); font-size: 15px; line-height: 1.6; }
 
-.schedule-heading {
-  font-family: var(--font-cond); font-size: 16px; font-weight: 700;
+.section-heading {
+  font-family: var(--font-cond); font-size: 18px; font-weight: 700;
   letter-spacing: 2px; text-transform: uppercase; color: var(--green-bright);
-  margin-bottom: 16px; margin-top: 36px;
+  margin: 0 0 6px;
 }
-.schedule-table-wrap { overflow-x: auto; max-width: 600px; }
-.schedule-table {
-  width: 100%; border-collapse: collapse; font-size: 14px;
-}
-.schedule-table th, .schedule-table td {
-  padding: 11px 16px; text-align: left; border-bottom: 1px solid var(--border);
-}
-.schedule-table th {
-  background: var(--green-dark); font-family: var(--font-cond); font-size: 11px;
-  font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--white);
-}
-.schedule-table tr:hover { background: rgba(255,255,255,0.03); }
-.gender-pill {
-  font-family: var(--font-cond); font-size: 10px; font-weight: 700; letter-spacing: 1px;
-  text-transform: uppercase; padding: 3px 10px; border-radius: 4px;
-}
-.gender-pill.girls { background: rgba(244,114,182,0.15); color: #f472b6; border: 1px solid rgba(244,114,182,0.3); }
-.gender-pill.mixed { background: rgba(37,160,76,0.12); color: var(--green-bright); border: 1px solid rgba(37,160,76,0.3); }
+.section-sub { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
 
-.iframe-section { margin-top: 12px; }
-.iframe-note { color: var(--muted); font-size: 14px; margin-bottom: 16px; }
-.iframe-note a { color: var(--green-bright); }
-.iframe-wrap {
-  border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
-  background: var(--card);
+/* Ground maps */
+.maps-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.map-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden;
 }
-.draws-iframe { width: 100%; height: 700px; border: none; display: block; }
+.map-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+}
+.map-title { font-family: var(--font-cond); font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--white); }
+.map-open-link { font-family: var(--font-cond); font-size: 11px; font-weight: 600; color: var(--green-bright); text-decoration: none; letter-spacing: 0.5px; }
+.map-open-link:hover { text-decoration: underline; }
+.map-embed-wrap { position: relative; }
+.map-img { width: 100%; display: block; max-height: 480px; object-fit: contain; background: #fff; }
+.map-fallback { padding: 40px 20px; text-align: center; flex-direction: column; align-items: center; gap: 16px; color: var(--muted); font-size: 14px; }
+
+/* Draw age-group selector */
+.draw-age-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+.draw-age-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 18px; background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; font-family: var(--font-cond); font-size: 12px;
+  font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--muted); cursor: pointer; transition: all 0.15s;
+}
+.draw-age-pill.active, .draw-age-pill:hover { background: var(--green); border-color: var(--green); color: #fff; }
+
+.draw-placeholder { padding: 48px 0; color: var(--muted); font-size: 15px; text-align: center; font-style: italic; }
+
+/* Individual draw section */
+.draw-section { }
+.draw-section-header {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: 10px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.draw-section-title { display: flex; align-items: center; gap: 10px; }
+.draw-section-title h3 { font-family: var(--font-cond); font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin: 0; }
+.draw-time { font-family: var(--font-cond); font-size: 12px; font-weight: 600; letter-spacing: 1px; color: var(--muted); }
+
+.draw-docs { display: grid; gap: 20px; }
+.draw-docs-1 { grid-template-columns: 1fr; max-width: 900px; }
+.draw-docs-2 { grid-template-columns: repeat(2, 1fr); }
+
+.draw-doc-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden;
+}
+.draw-doc-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; background: var(--green-dark); border-bottom: 1px solid var(--border);
+}
+.draw-doc-name { font-family: var(--font-cond); font-size: 14px; font-weight: 700; letter-spacing: 1px; color: var(--white); }
+.draw-doc-link { font-family: var(--font-cond); font-size: 11px; font-weight: 600; color: var(--green-bright); text-decoration: none; }
+.draw-doc-link:hover { text-decoration: underline; }
+.draw-iframe-wrap { }
+.draw-iframe { width: 100%; height: 600px; border: none; display: block; }
+
+.dribl-note {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 24px; max-width: 600px;
+}
+.dribl-note p { color: var(--muted); font-size: 15px; margin: 0; }
+.dribl-note a { color: var(--green-bright); }
+
+.gender-badge {
+  font-family: var(--font-cond); font-size: 10px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; padding: 3px 10px;
+  border-radius: 4px;
+}
+.gender-badge.girls { background: rgba(244,114,182,0.15); color: #f472b6; border: 1px solid rgba(244,114,182,0.3); }
 
 @media (max-width: 900px) {
   .page-hero  { padding: 40px 20px 32px; }
   .page-inner { padding: 28px 20px; }
   .teams-4, .teams-3 { grid-template-columns: repeat(2, 1fr); }
+  .maps-grid { grid-template-columns: 1fr; }
+  .draw-docs-2 { grid-template-columns: 1fr; }
 }
 @media (max-width: 600px) {
   .teams-4, .teams-3, .teams-2 { grid-template-columns: 1fr; }
   .time-badge { margin-left: 0; width: 100%; }
-  .draws-iframe { height: 500px; }
+  .draw-iframe { height: 420px; }
+  .draw-section-header { flex-direction: column; align-items: flex-start; }
 }
 </style>
