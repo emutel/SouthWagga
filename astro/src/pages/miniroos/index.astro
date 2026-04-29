@@ -1,0 +1,584 @@
+---
+// src/pages/miniroos/index.astro
+import Base from '../../layouts/Base.astro';
+import { CLUB } from '../../club.config.js';
+
+const ageGroups = [
+  {
+    id: 'u5',
+    label: 'Under 5',
+    gender: 'mixed',
+    drawTime: '1:15pm Saturdays',
+    teams: [
+      {
+        name: 'WARRIORS',
+        coach: 'Matt Hope & Mike Fox',
+        players: ['Thomas Hope','Zoe Hodge','Beau Fox','Thomas Dodds','Harry Stokes','James McGauley-Lancaster','Lachlan O\'Brien','William Farrugia'],
+      },
+      {
+        name: 'VIKINGS',
+        coach: 'Catherine Perry (Manager)',
+        note: 'Will need parent helpers on Saturday games',
+        players: ['Constantine Perry','Jireh Meli','Micah Te Pere','Teddie Wardman-Cox','Tommy Robertson','Riggs Holloway','Axel Flaws'],
+      },
+    ],
+  },
+  {
+    id: 'u56g',
+    label: 'Under 5/6 Girls',
+    gender: 'girls',
+    drawTime: '1:15pm Saturdays',
+    teams: [
+      {
+        name: 'WARRIORS',
+        coachNeeded: true,
+        players: ['Maggie Palframan','Molly Palframan','Georgia Tenison','Georgia Lustenberger','Willa Gair','Arianna Haliqi'],
+      },
+      {
+        name: 'KNIGHTS',
+        coach: 'Emily Butt',
+        players: ['Evie Passlow','Stevie Higginson','Lucy Robinson','Zoe Ingold','Teddie Litchfield','Edwina Butt','Penelope King','Rosie Thomas'],
+      },
+    ],
+  },
+  {
+    id: 'u6',
+    label: 'Under 6',
+    gender: 'mixed',
+    drawTime: '9:15am / 10:15am Saturdays',
+    teams: [
+      {
+        name: 'WARRIORS',
+        coach: 'Nicola Smith',
+        players: ['Monty King','Violet Wallace','Edward Wilkinson','Patrick Ta','Toby Lindley','Edward Barrett','Halle Wealands','Patrick Moore','Arthur Wilson','Elijah Ross'],
+      },
+      {
+        name: 'VIKINGS',
+        coach: 'Andy Heller',
+        players: ['Hailie Christmann','Eli Christmann','Noah Heller','Valentino Datuin','Felipe Esturla','Tyler Purcell','Livan Yousif','Zarlo Alexander'],
+      },
+      {
+        name: 'GLADIATORS',
+        coach: 'Sam Palmer & Jordan Steward',
+        players: ['Bonnie McCormack','Bowie Stewart','Wally Campbell','Edgar Pryor','India Cullenward','Archie Palmer','Lulu Ferguson','Ted Greaney','Oliver Jones'],
+      },
+      {
+        name: 'KNIGHTS',
+        coach: 'Jake Phillips',
+        players: ['Eric Doolan','Jace Phillips','Henry Lenehan','Lochlan Weston','Archie Wardman-Cox','Philip Higginson','Reign Kirby','Nicholas van der Meer'],
+      },
+    ],
+  },
+  {
+    id: 'u7',
+    label: 'Under 7',
+    gender: 'mixed',
+    drawTime: '11:15am / 12:15pm Saturdays',
+    teams: [
+      {
+        name: 'WARRIORS',
+        coach: 'Warren & Karly Fynn',
+        players: ['Jack Fynn','Jack Barber','Jimmy Beckhouse','Patrick Keen','Edward Roberts','Benjamin Kliman','Samuel Augustine','Harvey Smith'],
+      },
+      {
+        name: 'VIKINGS',
+        coachNeeded: true,
+        players: ['Abi Dyason','Christian Brummer','Jack Elias','Bennett Palframan','Connor Hick','Romareo Saydo','Fred Struthers','George Barnes'],
+      },
+      {
+        name: 'KNIGHTS',
+        coach: 'Tim Butterfield',
+        players: ['Lonnie Litchfield','Duke McClure','Poppy Triggs','Leo Powell','Freddie Butterfield','Zali Van Der Rijt','Angus Somerville','Thomas Daily','Polly Cullenward'],
+      },
+      {
+        name: 'GLADIATORS',
+        coachNeeded: true,
+        players: ['Maverick Honeyman','Billy Watt','Cooper Brearley','Samuel Morton','Thomas Luff','Miran Krezo','Hudson Sypott','Harry Greaney'],
+      },
+    ],
+  },
+  {
+    id: 'u78g',
+    label: 'Under 7/8 Girls',
+    gender: 'girls',
+    drawTime: '1:15pm Saturdays',
+    teams: [
+      {
+        name: 'WARRIORS',
+        coach: 'Steve McCromack & Jordan Stewart',
+        players: ['Margot Gooden','Lucy McCormack','Liliana Turnbull','Lillian O\'Brien','Eloise Gair','Lucy Heller','Frankie Stewart','Poppy Triggs','Zali Van Der Rijt','Polly Cullenward','Charlotte Flenley'],
+      },
+      {
+        name: 'VIKINGS',
+        coachNeeded: true,
+        players: ['Maddison Jones','Lottie Treloar','Ayla Coleman','Isabella Gray','Willow Cullen','Halle Wealands','Violet Wallace','Abi Dyason','Rahaf Choko','Ramisha Thapa Chettri','Eve Cheney'],
+      },
+    ],
+  },
+  {
+    id: 'u8',
+    label: 'Under 8',
+    gender: 'mixed',
+    drawTime: '11:15am / 12:15pm Saturdays',
+    teams: [
+      {
+        name: 'WARRIORS',
+        coach: 'Parents sharing',
+        players: ['Finn Writer','Hugo Shumack','Hugo Ovenden','Hutch Honeysett','Kohen Lecerf','Sloan Ward','Arlo Woolstencroft','George King','Sonny Moore','Maximilian Wallace','Archie Groth'],
+      },
+      {
+        name: 'VIKINGS',
+        coachNeeded: true,
+        players: ['Arthur Ta','Oliver Smith','Harry Lenehan','Alexander Barber','Levend Talo','Vincent Higginson','Chance Fairman','Kian McKenzie','Liam Chandler','Rehaan Sanan'],
+      },
+    ],
+  },
+  {
+    id: 'u9',
+    label: 'Under 9',
+    gender: 'mixed',
+    drawTime: '9:15am / 10:15am Saturdays',
+    teams: [
+      {
+        name: 'WARRIORS',
+        coach: 'Parents sharing',
+        players: ['Wilbur Shumack','Arthur Moore','Henry Ovenden','Matthew Yang','Matthew Lance','Asher Simpkins','Reid Hodges','Jack Dawson','Louis Hallman'],
+      },
+      {
+        name: 'VIKINGS',
+        coachNeeded: true,
+        players: ['Darcy Evans','Leon Yousif','Arlo Ryan','Francis Krezo','Oliver Smales','Mevan Haliqi','Dalvan Salman','Lucas Stone'],
+      },
+      {
+        name: 'KNIGHTS',
+        coach: 'Craig Wealands',
+        players: ['Whittaker Wealands','Owen Murphy','Euan Nicholas','Beau Absolum','Samuel Barrett','Rafael Brown','Xander Garathy','Aston Burkinshaw','Jude Fields'],
+      },
+    ],
+  },
+  {
+    id: 'u910g',
+    label: 'Under 9/10 Girls',
+    gender: 'girls',
+    drawTime: '8:15am Saturdays',
+    teams: [
+      {
+        name: 'WARRIORS',
+        coach: 'Katelyn Worldon',
+        players: ['Sally Gooden','Nova Coleman','Millie Moore','Mariya Sulaiman','Gemma Hook','Sophie Butt','London Halligan','Tully Marley','Stella Mitchell','Miya Lonsdale','Maya Elias Hasan','Madeline Flaws'],
+      },
+      {
+        name: 'VIKINGS',
+        coach: 'Parents sharing',
+        players: ['Harriet Chapman','Grace Passlow','Matilda Longden','Amelia Fowler','Georgia Davis','Skylar Keemink','Willa Robertson','Arabella Lamont','Bonnie Walker','Zara Phillips','Ella Seymour','Thea Hayward'],
+      },
+    ],
+  },
+  {
+    id: 'u10',
+    label: 'Under 10',
+    gender: 'mixed',
+    drawTime: '9:15am / 10:15am Saturdays',
+    teams: [
+      {
+        name: 'WARRIORS',
+        coach: 'Warren & Karly Fynn',
+        players: ['Henry Smith','Hudson Fynn','Lachlan McCormack','William Mumme','Cooper Honeyman','Joe Nicholl','Charlie Rake','Jude Tippler','Ethan Bruce','Rafael Brown','Sam Barrett'],
+      },
+      {
+        name: 'VIKINGS',
+        coach: 'Simon Spargo & Alexis Moore',
+        players: ['Henry Ta','Isaac McCaig','Blake Humphrey','Anna Higginson','Edward Higginson','Violet Ovenden','Lilly Lenehan','Harry Moore','Sarkout Meskin','Ilijah Krezo','Brayden Spargo'],
+      },
+      {
+        name: 'KNIGHTS',
+        coachNeeded: true,
+        players: ['Jonathon Haines','Harry Lustenberger','Haval Dawd','Arkan Dahir','Rhyan Longmore','Kiara McKenzie','Sihar Choko','William Mumme','Joe Nicholl','Jude Tippler','Henry Smith'],
+      },
+    ],
+  },
+  {
+    id: 'u1112',
+    label: 'Under 11/12',
+    gender: 'mixed',
+    drawTime: '11:15am / 12:15pm / 1:15pm Saturdays',
+    teams: [
+      {
+        name: 'WARRIORS',
+        coach: 'Neil Brown & Brad Ristivojevic',
+        players: ['Jacob Brown','Artie Barrett','John Fowler','Jack Nicholas','Ollie Becke','Tom Goldsworthy','Vann Denholm','Xavier Ristivojevic','Max Davies','Harry Herbert','Henry Struthers','Jed Rodham','Joel Thompson'],
+      },
+      {
+        name: 'VIKINGS',
+        coach: 'Andy Heller',
+        players: ['Harrison Heller','Louis Hutcheon','Tommy Blackmore','Duke Honeysett','Carter Flew','Hugh Greig','Leo Ward','Mason Absolum','Loch Wealands','Glenn Doneley','Riley Roberts','Jack Watt'],
+      },
+      {
+        name: 'KNIGHTS',
+        coach: 'Seth Knox-Niven & Will Cooper',
+        players: ['Dustin Dunbar','Finnley Redmead','Archer Smith','Patrick Nicholls','Ellyra Dyason','Cooper Knox Niven','Sophia McManus','Ivy Kennis','Hannah Afful','John Gwa','Arwan Khalaf','Scarlett Hook','Hugh Middleton','Ava Lecerf'],
+      },
+      {
+        name: 'GLADIATORS',
+        coachNeeded: true,
+        players: ['Athena Parker','Darius Parker','Arwan Khudeeda','Maxwell Ryan','Marwan Sulaiman','Alan Dahir','Charlie Smith','Diyala Loko','Iorans Khodedah','Marila Yousif','Altamis Habba Din','Max Burkinshaw'],
+      },
+    ],
+  },
+  {
+    id: 'u1112g',
+    label: 'Under 11/12 Girls',
+    gender: 'girls',
+    drawTime: '1:15pm Saturdays',
+    teams: [
+      {
+        name: 'WARRIORS',
+        coach: 'Kara Dyason & Katelyn Worldon',
+        players: ['Ellyra Dyason','Isabel Evans','Arwa Talo','Ala Talo','Rwa Talo','Maisy Hilton','Lavania Talo','Sophia McManus','Scarlett Hook','Hannah Afful','Bella Smith','Zoe Davidson','Aria Chandler'],
+      },
+      {
+        name: 'VIKINGS',
+        coach: 'Anthony Gray',
+        players: ['Amelia Gray','Lucy Gray','Dima Smoki','Sereena Dissanayaka Mudiyanselage','Lilly Lenehan','Violet Ovenden','Ivy Kennis','Joy Idmo','Ava Lecerf','Maddison Marshall','Audrey Klavins','Marley Sydenham','Jaklin Elias'],
+      },
+    ],
+  },
+];
+
+const drawSchedule = [
+  { group: 'U/5',        time: '1:15pm',  gender: 'Mixed' },
+  { group: 'U/6',        time: '9:15am & 10:15am', gender: 'Mixed' },
+  { group: 'U5/6 Girls', time: '1:15pm',  gender: 'Girls' },
+  { group: 'U/7',        time: '11:15am & 12:15pm', gender: 'Mixed' },
+  { group: 'U7/8 Girls', time: '1:15pm',  gender: 'Girls' },
+  { group: 'U/8',        time: '11:15am & 12:15pm', gender: 'Mixed' },
+  { group: 'U/9',        time: '9:15am & 10:15am', gender: 'Mixed' },
+  { group: 'U9/10 Girls',time: '8:15am',  gender: 'Girls' },
+  { group: 'U/10',       time: '9:15am & 10:15am', gender: 'Mixed' },
+  { group: 'U11/12',     time: '11:15am, 12:15pm & 1:15pm', gender: 'Mixed' },
+  { group: 'U11/12 Girls',time: '1:15pm', gender: 'Girls' },
+];
+---
+<Base title="MiniRoos 2026" description={`2026 MiniRoos teams and draw schedule for ${CLUB.name}.`}>
+
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <div class="label">2026 Season</div>
+      <h1>MiniRoos</h1>
+      <p>Saturday morning football for Under 5s through Under 11/12s. No ladders · No formal results · Just fun.</p>
+    </div>
+  </div>
+
+  <div class="page-inner">
+
+    <!-- Tab bar -->
+    <div class="tab-bar" role="tablist">
+      <button class="tab active" data-tab="teams" role="tab">Teams &amp; Squads</button>
+      <button class="tab" data-tab="draws" role="tab">Draw Schedule</button>
+    </div>
+
+    <!-- ── TEAMS PANEL ── -->
+    <div class="tab-panel active" id="panel-teams">
+
+      <!-- Age group filter pills -->
+      <div class="age-pills">
+        <button class="age-pill active" data-age="all">All Groups</button>
+        {ageGroups.map(g => (
+          <button class="age-pill" data-age={g.id}>
+            {g.label}
+            {g.gender === 'girls' && <span class="girls-dot"></span>}
+          </button>
+        ))}
+      </div>
+
+      <!-- Age group sections -->
+      {ageGroups.map(g => (
+        <div class="age-section" data-age={g.id} id={g.id}>
+          <div class="age-header">
+            <h2 class="age-title">{g.label}</h2>
+            {g.gender === 'girls' && <span class="gender-badge girls">Girls</span>}
+            <span class="time-badge">{g.drawTime}</span>
+          </div>
+
+          <div class={`teams-row teams-${g.teams.length}`}>
+            {g.teams.map(t => (
+              <div class="team-card">
+                <div class="team-card-header">
+                  <span class="team-name">{t.name}</span>
+                  {t.coachNeeded
+                    ? <span class="coach-needed">Coach needed</span>
+                    : <span class="coach-name">{t.coach}</span>
+                  }
+                  {t.note && <span class="team-note">{t.note}</span>}
+                </div>
+                <ul class="squad-list">
+                  {t.players.map(p => (
+                    <li>{p}</li>
+                  ))}
+                </ul>
+                <div class="player-count">{t.players.length} players</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- ── DRAWS PANEL ── -->
+    <div class="tab-panel" id="panel-draws">
+
+      <div class="draws-intro">
+        <p>MiniRoos games are played every Saturday morning at <strong>Rawlings Park</strong>. Games run approximately 40 minutes. No ladders or scores are recorded — just fun, development football for all kids.</p>
+        <a
+          href="https://www.footballwagga.com.au/competitions/miniroos/draws-2026"
+          target="_blank"
+          rel="noopener"
+          class="btn btn-primary draw-btn"
+        >
+          View Full 2026 Draw on Football Wagga ↗
+        </a>
+      </div>
+
+      <h3 class="schedule-heading">Saturday Start Times by Age Group</h3>
+      <div class="schedule-table-wrap">
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th>Age Group</th>
+              <th>Start Time(s)</th>
+              <th>Gender</th>
+            </tr>
+          </thead>
+          <tbody>
+            {drawSchedule.map(row => (
+              <tr>
+                <td><strong>{row.group}</strong></td>
+                <td>{row.time}</td>
+                <td>
+                  <span class={`gender-pill ${row.gender === 'Girls' ? 'girls' : 'mixed'}`}>
+                    {row.gender}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="iframe-section">
+        <h3 class="schedule-heading">Draw Documents</h3>
+        <p class="iframe-note">The full draw (including round-by-round fixture details) is hosted on Football Wagga. You can view it directly below or <a href="https://www.footballwagga.com.au/competitions/miniroos/draws-2026" target="_blank" rel="noopener">open it in a new tab ↗</a>.</p>
+        <div class="iframe-wrap">
+          <iframe
+            src="https://www.footballwagga.com.au/competitions/miniroos/draws-2026"
+            title="Football Wagga MiniRoos 2026 Draws"
+            loading="lazy"
+            class="draws-iframe"
+          ></iframe>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</Base>
+
+<script>
+  // Tab switching
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(`panel-${(tab as HTMLElement).dataset.tab}`)?.classList.add('active');
+    });
+  });
+
+  // Age group filter
+  document.querySelectorAll('.age-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.age-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      const age = (pill as HTMLElement).dataset.age;
+      document.querySelectorAll('.age-section').forEach(sec => {
+        (sec as HTMLElement).style.display = (age === 'all' || (sec as HTMLElement).dataset.age === age) ? '' : 'none';
+      });
+    });
+  });
+</script>
+
+<style>
+.page-hero {
+  background: linear-gradient(135deg, var(--green-dark) 0%, var(--off-black) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 60px 48px 48px;
+}
+.page-hero-inner { max-width: 1280px; margin: 0 auto; }
+.page-hero .label {
+  font-family: var(--font-cond);
+  font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--green-bright); margin-bottom: 8px;
+}
+.page-hero h1 { font-size: clamp(48px, 6vw, 80px); margin: 0 0 10px; }
+.page-hero p  { color: var(--muted); font-size: 15px; }
+
+.page-inner { max-width: 1280px; margin: 0 auto; padding: 40px 48px; }
+
+/* Tabs */
+.tab-bar {
+  display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 32px;
+}
+.tab {
+  padding: 10px 22px; background: none; border: none;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  font-family: var(--font-cond); font-size: 14px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); cursor: pointer;
+  transition: all 0.15s;
+}
+.tab:hover, .tab.active { color: var(--white); border-bottom-color: var(--green-bright); }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Age pills */
+.age-pills {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 36px;
+}
+.age-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 16px; background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; font-family: var(--font-cond); font-size: 12px;
+  font-weight: 600; letter-spacing: 1px; color: var(--muted); cursor: pointer;
+  transition: all 0.15s;
+}
+.age-pill.active, .age-pill:hover {
+  background: var(--green); border-color: var(--green); color: #fff;
+}
+.girls-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: #f472b6; flex-shrink: 0;
+}
+
+/* Age sections */
+.age-section { margin-bottom: 56px; }
+.age-header {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.age-title {
+  font-family: var(--font-cond); font-size: 28px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 1px; margin: 0;
+}
+.gender-badge {
+  font-family: var(--font-cond); font-size: 10px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; padding: 3px 10px;
+  border-radius: 4px;
+}
+.gender-badge.girls { background: rgba(244,114,182,0.15); color: #f472b6; border: 1px solid rgba(244,114,182,0.3); }
+.time-badge {
+  margin-left: auto;
+  font-family: var(--font-cond); font-size: 12px; font-weight: 600;
+  letter-spacing: 1px; color: var(--muted);
+}
+
+/* Teams row */
+.teams-row {
+  display: grid; gap: 16px;
+}
+.teams-1 { grid-template-columns: repeat(1, minmax(0,400px)); }
+.teams-2 { grid-template-columns: repeat(2, 1fr); }
+.teams-3 { grid-template-columns: repeat(3, 1fr); }
+.teams-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* Team card */
+.team-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.team-card-header {
+  padding: 16px 18px 14px; background: var(--green-dark);
+  border-bottom: 1px solid var(--border);
+}
+.team-name {
+  display: block; font-family: var(--font-cond); font-size: 20px; font-weight: 800;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--green-bright); margin-bottom: 4px;
+}
+.coach-name {
+  display: block; font-size: 13px; color: var(--muted);
+}
+.coach-needed {
+  display: inline-block; font-family: var(--font-cond); font-size: 11px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; color: #f97316;
+  background: rgba(249,115,22,0.12); border: 1px solid rgba(249,115,22,0.3);
+  border-radius: 4px; padding: 2px 8px; margin-top: 2px;
+}
+.team-note {
+  display: block; font-size: 11px; color: var(--muted); margin-top: 4px; font-style: italic;
+}
+
+/* Squad list */
+.squad-list {
+  list-style: none; padding: 14px 18px; margin: 0; flex: 1;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.squad-list li {
+  font-size: 13px; color: var(--white); padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.squad-list li:last-child { border-bottom: none; }
+
+.player-count {
+  padding: 10px 18px; font-family: var(--font-cond); font-size: 11px;
+  font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--muted); border-top: 1px solid var(--border);
+}
+
+/* Draws panel */
+.draws-intro { margin-bottom: 32px; }
+.draws-intro p { color: var(--muted); font-size: 15px; line-height: 1.6; margin-bottom: 18px; }
+.draw-btn { display: inline-block; text-decoration: none; }
+
+.schedule-heading {
+  font-family: var(--font-cond); font-size: 16px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--green-bright);
+  margin-bottom: 16px; margin-top: 36px;
+}
+.schedule-table-wrap { overflow-x: auto; max-width: 600px; }
+.schedule-table {
+  width: 100%; border-collapse: collapse; font-size: 14px;
+}
+.schedule-table th, .schedule-table td {
+  padding: 11px 16px; text-align: left; border-bottom: 1px solid var(--border);
+}
+.schedule-table th {
+  background: var(--green-dark); font-family: var(--font-cond); font-size: 11px;
+  font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--white);
+}
+.schedule-table tr:hover { background: rgba(255,255,255,0.03); }
+.gender-pill {
+  font-family: var(--font-cond); font-size: 10px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; padding: 3px 10px; border-radius: 4px;
+}
+.gender-pill.girls { background: rgba(244,114,182,0.15); color: #f472b6; border: 1px solid rgba(244,114,182,0.3); }
+.gender-pill.mixed { background: rgba(37,160,76,0.12); color: var(--green-bright); border: 1px solid rgba(37,160,76,0.3); }
+
+.iframe-section { margin-top: 12px; }
+.iframe-note { color: var(--muted); font-size: 14px; margin-bottom: 16px; }
+.iframe-note a { color: var(--green-bright); }
+.iframe-wrap {
+  border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+  background: var(--card);
+}
+.draws-iframe { width: 100%; height: 700px; border: none; display: block; }
+
+@media (max-width: 900px) {
+  .page-hero  { padding: 40px 20px 32px; }
+  .page-inner { padding: 28px 20px; }
+  .teams-4, .teams-3 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .teams-4, .teams-3, .teams-2 { grid-template-columns: 1fr; }
+  .time-badge { margin-left: 0; width: 100%; }
+  .draws-iframe { height: 500px; }
+}
+</style>

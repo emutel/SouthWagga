@@ -12,9 +12,10 @@ const active = (href) => path === href || path.startsWith(href + '/') ? 'active'
     </a>
 
     <ul class="nav-links">
-      <li><a href="/results"  class={active('/results')}>Results</a></li>
-      <li><a href="/teams"    class={active('/teams')}>Teams</a></li>
-      <li><a href="/academy"  class={active('/academy')}>Academy</a></li>
+      <li><a href="/results"   class={active('/results')}>Results</a></li>
+      <li><a href="/teams"     class={active('/teams')}>Teams</a></li>
+      <li><a href="/miniroos"  class={active('/miniroos')}>MiniRoos</a></li>
+      <li><a href="/academy"   class={active('/academy')}>Academy</a></li>
       <li><a href="/gallery"  class={active('/gallery')}>Gallery</a></li>
       <li><a href="/news"     class={active('/news')}>News</a></li>
       <li><a href="/events"   class={active('/events')}>Events</a></li>
@@ -34,6 +35,7 @@ const active = (href) => path === href || path.startsWith(href + '/') ? 'active'
       <li><a href="/">Home</a></li>
       <li><a href="/results">Results & Fixtures</a></li>
       <li><a href="/teams">Teams</a></li>
+      <li><a href="/miniroos">MiniRoos</a></li>
       <li><a href="/academy">Academy</a></li>
       <li><a href="/gallery">Gallery</a></li>
       <li><a href="/news">News</a></li>
