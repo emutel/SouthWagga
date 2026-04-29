@@ -8,17 +8,7 @@ const {
   description = `${CLUB.shortName} Academy Portal`,
 } = Astro.props;
 
-const c = CLUB.colors;
-const colorVars = [
-  `--green:${c.primary}`,
-  `--green-bright:${c.primaryBright}`,
-  `--green-dark:${c.primaryDark}`,
-  `--gold:${c.gold}`,
-  c.offBlack ? `--off-black:${c.offBlack}` : '',
-  c.card     ? `--card:${c.card}`           : '',
-  c.border   ? `--border:${c.border}`       : '',
-  c.muted    ? `--muted:${c.muted}`         : '',
-].filter(Boolean).join(';') + ';';
+const colorVars = `--green:${CLUB.colors.primary};--green-bright:${CLUB.colors.primaryBright};--green-dark:${CLUB.colors.primaryDark};--gold:${CLUB.colors.gold};`;
 ---
 <!DOCTYPE html>
 <html lang="en" style={colorVars}>

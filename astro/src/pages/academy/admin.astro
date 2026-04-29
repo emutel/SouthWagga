@@ -2,11 +2,10 @@
 // src/pages/academy/admin.astro
 // Technical Director admin portal — full rewrite
 import PortalBase from '../../layouts/PortalBase.astro';
-import { CLUB } from '../../club.config.js';
 ---
 <PortalBase
   title="Academy — Technical Director"
-  description={`${CLUB.shortName} Academy administration panel.`}
+  description="Warriors FC Academy administration panel."
 >
 
 <style is:global>
@@ -43,10 +42,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
 .login-sub { color: #6e7681; font-size: 14px; margin-top: 8px; }
 .login-outer { display: flex; justify-content: center; padding: 32px 24px 48px; }
 .login-card { width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
-.demo-info-banner { display:flex; gap:12px; align-items:flex-start; background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.25); border-radius:8px; padding:12px 14px; font-size:13px; line-height:1.8; color:#3b82f6; }
-.demo-info-banner strong { display:block; color:#2563eb; margin-bottom:4px; }
-.demo-cred { display:block; font-family:monospace; font-size:12px; color:#1d4ed8; }
-.demo-cred-label { display:inline-block; width:60px; font-family:sans-serif; text-transform:uppercase; font-size:10px; letter-spacing:1px; color:#60a5fa; }
 .field-group { display: flex; flex-direction: column; gap: 5px; }
 .field-group label { font-size: 13px; font-weight: 600; }
 .field-group input { padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background: var(--card); }
@@ -250,29 +245,19 @@ input[type=range] { width: 100%; accent-color: var(--green-accent); }
 <!-- View: Login -->
 <div id="view-login" class="view">
   <div class="login-hero">
-    <span class="login-label">{CLUB.shortName} Academy</span>
+    <span class="login-label">Warriors Academy</span>
     <h1 class="login-title">Technical Director Portal</h1>
     <p class="login-sub">Manage enrollments, players, and communications</p>
   </div>
   <div class="login-outer">
     <div class="login-card">
-      {CLUB.demoMode && (
-        <div class="demo-info-banner">
-          <span style="font-size:20px;flex-shrink:0">ℹ️</span>
-          <div>
-            <strong>Demo login</strong>
-            <span class="demo-cred"><span class="demo-cred-label">Email</span> director@riverside-demo.com</span>
-            <span class="demo-cred"><span class="demo-cred-label">Password</span> Demo1234!</span>
-          </div>
-        </div>
-      )}
       <div class="field-group">
         <label>Email</label>
-        <input id="login-email" type="email" autocomplete="email" value={CLUB.demoMode ? 'director@riverside-demo.com' : ''}>
+        <input id="login-email" type="email" autocomplete="email">
       </div>
       <div class="field-group">
         <label>Password</label>
-        <input id="login-password" type="password" autocomplete="current-password" value={CLUB.demoMode ? 'Demo1234!' : ''}>
+        <input id="login-password" type="password" autocomplete="current-password">
       </div>
       <button id="login-btn" class="btn-primary">Sign In &rarr;</button>
       <p id="login-error" class="error-text" hidden></p>
@@ -287,7 +272,7 @@ input[type=range] { width: 100%; accent-color: var(--green-accent); }
   <div class="topbar">
     <div class="topbar-row1">
       <div class="topbar-left">
-        <span class="topbar-label">{CLUB.shortName} Academy</span>
+        <span class="topbar-label">Warriors Academy</span>
         <h1 class="topbar-title">Technical Director</h1>
       </div>
       <div class="topbar-right">
@@ -358,7 +343,7 @@ input[type=range] { width: 100%; accent-color: var(--green-accent); }
 
 </div><!-- /view-dashboard -->
 
-<script define:vars={{ clubShortName: CLUB.shortName, clubAbbr: CLUB.abbreviation }}>
+<script>
 const DURL = import.meta.env.PUBLIC_DIRECTUS_URL || 'https://directus-production-ebbb.up.railway.app';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -428,7 +413,7 @@ function buildFIFACard(profile, assessment) {
       <div class="fc-header"><div><div class="fc-overall">&mdash;</div><div class="fc-pos">${posLabel(pos)}</div><div class="fc-tier">Unrated</div></div></div>
       <div class="fc-photo">${photoHtml}</div>
       <div class="fc-name">${name.toUpperCase()}</div>
-      <div class="fc-age">${agLabel} &middot; ${clubShortName}</div>
+      <div class="fc-age">${agLabel} &middot; Warriors FC</div>
       <div class="fc-no-assess">Not yet assessed</div>
     </div>`;
   }
@@ -442,7 +427,7 @@ function buildFIFACard(profile, assessment) {
     </div>
     <div class="fc-photo">${photoHtml}</div>
     <div class="fc-name">${name.toUpperCase()}</div>
-    <div class="fc-age">${agLabel} &middot; ${clubShortName}</div>
+    <div class="fc-age">${agLabel} &middot; Warriors FC</div>
     <div class="fc-stats">
       ${[['PAC', attrs.pac], ['SHO', attrs.sho], ['PAS', attrs.pas], ['DRI', attrs.dri], ['DEF', attrs.def], ['PHY', attrs.phy]]
         .map(([l, v]) => `<div class="fc-stat"><span class="fc-sv">${v}</span><span class="fc-sl">${l}</span></div>`).join('')}

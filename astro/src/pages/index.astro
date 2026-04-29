@@ -42,11 +42,8 @@ const tickerItems = results.slice(0, 6);
     <div class="hero-bg"></div>
     <div class="hero-inner">
       <div class="hero-content">
-        <div class="label">{new Date().getFullYear()} Season · {CLUB.competition}</div>
-        <h1 class="hero-title">
-          {CLUB.heroLines.slice(0,-1).map(line => <>{line}<br/></>)}
-          <span>{CLUB.heroLines[CLUB.heroLines.length-1]}</span>
-        </h1>
+        <div class="label">2025 Season · Greater Wagga Football</div>
+        <h1 class="hero-title">South<br>Wagga<br><span>Warriors.</span></h1>
         <p class="hero-sub">{CLUB.tagline}</p>
         <div class="hero-actions">
           <a href="/results" class="btn btn-primary">⚽ Latest Results</a>
@@ -77,9 +74,9 @@ const tickerItems = results.slice(0, 6);
               <span class={`outcome-badge outcome-${r.outcome}`}>{r.outcome?.toUpperCase()}</span>
             </div>
             <div class="result-scoreline">
-              <span class={`result-team ${CLUB.dribl.teamPatterns.some(p => r.home_team?.toLowerCase().includes(p)) ? 'warriors' : ''}`}>{r.home_team}</span>
+              <span class={`result-team ${r.home_team?.toLowerCase().includes('warriors') ? 'warriors' : ''}`}>{r.home_team}</span>
               <span class="result-digits">{r.home_score} – {r.away_score}</span>
-              <span class={`result-team right ${CLUB.dribl.teamPatterns.some(p => r.away_team?.toLowerCase().includes(p)) ? 'warriors' : ''}`}>{r.away_team}</span>
+              <span class={`result-team right ${r.away_team?.toLowerCase().includes('warriors') ? 'warriors' : ''}`}>{r.away_team}</span>
             </div>
             {r.competition && <div class="result-division">{r.competition}</div>}
           </div>
@@ -169,8 +166,8 @@ const tickerItems = results.slice(0, 6);
       <div class="section-inner academy-cta-inner">
         <div>
           <div class="label">Player Development</div>
-          <h2>{CLUB.shortName} Academy</h2>
-          <p>Structured development pathways for players aged 6–18. From Mini Roos to our Senior Elite program.</p>
+          <h2>Warriors Academy</h2>
+          <p>Structured development pathways for players aged 6–18. From Mini Warriors to our Senior Elite program.</p>
           <a href="/academy" class="btn btn-primary" style="margin-top:24px">View Programs & Enrol →</a>
         </div>
         <div class="academy-preview">
@@ -191,13 +188,13 @@ const tickerItems = results.slice(0, 6);
     <div class="section-inner">
       <div class="section-header">
         <div class="label">Follow Along</div>
-        <h2>{CLUB.social.instagram} on Instagram</h2>
+        <h2>@Warriors on Instagram</h2>
       </div>
       <div id="instagram-grid" class="instagram-grid">
         <!-- Populated by client-side script using Instagram Basic Display API -->
         <div class="instagram-placeholder">Loading Instagram feed...</div>
       </div>
-      <a href={`https://instagram.com/${CLUB.social.instagram.replace('@','')}`} class="btn btn-outline-green" style="margin-top:20px" id="instagram-follow">
+      <a href="https://instagram.com/" class="btn btn-outline-green" style="margin-top:20px" id="instagram-follow">
         Follow on Instagram →
       </a>
     </div>

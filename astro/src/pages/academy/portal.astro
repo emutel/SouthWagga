@@ -16,31 +16,21 @@ import { CLUB } from '../../club.config.js';
 <div id="view-login" class="portal-view">
   <div class="login-hero">
     <div class="login-hero-inner">
-      <span class="login-label">{CLUB.shortName} Academy</span>
+      <span class="login-label">Warriors Academy</span>
       <h1 class="login-h1">Player Portal</h1>
       <p class="login-sub">Sign in to view your player card and stats</p>
     </div>
   </div>
   <div class="login-outer">
     <div class="login-card">
-      {CLUB.demoMode && (
-        <div class="demo-info-banner">
-          <span style="font-size:20px;flex-shrink:0">ℹ️</span>
-          <div>
-            <strong>Demo login</strong><br>
-            <span class="demo-cred"><span class="demo-cred-label">Email</span> parent@riverside-demo.com</span>
-            <span class="demo-cred"><span class="demo-cred-label">Password</span> Demo1234!</span>
-          </div>
-        </div>
-      )}
       <div id="session-expired-msg" hidden style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:12px 14px;font-size:14px;color:#f59e0b;margin-bottom:16px;">Your session expired. Please sign in again.</div>
       <div class="login-field-group">
         <label for="login-email">Email</label>
-        <input id="login-email" type="email" autocomplete="email" placeholder="your@email.com" value={CLUB.demoMode ? 'parent@riverside-demo.com' : ''}>
+        <input id="login-email" type="email" autocomplete="email" placeholder="your@email.com">
       </div>
       <div class="login-field-group">
         <label for="login-password">Password</label>
-        <input id="login-password" type="password" autocomplete="current-password" placeholder="••••••••" value={CLUB.demoMode ? 'Demo1234!' : ''}>
+        <input id="login-password" type="password" autocomplete="current-password" placeholder="••••••••">
       </div>
       <button id="login-btn" class="btn-primary">Sign In →</button>
       <div id="login-error" class="form-msg form-msg--error" hidden></div>
@@ -57,7 +47,7 @@ import { CLUB } from '../../club.config.js';
   <div class="dash-header">
     <div class="dash-header-inner">
       <div>
-        <span class="dash-label">{CLUB.shortName} Academy</span>
+        <span class="dash-label">Warriors Academy</span>
         <h1 id="dash-title" class="dash-h1">Player Portal</h1>
       </div>
       <button id="logout-btn" class="btn-secondary">Sign Out</button>
@@ -131,7 +121,7 @@ import { CLUB } from '../../club.config.js';
       <h2 class="stats-modal-title">How Your Stats Are Measured</h2>
       <button id="stats-modal-close" class="modal-close-btn">✕</button>
     </div>
-    <p class="stats-modal-subtitle">Your {CLUB.shortName} card is updated at the start of each season and at the end of every term. Here's exactly how each stat is tested — and what you can do to reach the next level.</p>
+    <p class="stats-modal-subtitle">Your Warriors FC card is updated at the start of each season and at the end of every term. Here's exactly how each stat is tested — and what you can do to reach the next level.</p>
     <div id="stats-modal-body" class="stats-modal-body"><!-- Injected by JS --></div>
   </div>
 </div>
@@ -141,7 +131,7 @@ import { CLUB } from '../../club.config.js';
 <!-- html2canvas for card download -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-<script define:vars={{ clubShortName: CLUB.shortName, clubAbbr: CLUB.abbreviation }}>
+<script>
 // ── CONFIG ────────────────────────────────────────────────────
 const DURL = import.meta.env.PUBLIC_DIRECTUS_URL || '';
 
@@ -488,7 +478,7 @@ function buildFIFACard(enrollment, profile, assessment) {
       : `<svg class="fc-photo-svg" viewBox="0 0 80 100" fill="none" width="80" height="100"><circle cx="40" cy="26" r="18" fill="rgba(255,255,255,0.2)"/><path d="M8 95 C8 65 20 54 40 52 C60 54 72 65 72 95" fill="rgba(255,255,255,0.2)"/></svg>`}
   </div>
   <div class="fc-name">${nameDisplay.toUpperCase()}</div>
-  <div class="fc-age">${agLabel} · ${clubShortName}</div>
+  <div class="fc-age">${agLabel} · Warriors FC</div>
   <div class="fc-stats">
     <div class="fc-stat"><span class="fc-sv">${attrs.pac}</span><span class="fc-sl">PAC</span></div>
     <div class="fc-stat"><span class="fc-sv">${attrs.sho}</span><span class="fc-sl">SHO</span></div>
@@ -1019,7 +1009,7 @@ document.getElementById('download-btn').addEventListener('click', async () => {
     const name = profile?.enrollment
       ? `${profile.enrollment.player_first_name}_${profile.enrollment.player_last_name}`
       : 'player';
-    link.download = `${clubAbbr.toLowerCase()}-player-card-${name}.png`;
+    link.download = `warriors-player-card-${name}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
     showToast('Card saved!');
@@ -1041,18 +1031,18 @@ async function generateCardDataUrl() {
 }
 
 document.getElementById('share-btn').addEventListener('click', async () => {
-  const shareText = `Check out my ${clubShortName} Academy player card! ⚽🏆`;
+  const shareText = 'Check out my Warriors FC Academy player card! ⚽🏆';
   const shareUrl = window.location.href;
 
   // Try native Web Share API first (mobile browsers)
   if (navigator.share && navigator.canShare) {
     try {
       const dataUrl = await generateCardDataUrl();
-      let shareData = { title: `My ${clubShortName} Card`, text: shareText, url: shareUrl };
+      let shareData = { title: 'My Warriors FC Card', text: shareText, url: shareUrl };
       if (dataUrl) {
         const res = await fetch(dataUrl);
         const blob = await res.blob();
-        const file = new File([blob], `${clubAbbr.toLowerCase()}-player-card.png`, { type: 'image/png' });
+        const file = new File([blob], 'warriors-player-card.png', { type: 'image/png' });
         if (navigator.canShare({ files: [file] })) shareData.files = [file];
       }
       await navigator.share(shareData);
@@ -1069,8 +1059,8 @@ document.getElementById('share-btn').addEventListener('click', async () => {
   const profile = currentProfile();
   const name = profile?.enrollment
     ? `${profile.enrollment.player_first_name} ${profile.enrollment.player_last_name}`
-    : `${clubShortName} Player`;
-  const text = encodeURIComponent(`Check out ${name}'s ${clubShortName} Academy card! ⚽🏆`);
+    : 'Warriors Player';
+  const text = encodeURIComponent(`Check out ${name}'s Warriors FC Academy card! ⚽🏆`);
   const url = encodeURIComponent(shareUrl);
 
   document.getElementById('share-wa').href = `https://wa.me/?text=${text}%20${url}`;
@@ -1307,10 +1297,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
 .login-sub { color: var(--muted); font-size: 16px; line-height: 1.5; }
 .login-outer { display: flex; justify-content: center; padding: 56px 20px; }
 .login-card { width: 100%; max-width: 440px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 36px; }
-.demo-info-banner { display:flex; gap:12px; align-items:flex-start; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:10px; padding:14px 16px; margin-bottom:20px; font-size:13px; line-height:1.8; color:#93c5fd; }
-.demo-info-banner strong { display:block; color:#bfdbfe; margin-bottom:4px; }
-.demo-cred { display:block; font-family:monospace; font-size:12px; color:#bfdbfe; }
-.demo-cred-label { display:inline-block; width:60px; font-family:var(--font-cond); text-transform:uppercase; font-size:10px; letter-spacing:1px; color:#7ca8d4; }
 .login-field-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
 .login-field-group label { font-family: var(--font-cond); font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 .login-field-group input {

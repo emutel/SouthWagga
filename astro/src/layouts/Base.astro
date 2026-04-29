@@ -18,19 +18,7 @@ const siteTitle = title.includes(CLUB.seo.titleSuffix) ? title : `${title} | ${C
 
 // Inject club brand colours as CSS custom properties on <html>,
 // overriding the fallback values in global.css. Change CLUB.colors to retheme.
-const c = CLUB.colors;
-const colorVars = [
-  `--green:${c.primary}`,
-  `--green-bright:${c.primaryBright}`,
-  `--green-dark:${c.primaryDark}`,
-  `--gold:${c.gold}`,
-  `--win:${c.primaryBright}`,
-  `--draw:${c.gold}`,
-  c.offBlack ? `--off-black:${c.offBlack}` : '',
-  c.card     ? `--card:${c.card}`           : '',
-  c.border   ? `--border:${c.border}`       : '',
-  c.muted    ? `--muted:${c.muted}`         : '',
-].filter(Boolean).join(';') + ';';
+const colorVars = `--green:${CLUB.colors.primary};--green-bright:${CLUB.colors.primaryBright};--green-dark:${CLUB.colors.primaryDark};--gold:${CLUB.colors.gold};--win:${CLUB.colors.primaryBright};--draw:${CLUB.colors.gold};`;
 ---
 <!DOCTYPE html>
 <html lang="en" style={colorVars}>
